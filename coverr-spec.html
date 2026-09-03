@@ -1,0 +1,809 @@
+<title>Coverr v1 Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+:root{
+  --paper:#EDECE4;
+  --surface:#F6F5EF;
+  --surface-2:#E4E3D8;
+  --ink:#1A1A13;
+  --ink-2:#4E4E42;
+  --ink-3:#77776A;
+  --rule:#D2D1C4;
+  --rule-strong:#B6B5A5;
+  --accent:#A83B12;
+  --accent-soft:#F0DED4;
+  --ok:#2E6B45;
+  --ok-soft:#DDE8DF;
+  --warn:#8A6408;
+  --warn-soft:#EFE5CC;
+  --crit:#A32A1E;
+  --crit-soft:#F2DCD8;
+  --shadow:0 1px 2px rgba(26,26,19,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#15150F;
+    --surface:#1D1D16;
+    --surface-2:#26261D;
+    --ink:#EDEDE2;
+    --ink-2:#B3B3A4;
+    --ink-3:#88887A;
+    --rule:#33332A;
+    --rule-strong:#4A4A3D;
+    --accent:#E8763F;
+    --accent-soft:#3A2116;
+    --ok:#6FB98C;
+    --ok-soft:#1D2C23;
+    --warn:#D6A93F;
+    --warn-soft:#302614;
+    --crit:#E5796A;
+    --crit-soft:#331A16;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#15150F;
+  --surface:#1D1D16;
+  --surface-2:#26261D;
+  --ink:#EDEDE2;
+  --ink-2:#B3B3A4;
+  --ink-3:#88887A;
+  --rule:#33332A;
+  --rule-strong:#4A4A3D;
+  --accent:#E8763F;
+  --accent-soft:#3A2116;
+  --ok:#6FB98C;
+  --ok-soft:#1D2C23;
+  --warn:#D6A93F;
+  --warn-soft:#302614;
+  --crit:#E5796A;
+  --crit-soft:#331A16;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif;
+  font-size:17px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.page{
+  max-width:1180px;
+  margin:0 auto;
+  padding:0 28px 120px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0 56px;
+}
+@media (min-width:1080px){
+  .page{grid-template-columns:186px minmax(0,1fr)}
+}
+
+/* ---------- masthead ---------- */
+.masthead{
+  grid-column:1/-1;
+  border-bottom:2px solid var(--ink);
+  padding:56px 0 22px;
+  margin-bottom:44px;
+}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+h1{
+  font-family:Archivo,system-ui,sans-serif;
+  font-weight:800;
+  font-size:clamp(2.6rem,7vw,4.2rem);
+  line-height:.94;
+  letter-spacing:-.028em;
+  margin:.22em 0 .34em;
+  text-wrap:balance;
+}
+.standfirst{
+  font-size:1.16rem;
+  color:var(--ink-2);
+  max-width:60ch;
+  margin:0 0 30px;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0 34px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11.5px;
+  line-height:1.9;
+  color:var(--ink-3);
+}
+.meta b{color:var(--ink-2);font-weight:500}
+
+/* ---------- toc ---------- */
+nav.toc{display:none}
+@media (min-width:1080px){
+  nav.toc{
+    display:block;
+    grid-column:1;
+    align-self:start;
+    position:sticky;
+    top:28px;
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    font-size:11.5px;
+    line-height:1.5;
+  }
+  nav.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+  nav.toc a{
+    color:var(--ink-3);
+    text-decoration:none;
+    display:grid;
+    grid-template-columns:22px 1fr;
+    gap:4px;
+  }
+  nav.toc a:hover{color:var(--accent)}
+  nav.toc a span{color:var(--rule-strong)}
+  nav.toc a:hover span{color:var(--accent)}
+}
+
+main{grid-column:1/-1}
+@media (min-width:1080px){main{grid-column:2}}
+
+/* ---------- sections ---------- */
+section{margin-bottom:64px;scroll-margin-top:24px}
+.sec-head{
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  border-bottom:1px solid var(--rule-strong);
+  padding-bottom:8px;
+  margin-bottom:24px;
+}
+.sec-num{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:12px;
+  font-weight:600;
+  color:var(--accent);
+}
+h2{
+  font-family:Archivo,system-ui,sans-serif;
+  font-weight:700;
+  font-size:1.44rem;
+  letter-spacing:-.016em;
+  margin:0;
+  text-wrap:balance;
+}
+h3{
+  font-family:Archivo,system-ui,sans-serif;
+  font-weight:600;
+  font-size:1.03rem;
+  letter-spacing:-.008em;
+  margin:34px 0 10px;
+}
+h4{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  margin:26px 0 8px;
+}
+p{margin:0 0 14px;max-width:70ch}
+ul,ol{margin:0 0 14px;padding-left:20px;max-width:70ch}
+li{margin-bottom:6px}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.86em}
+p code,li code,td code{
+  background:var(--surface-2);
+  padding:1px 5px;
+  border-radius:2px;
+}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- tables ---------- */
+.scroll{overflow-x:auto;margin:0 0 18px;border:1px solid var(--rule);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;font-family:Archivo,system-ui,sans-serif}
+th{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10.5px;
+  font-weight:600;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  text-align:left;
+  padding:10px 14px;
+  border-bottom:1px solid var(--rule-strong);
+  white-space:nowrap;
+}
+td{padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-2)}
+td:first-child{color:var(--ink);font-weight:500}
+tr:last-child td{border-bottom:none}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:"IBM Plex Mono",ui-monospace,monospace}
+
+/* ---------- chips ---------- */
+.chip{
+  display:inline-block;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  padding:2.5px 7px;
+  border-radius:2px;
+  white-space:nowrap;
+}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.crit{background:var(--crit-soft);color:var(--crit)}
+.chip.info{background:var(--surface-2);color:var(--ink-3)}
+.chip.acc{background:var(--accent-soft);color:var(--accent)}
+
+/* ---------- flow steps ---------- */
+.flow{list-style:none;padding:0;margin:0 0 18px;max-width:74ch;counter-reset:step}
+.flow>li{
+  counter-increment:step;
+  display:grid;
+  grid-template-columns:26px 1fr;
+  gap:14px;
+  padding:12px 0;
+  border-bottom:1px solid var(--rule);
+  margin:0;
+}
+.flow>li:last-child{border-bottom:none}
+.flow>li::before{
+  content:counter(step,decimal-leading-zero);
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;
+  font-weight:600;
+  color:var(--rule-strong);
+  padding-top:5px;
+}
+.flow b{
+  font-family:Archivo,system-ui,sans-serif;
+  font-weight:600;
+  font-size:.95rem;
+  display:block;
+  margin-bottom:1px;
+}
+.flow small{font-size:14.5px;color:var(--ink-2);display:block;line-height:1.55}
+
+/* ---------- code / model ---------- */
+pre{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:12.5px;
+  line-height:1.72;
+  background:var(--surface);
+  border:1px solid var(--rule);
+  border-left:2px solid var(--accent);
+  padding:16px 18px;
+  overflow-x:auto;
+  margin:0 0 18px;
+  color:var(--ink-2);
+}
+pre b{color:var(--ink);font-weight:600}
+pre i{color:var(--ink-3);font-style:normal}
+pre u{text-decoration:none;color:var(--accent)}
+
+/* ---------- callout ---------- */
+.note{
+  background:var(--surface);
+  border:1px solid var(--rule);
+  border-left:2px solid var(--rule-strong);
+  padding:14px 18px;
+  margin:0 0 18px;
+  max-width:74ch;
+}
+.note p:last-child{margin-bottom:0}
+.note.acc{border-left-color:var(--accent)}
+.note h4{margin-top:0}
+
+/* ---------- perforation ---------- */
+.perf{
+  height:1px;
+  margin:78px 0;
+  background:repeating-linear-gradient(90deg,var(--rule-strong) 0 7px,transparent 7px 14px);
+}
+
+/* ---------- two-up ---------- */
+.cols{display:grid;grid-template-columns:1fr;gap:0 40px}
+@media (min-width:720px){.cols{grid-template-columns:1fr 1fr}}
+
+footer{
+  grid-column:1/-1;
+  border-top:2px solid var(--ink);
+  margin-top:24px;
+  padding-top:18px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11.5px;
+  color:var(--ink-3);
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+<header class="masthead">
+  <div class="eyebrow">Product specification &middot; v1</div>
+  <h1>Coverr</h1>
+  <p class="standfirst">Presale, door check-in and settlement for independent bands in Honduras. Buyers pay by bank transfer straight to the band&rsquo;s own account &mdash; the platform never touches the money.</p>
+  <div class="meta">
+    <div><b>Scope</b> &nbsp;v1, single band, single event type</div>
+    <div><b>Market</b> &nbsp;Honduras (HNL), BAC-first</div>
+    <div><b>Baseline</b> &nbsp;229 attendees, L52,650 gross</div>
+    <div><b>Status</b> &nbsp;Ready to build</div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li><a href="#s1"><span>01</span> Problem</a></li>
+    <li><a href="#s2"><span>02</span> Decisions</a></li>
+    <li><a href="#s3"><span>03</span> Roles</a></li>
+    <li><a href="#s4"><span>04</span> Buyer flow</a></li>
+    <li><a href="#s5"><span>05</span> Door flow</a></li>
+    <li><a href="#s6"><span>06</span> Event admin</a></li>
+    <li><a href="#s7"><span>07</span> Band home</a></li>
+    <li><a href="#s8"><span>08</span> Verification</a></li>
+    <li><a href="#s9"><span>09</span> Data model</a></li>
+    <li><a href="#s10"><span>10</span> Settlement</a></li>
+    <li><a href="#s11"><span>11</span> Pricing</a></li>
+    <li><a href="#s12"><span>12</span> Open items</a></li>
+    <li><a href="#s13"><span>13</span> Not in v1</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="s1">
+  <div class="sec-head"><span class="sec-num">01</span><h2>The problem, stated once</h2></div>
+  <p>A band posts a flyer with a phone number and a bank account. Buyers transfer, screenshot the confirmation, and send it over WhatsApp. Someone types every name into a spreadsheet by hand. The venue gets asked questions that aren&rsquo;t its job to answer.</p>
+  <p>On the night, staff check printed lists by name, take cash and transfers at the door, photograph screens, and tally headcount on paper. Wristbands, screenshots and the paper count never agree, so the band recounts and averages.</p>
+
+  <h4>What the last event actually looked like</h4>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Channel</th><th class="n">People</th><th class="n">Money</th><th>Failure mode</th></tr></thead>
+      <tbody>
+        <tr><td>Presale</td><td class="n">92</td><td class="n">L18,400</td><td>Hand-typed from WhatsApp, one row at a time</td></tr>
+        <tr><td>Door &mdash; transfer</td><td class="n">84</td><td class="n">L21,000</td><td>Queue stalls while staff read screenshots</td></tr>
+        <tr><td>Door &mdash; cash</td><td class="n">53</td><td class="n">L13,250</td><td>Tallied on paper, never matches</td></tr>
+        <tr><td>Comps</td><td class="n">4</td><td class="n">L0</td><td>Outside the numbering, invisible to the count</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Two observations from that data shaped this spec. <strong>39% of door sales were cash</strong> &mdash; so a transfer-only product solves the easy half and leaves the hard half broken. And <strong>84 &times; 250 = 21,000 exactly, 53 &times; 250 = 13,250 exactly</strong> &mdash; one of those figures was divided out of the other, so the reconciliation was never an independent check at all.</p>
+</section>
+
+<section id="s2">
+  <div class="sec-head"><span class="sec-num">02</span><h2>Decisions already settled</h2></div>
+  <p>These are closed. Recorded here so they don&rsquo;t get relitigated mid-build.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Decision</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Money never passes through the platform</td><td>Each band collects into its own account. Keeps this a SaaS tool rather than a money transmitter, and removes the payout obligation entirely.</td></tr>
+        <tr><td>No card processing</td><td>No PixelPay, Stripe or PayPal. Bank transfer only, which is what buyers already use.</td></tr>
+        <tr><td>QR issues immediately, always</td><td>The buyer is never held in a pending state. Verification is internal bookkeeping, not a gate on the customer.</td></tr>
+        <tr><td>Verification is deterministic, not AI judgment</td><td>Every flag is a checkable fact with a reason you can say out loud. No model ever calls a real buyer a forger.</td></tr>
+        <tr><td>No email forwarding setup</td><td>Band admins won&rsquo;t configure it. BAC&rsquo;s own alert email is also useless for matching &mdash; no sender name, no reference.</td></tr>
+        <tr><td>No <span class="mono">notificar a</span> address</td><td>Typing an unfamiliar email into a bank transfer form feels like a scam to the person doing it. Abandonment risk outweighs the data.</td></tr>
+        <tr><td>No per-account ownership tracking</td><td>The band owns its own arithmetic. A per-account subtotal on the dashboard is the whole feature.</td></tr>
+        <tr><td>Cash is first-class</td><td>A staff cash-sale button, not an afterthought. It&rsquo;s 39% of the door.</td></tr>
+        <tr><td>Comps are first-class</td><td>Issued a QR, checked in, counted in attendance, zero revenue.</td></tr>
+        <tr><td>Wristbands stay</td><td>Third independent count, and the only thing that handles re-entry &mdash; a QR burns on first scan.</td></tr>
+        <tr><td>Email delivery, not WhatsApp</td><td>Avoids leaving a dead one-message thread in every buyer&rsquo;s inbox.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="sec-head"><span class="sec-num">03</span><h2>Roles</h2></div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Role</th><th>Account</th><th>Can do</th></tr></thead>
+      <tbody>
+        <tr><td>Buyer</td><td>None &mdash; public link</td><td>Buy, receive QRs, recover tickets, request a refund</td></tr>
+        <tr><td>Door staff</td><td>Magic link, browser only</td><td>Scan, sell cash, sell at box-office price, search by name, log wristbands</td></tr>
+        <tr><td>Band admin</td><td>Email + magic link</td><td>Everything, plus expenses, splits, advances, flag queue, settlement</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>No native app anywhere. Staff open a URL, and the scanner is a PWA so it survives a dead signal at the venue.</p>
+</section>
+
+<section id="s4">
+  <div class="sec-head"><span class="sec-num">04</span><h2>Buyer flow</h2></div>
+  <p>One page, one scroll, no account. The link goes in the flyer, the bio, and the venue&rsquo;s repost &mdash; which is what removes the venue from the conversation.</p>
+
+  <ol class="flow">
+    <li><b>Event page</b><small>Band, date, doors, venue, music, price. Presale price shown with remaining count if capped.</small></li>
+    <li><b>Quantity</b><small>Picker with running total. <span class="mono">4 &times; L200 = L800</span>.</small></li>
+    <li><b>Bank picker &mdash; &ldquo;&iquest;Con qu&eacute; banco vas a pagar?&rdquo;</b><small>BAC / Ficohsa / Atl&aacute;ntida / Occidente / Banpa&iacute;s / Otro. Selecting one shows <em>only</em> that bank&rsquo;s account, large, tap-to-copy, labelled <span class="mono">mismo banco &mdash; sin comisi&oacute;n</span>. &ldquo;Otro&rdquo; shows the default account and an honest warning that their bank will charge roughly L40 in ACH fees.</small></li>
+    <li><b>Optional detail code</b><small>A second tap-to-copy chip, <span class="mono">JGL-4827</span>, labelled <em>opcional &mdash; nos ayuda a confirmarte m&aacute;s r&aacute;pido</em>. Never required, never validated, never blocks the QR. Two of three sample confirmations already had something written in that field unprompted.</small></li>
+    <li><b>Upload the confirmation</b><small>Camera or file. Accepts image or PDF. Uploads and extracts while the buyer keeps typing.</small></li>
+    <li><b>Payer details</b><small>Name, email, phone.</small></li>
+    <li><b>Attendee names</b><small>One row per ticket, each with an optional note. Real examples from the current spreadsheet: <em>&ldquo;me dicen Mando&rdquo;</em>, <em>&ldquo;son dos personas con el mismo nombre&rdquo;</em>.</small></li>
+    <li><b>Consent</b><small>Refund policy shown before purchase. Band picks <span class="mono">none</span> or <span class="mono">24h</span>. Text is stored on the order, so a later policy change never applies retroactively.</small></li>
+    <li><b>QR codes on screen, immediately</b><small>One per attendee, named, with a download button. Email follows with the same codes and the band&rsquo;s thank-you note.</small></li>
+  </ol>
+
+  <h3>Three ways to get your ticket back</h3>
+  <p>Email deliverability is the largest silent failure in the whole system. If the QR email lands in spam, everything breaks at the door. Three independent layers:</p>
+  <ol>
+    <li><strong>On screen at purchase</strong> &mdash; the primary. Email is backup, not delivery.</li>
+    <li><strong><span class="mono">/recuperar</span></strong> &mdash; enter an email, get the tickets resent. Always returns the same message whether or not the address is registered, so nobody can probe who bought.</li>
+    <li><strong>Staff name search</strong> &mdash; the last resort, at the door, in the admin app.</li>
+  </ol>
+</section>
+
+<section id="s5">
+  <div class="sec-head"><span class="sec-num">05</span><h2>Door flow</h2></div>
+
+  <h3>Scanning</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Result</th><th>Screen</th><th>Staff does</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip ok">Verde</span></td><td>Name, ticket 2 of 4, order code</td><td>Wristband, let them in</td></tr>
+        <tr><td><span class="chip warn">&Aacute;mbar</span></td><td>Same, plus <em>the reason</em>: &ldquo;faltan L50&rdquo;, &ldquo;referencia repetida&rdquo;, &ldquo;comprobante ilegible&rdquo;</td><td>Ask to see the confirmation, resolve or wave through</td></tr>
+        <tr><td><span class="chip crit">Rojo</span></td><td>Already checked in at 21:04 by Marcelo</td><td>Duplicate scan &mdash; check the wristband</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Amber must always name its reason on screen. Staff resolving a flag in five seconds is the entire point; staff phoning the admin is the failure.</p>
+
+  <h3>Selling at the door</h3>
+  <ul>
+    <li><strong>Cash sale</strong> &mdash; quantity, tap, done. Increments the count, creates ticket records, needs no QR. The wristband is the token.</li>
+    <li><strong>Walk-up transfer</strong> &mdash; a printed QR poster at the entrance points at the same buyer flow at box-office price. They self-serve in the queue instead of holding it up.</li>
+    <li><strong>Wristband counter</strong> &mdash; admin enters the starting count; the app shows what remaining <em>should</em> be at any moment.</li>
+  </ul>
+
+  <h3>Offline</h3>
+  <p>The scanner caches the full attendee list on load and validates locally. Scans queue and sync on reconnect. With two devices offline simultaneously, a cross-device double scan is <strong>flagged at sync, not prevented</strong> &mdash; trying to prevent it needs connectivity the venue doesn&rsquo;t have. The wristband is the real anti-passback control, which is exactly why it stays.</p>
+</section>
+
+<section id="s6">
+  <div class="sec-head"><span class="sec-num">06</span><h2>Event admin</h2></div>
+  <div class="cols">
+    <div>
+      <h4>Live dashboard</h4>
+      <ul>
+        <li>Sold, checked in, still outside</li>
+        <li>Revenue by channel: presale / door transfer / door cash</li>
+        <li>Per-account subtotals &mdash; <span class="mono">BAC L18,400 &middot; Ficohsa L4,200</span></li>
+        <li>Wristbands remaining, expected vs. actual</li>
+        <li>Open flags</li>
+      </ul>
+      <h4>Orders</h4>
+      <ul>
+        <li>Filter by channel, status, flag, bank</li>
+        <li>Full-text search on attendee and payer name</li>
+        <li>Edit an attendee name &mdash; that&rsquo;s the whole name-transfer feature</li>
+        <li>Export CSV</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Flag queue</h4>
+      <ul>
+        <li>The proof image, the extracted fields, the reason</li>
+        <li>Buyer&rsquo;s email and phone, ready to contact</li>
+        <li>Resolve with a note, or void the order</li>
+      </ul>
+      <h4>Money</h4>
+      <ul>
+        <li>Expenses &mdash; label, amount, note, paid flag</li>
+        <li>Members and split percentages</li>
+        <li>Advances, dated, per member, carrying across events</li>
+        <li>Settlement report &mdash; the paywall</li>
+      </ul>
+    </div>
+  </div>
+
+  <h4>Notifications to the admin</h4>
+  <p>Only one in v1: <strong>a flagged proof</strong>, sent immediately, containing the image, the extracted fields, the reason, and the buyer&rsquo;s contact details. Milestone emails every <em>n</em> tickets are deferred &mdash; a live dashboard already answers that question.</p>
+</section>
+
+
+<section id="s7">
+  <div class="sec-head"><span class="sec-num">07</span><h2>Band home and history</h2></div>
+  <p>Section 6 is one event, live. This is what the band lands on when it logs in &mdash; every event it has ever run, and it stays open whether or not the next gig has been paid for. It is also the only part of the product a band would open on a Tuesday with no show booked.</p>
+
+  <h3>Per-event metrics</h3>
+  <p>Every figure below is derived from records, never typed. The baseline column is the Jungla 01/08 event, so the shape of a real row is visible from day one.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Metric</th><th class="n">01/08 baseline</th><th>Why it&rsquo;s worth trending</th></tr></thead>
+      <tbody>
+        <tr><td>Attendance</td><td class="n">229</td><td>Presale / door transfer / door cash / comps, broken out</td></tr>
+        <tr><td>Presale share</td><td class="n">40%</td><td>92 of 229. Money banked before doors &mdash; the single best measure of how de-risked a show was</td></tr>
+        <tr><td>Gross</td><td class="n">L52,650</td><td></td></tr>
+        <tr><td>Costs</td><td class="n">L9,226</td><td></td></tr>
+        <tr><td>Cost ratio</td><td class="n">17.5%</td><td>Comparable across events of any size, unlike the raw cost figure</td></tr>
+        <tr><td>Net</td><td class="n">L43,424</td><td></td></tr>
+        <tr><td>Net per head</td><td class="n">L189.63</td><td>The most honest cross-event comparison there is</td></tr>
+        <tr><td>Realised avg ticket</td><td class="n">L229.91</td><td>Sits between L200 and L250 &mdash; encodes the presale/door mix in one number</td></tr>
+        <tr><td>Cash share of door</td><td class="n">39%</td><td>Drives how much float and how many staff the next door needs</td></tr>
+        <tr><td>Presale no-show rate</td><td class="n">unmeasurable</td><td>Presale sold vs. presale scanned. Assumed rare, never once actually counted</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note acc">
+    <p><strong>No-show rate is the one that only exists because the platform does.</strong> Nothing in the current process compares who paid against who walked in &mdash; the printed list gets ticked and thrown away. After two events this becomes a real number, and it changes how many presale tickets are worth selling against a fixed capacity.</p>
+  </div>
+
+  <h3>Costs, compared</h3>
+  <p>The existing expense labels are already consistent across events &mdash; Sonido, Tarima, IG Boost, Comida, Taquilleros, Fotos, Decoraci&oacute;n. That consistency is what makes &ldquo;did we spend less this time&rdquo; answerable, and it is fragile: one <span class="mono">sonido</span> or <span class="mono">sonido y luces</span> and the series breaks.</p>
+  <p>So <span class="mono">Expense</span> gains a normalised <span class="mono">category</span> alongside its free-text label. The label stays human (&ldquo;Cristy &mdash; decoraci&oacute;n tarima&rdquo;); the category is what trends. Past labels autocomplete when entering a new expense.</p>
+
+  <h3>Fans</h3>
+  <p>Buyers are matched across events on normalised email and phone. This yields three things no spreadsheet can:</p>
+  <ul>
+    <li><strong>Unique people reached</strong> across every gig &mdash; the band&rsquo;s actual audience size, as opposed to the sum of attendances</li>
+    <li><strong>Returning share</strong> &mdash; what fraction of tonight&rsquo;s room has been before</li>
+    <li><strong>Regulars</strong> &mdash; anyone at three or more shows. That list is the band&rsquo;s core following, with contactable emails, and it is worth more than any other output of this product</li>
+  </ul>
+  <p>Comps are included in the fan view and excluded from every revenue figure.</p>
+
+  <h3>What&rsquo;s free and what&rsquo;s gated</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Capability</th><th>Access</th></tr></thead>
+      <tbody>
+        <tr><td>Every past event&rsquo;s dashboard, orders and settlement</td><td><span class="chip ok">Free forever</span></td></tr>
+        <tr><td>History, trends, cost comparison, fans</td><td><span class="chip ok">Free forever</span></td></tr>
+        <tr><td>CSV export of anything already unlocked</td><td><span class="chip ok">Free forever</span></td></tr>
+        <tr><td>Running the next event end to end &mdash; presale, QRs, check-in, cash sales, live dashboard</td><td><span class="chip ok">Free</span></td></tr>
+        <tr><td>Settlement report and export <em>for that new event</em></td><td><span class="chip acc">Unlock fee</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>A band never loses access to anything it already has, and can run an entire gig before deciding to pay. The unlock fires at the moment of maximum value: the show is over, the money is in the account, and four people are waiting to be told their number.</p>
+  <div class="note">
+    <h4>This is a soft paywall, deliberately</h4>
+    <p>A band could read gross off the live dashboard and do the splits by hand. The defence isn&rsquo;t technical &mdash; it&rsquo;s that the settlement report <em>is</em> the tedious part (expenses, advances, per-member payouts, the export), and L1,200 against L43,000 with bandmates waiting is not a fight anyone picks. Locking the live dashboard instead would break the product on the night, which is far worse than losing the occasional fee.</p>
+  </div>
+</section>
+
+<div class="perf" role="separator"></div>
+
+<section id="s8">
+  <div class="sec-head"><span class="sec-num">08</span><h2>Verification pipeline</h2></div>
+  <p>Runs on upload, in the background, while the buyer finishes typing. It never blocks the QR.</p>
+
+  <ol class="flow">
+    <li><b>Store and hash</b><small>SHA-256 for exact duplicates, perceptual hash for re-crops and re-screenshots.</small></li>
+    <li><b>Classify</b><small><span class="mono">app_notification</span> &middot; <span class="mono">web_result</span> &middot; <span class="mono">alert_email</span> &middot; <span class="mono">pdf_export</span> &middot; <span class="mono">unknown</span>. Unknown routes to manual review &mdash; it never guesses.</small></li>
+    <li><b>Extract</b><small>PDF with a text layer &rarr; pdfminer, deterministic and free. Image &rarr; one vision call returning a strict JSON schema. Extraction is <em>by label, never by position</em>: the three samples render at three different widths and one is cropped on both edges.</small></li>
+    <li><b>Check</b><small>The five rules below, all deterministic.</small></li>
+    <li><b>Record and notify</b><small>Set <span class="mono">verification_status</span>, raise flags, email the admin if anything is critical.</small></li>
+  </ol>
+
+  <h3>Fields to extract</h3>
+  <pre><b>sender_name</b>     <i>NOMBRE DE QUIEN ENVIA</i>
+<b>sender_account</b>  <i>000000002          (web_result only)</i>
+<b>dest_account</b>    <i>000000001</i>
+<b>dest_name</b>       <i>NOMBRE DEL TITULAR</i>
+<b>amount</b>          <i>200.00             L200.00 | L1,200.00 | 400.00 LPS</i>
+<b>currency</b>        <i>HNL</i>
+<b>datetime</b>        <i>2026-07-30T20:20:18</i>
+<b>reference</b>       <i>412465928          9 digits, NOT sequential</i>
+<b>detail</b>          <i>"Preventa Arctic monkeys" | "Boleto" | null</i>
+<b>bank</b>            <i>BAC</i>
+<b>doc_type</b>        <i>app_notification</i>
+<b>confidence</b>      <i>0.0 - 1.0</i></pre>
+
+  <div class="note">
+    <h4>One idea tested and discarded</h4>
+    <p>Reference numbers looked sequential across two samples, which would have given a free forgery check. A third sample killed it &mdash; <span class="mono">30/07 20:20 &rarr; 412494357</span> is <em>higher</em> than <span class="mono">31/07 11:25 &rarr; 412420296</span>. Not monotonic across days. Do not build range-interpolation checks on reference numbers.</p>
+  </div>
+
+  <h3>Checks</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Code</th><th>Severity</th><th>Fires when</th><th>What you tell the buyer</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">REF_DUPLICATE</span></td><td><span class="chip crit">Critical</span></td><td>Reference already used on another order, any event</td><td>&ldquo;Esa referencia ya se us&oacute; en otra compra&rdquo;</td></tr>
+        <tr><td><span class="mono">DEST_MISMATCH</span></td><td><span class="chip crit">Critical</span></td><td>Destination account isn&rsquo;t one of the band&rsquo;s</td><td>&ldquo;La transferencia no lleg&oacute; a nuestra cuenta&rdquo;</td></tr>
+        <tr><td><span class="mono">HASH_DUPLICATE</span></td><td><span class="chip crit">Critical</span></td><td>Same image already uploaded</td><td>&ldquo;Ese comprobante ya lo recibimos&rdquo;</td></tr>
+        <tr><td><span class="mono">AMOUNT_SHORT</span></td><td><span class="chip warn">Warning</span></td><td>Amount &lt; expected</td><td>&ldquo;Faltan L50&rdquo;</td></tr>
+        <tr><td><span class="mono">AMOUNT_OVER</span></td><td><span class="chip warn">Warning</span></td><td>Amount &gt; expected</td><td>Usually paying for someone else &mdash; admin confirms</td></tr>
+        <tr><td><span class="mono">DATE_STALE</span></td><td><span class="chip warn">Warning</span></td><td>Transaction predates the event going live</td><td>Recycled from an older transfer</td></tr>
+        <tr><td><span class="mono">UNREADABLE</span></td><td><span class="chip info">Info</span></td><td>Extraction failed or confidence low</td><td>Nothing &mdash; manual review, buyer unaffected</td></tr>
+        <tr><td><span class="mono">NAME_MISMATCH</span></td><td><span class="chip info">Info</span></td><td>Sender name doesn&rsquo;t match payer name</td><td>Nothing. Paying for friends is normal &mdash; never surface this</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note acc">
+    <p><strong><span class="mono">NAME_MISMATCH</span> must never reach the buyer or the door.</strong> The baseline event has multi-ticket purchases throughout &mdash; one person paying for four is the common case, not the suspicious one. It exists only as a weak signal in the admin view.</p>
+  </div>
+
+  <h3>Retention</h3>
+  <p>Proof files auto-delete 30 days after the event. Sample <span class="mono">web_result</span> exposes a third party&rsquo;s full account number and personal email, so this is real PII, not just an image. Encrypted at rest, admin-only access, deletion logged.</p>
+</section>
+
+<section id="s9">
+  <div class="sec-head"><span class="sec-num">09</span><h2>Data model</h2></div>
+  <pre><b>Band</b>
+  id, name, slug, contact_email, created_at
+
+<b>BandMember</b>
+  id, band_id, name, split_pct, is_core
+
+<b>BankAccount</b>
+  id, band_id, bank <u>BAC|FICOHSA|ATLANTIDA|OCCIDENTE|BANPAIS|OTHER</u>
+  account_number, holder_name, display_order, is_default, active
+
+<b>Event</b>
+  id, band_id, name, venue, starts_at, doors_at, description,
+  slug, flyer_url, thank_you_note, capacity_cap?,
+  refund_policy <u>none|24h</u>, refund_policy_text,
+  wristbands_start?, status <u>draft|live|closed|settled</u>
+
+<b>PriceRule</b>                        <i>presale and box office are two rows</i>
+  id, event_id, label, amount, max_qty?,
+  starts_at?, ends_at?, activates_on_selloff_of? &rarr; PriceRule
+
+<b>Order</b>
+  id, event_id, short_code                <i>JGL-4827</i>
+  payer_name, payer_email, payer_phone,
+  quantity, price_rule_id, expected_amount,
+  channel <u>online|door_online|door_cash|comp</u>
+  status <u>confirmed|refunded|void</u>
+  verification_status <u>matched|unmatched|flagged|manual_ok</u>
+  bank_selected, sold_by?, created_at
+
+<b>Attendee</b>                          <i>one row per ticket</i>
+  id, order_id, name, note,
+  qr_token <u>unique, random, 128-bit</u>
+  checked_in_at?, checked_in_by?, checked_in_device?
+
+<b>PaymentProof</b>
+  id, order_id, file_url, sha256, phash,
+  doc_type, ocr_raw <u>jsonb</u>, ocr_confidence,
+  x_sender_name, x_sender_account, x_dest_account, x_dest_name,
+  x_amount, x_currency, x_datetime, x_reference, x_detail, x_bank,
+  uploaded_at, purge_after
+
+<b>VerificationFlag</b>
+  id, order_id, proof_id, code, severity,
+  detail, resolved_at?, resolved_by?, resolution_note?
+
+<b>Expense</b>
+  id, event_id, label, amount, note, paid,
+  category <u>sound|stage|promo|food|art|staff|photo|decor|rental|other</u>
+
+<b>Contact</b>                           <i>a person, across events</i>
+  id, band_id, email_normalized, phone_normalized,
+  display_name, first_seen_event_id,
+  events_count, tickets_count, notes
+
+<b>EventUnlock</b>                       <i>billing</i>
+  id, event_id, bracket, amount, paid_at, method, reference
+
+<b>Advance</b>
+  id, band_id, member_id, event_id?, amount, date, note
+
+<b>RefundRequest</b>
+  id, order_id, requested_at, reason,
+  status <u>open|approved|denied</u>, handled_by?</pre>
+
+  <h4>Notes on the model</h4>
+  <ul>
+    <li><strong>PriceRule as a list, not an enum.</strong> &ldquo;Presale until it sells out or until Friday, then box office&rdquo; is already two rules with trigger conditions. Modelled this way, tiers later are configuration rather than a rewrite.</li>
+    <li><strong>QR lives on Attendee, not Order.</strong> A group buying four arrives separately; each person needs their own code.</li>
+    <li><strong>Comps are an Order</strong> with <span class="mono">channel = comp</span> and <span class="mono">expected_amount = 0</span>. They check in, they count toward attendance, they contribute nothing to revenue. The current spreadsheet keeps them outside the numbering entirely, which is one reason the headcount never matched.</li>
+    <li><strong>A refund voids the QR</strong> and writes a negative line, so the settlement stays true without deleting history.</li>
+    <li><strong><span class="mono">Contact</span> is derived, not entered.</strong> Built by normalising payer email and phone across orders. It powers the fan view and lets a band see that someone has been to five shows without ever asking them to sign up.</li>
+    <li><strong><span class="mono">Expense.category</span> is what trends; <span class="mono">label</span> stays human.</strong> Free-text labels alone can&rsquo;t be compared across events &mdash; one inconsistent spelling breaks the series.</li>
+    <li><strong><span class="mono">bank_selected</span> is worth storing</strong> even though buyers can ignore it &mdash; it tells you which account&rsquo;s statement an order should appear in when you eventually import one.</li>
+  </ul>
+</section>
+
+<section id="s10">
+  <div class="sec-head"><span class="sec-num">10</span><h2>Settlement</h2></div>
+  <p>Restructured from the spreadsheet, which subtracts every cost from the presale bucket. That produces the right total only while all splits are equal &mdash; add one session musician at 10% and it stops being explainable to the people it&rsquo;s paying.</p>
+
+  <pre>Gross     = presale + door_transfer + door_cash      <i>comps contribute 0</i>
+Costs     = &sum; expenses
+Net       = Gross &minus; Costs
+Share[i]  = Net &times; pct[i]
+Payout[i] = Share[i] &minus; advances[i]</pre>
+
+  <h4>Against the baseline event</h4>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Line</th><th class="n">HNL</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Presale</td><td class="n">18,400</td><td>92 &times; L200</td></tr>
+        <tr><td>Door</td><td class="n">34,250</td><td>137 &times; L250, of which L13,250 cash</td></tr>
+        <tr><td>Gross</td><td class="n">52,650</td><td>229 people</td></tr>
+        <tr><td>Costs</td><td class="n">&minus;9,226</td><td>Sound 4,500 &middot; art 1,500 &middot; photos 1,000 &middot; door staff 1,000 &middot; IG 720 &middot; food 506</td></tr>
+        <tr><td><strong>Net</strong></td><td class="n"><strong>43,424</strong></td><td></td></tr>
+        <tr><td>Share &times;4 @ 25%</td><td class="n">10,856</td><td>each</td></tr>
+        <tr><td>Armando payout</td><td class="n">5,541</td><td>less L5,315 advance</td></tr>
+        <tr><td>Pacheco payout</td><td class="n">9,536</td><td>less L1,320 advance</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul>
+    <li><strong>Warn when percentages don&rsquo;t total 100</strong>, never block &mdash; bands sometimes hold back a deliberate remainder for the fund.</li>
+    <li><strong>Advances are dated and carry across events</strong>, so an advance survives a show that underperforms.</li>
+    <li><strong>Ticket counts come from records, never a typed cell.</strong> The current sheet hardcodes <span class="mono">92</span>; add a presale row and revenue silently stops updating.</li>
+  </ul>
+</section>
+
+<section id="s11">
+  <div class="sec-head"><span class="sec-num">11</span><h2>Pricing</h2></div>
+  <p><strong>The settlement report is the paywall.</strong> Presale, QR delivery, check-in, cash sales and the live dashboard are all free every time. The band pays to unlock the final settlement and export &mdash; after the event, once the tool has visibly done its job and there&rsquo;s money in the account.</p>
+  <p>That timing also makes size-based pricing free to implement: the exact ticket count is already known when the charge fires, so the band never picks a plan and never negotiates.</p>
+  <p>Everything a band has already paid for stays open permanently, and the band home in section 7 &mdash; history, trends, cost comparison, fans &mdash; is never gated. The fee is per gig, not a subscription, and it buys the settlement for that gig.</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Tickets sold</th><th class="n">Fee</th><th>Reasoning</th></tr></thead>
+      <tbody>
+        <tr><td>First event, any size</td><td class="n">Free</td><td>Full features including the report. Nobody in this market pre-pays for unproven software from an unknown developer.</td></tr>
+        <tr><td>1 &ndash; 60</td><td class="n">L400</td><td>A 40-person bar gig grosses ~L4,000. Anything higher is unusable.</td></tr>
+        <tr><td>61 &ndash; 150</td><td class="n">L800</td><td></td></tr>
+        <tr><td>151 &ndash; 300</td><td class="n">L1,200</td><td>The baseline event lands here &mdash; 2.3% of gross, 2.8% of net.</td></tr>
+        <tr><td>301 +</td><td class="n">L1,800</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul>
+    <li><strong>Comps don&rsquo;t count toward the bracket.</strong> They&rsquo;re free tickets; don&rsquo;t charge for them.</li>
+    <li><strong>No subscription, no seat pricing, no expiry.</strong> A band that plays twice a year pays twice a year and keeps its history in between.</li>
+    <li><strong>Sell to bands and event planners, not venues.</strong> The band holds the bank account and the pain; the venue holds neither. Bands also carry the tool from venue to venue, so venues see it repeatedly without being sold to.</li>
+    <li><strong>Runtime cost is roughly $2 per event</strong> &mdash; about $0.70 in vision extraction across ~230 uploads, plus email. Margin holds even at the bottom bracket.</li>
+    <li>The fee is collected by bank transfer, on the same rail the product exists to fix.</li>
+  </ul>
+</section>
+
+<section id="s12">
+  <div class="sec-head"><span class="sec-num">12</span><h2>Open items</h2></div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Item</th><th>Blocks</th><th>Next action</th></tr></thead>
+      <tbody>
+        <tr><td>Bank statement export format</td><td>Optional morning-after reconciliation</td><td>Pull one BAC export. The question that matters: does the sender&rsquo;s name survive into the statement, or does it read <span class="mono">ACH CREDITO</span>?</td></tr>
+        <tr><td>Non-BAC confirmation samples</td><td>Extraction coverage beyond ~99% of volume</td><td>Collect Ficohsa, Cuscatl&aacute;n, Atl&aacute;ntida, plus one USD-converted transfer</td></tr>
+        <tr><td>Email deliverability</td><td>QR delivery, the highest-risk dependency</td><td>Dedicated sending domain, SPF/DKIM/DMARC, warm-up before the first real event</td></tr>
+        <tr><td>Venue capacity caps</td><td>Nothing &mdash; optional field</td><td>Ship the field, leave it blank by default</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s13">
+  <div class="sec-head"><span class="sec-num">13</span><h2>Not in v1</h2></div>
+  <p>Named here so they stay out of the build rather than creeping in.</p>
+  <ul>
+    <li>Ticket tiers, VIP, early bird, assigned seating</li>
+    <li>Card payments of any kind</li>
+    <li>Bank statement import &mdash; pinned until the export format is known</li>
+    <li>WhatsApp delivery</li>
+    <li>Multi-account ownership and inter-member settlement transfers</li>
+    <li>Milestone emails every <em>n</em> tickets</li>
+    <li>AI authenticity scoring &mdash; deliberately excluded, not deferred</li>
+    <li>Multi-band public discovery, an events directory, anything social</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  Coverr v1 &middot; Honduras &middot; drafted from the Jungla 01/08 event ledger
+</footer>
+
+</div>

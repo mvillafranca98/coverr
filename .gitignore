@@ -1,0 +1,11 @@
+# Payment confirmations from real buyers.
+# These contain full names, bank account numbers and personal email
+# addresses of third parties. This repo is public — never commit them.
+screenshots/
+*.xlsx
+
+# Local
+.DS_Store
+node_modules/
+.env
+.env.*
