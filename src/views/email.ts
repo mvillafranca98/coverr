@@ -1,0 +1,143 @@
+import { formatLpsShort, formatEventDate, formatEventTime, escapeHtml } from "../lib/core";
+
+type TicketEmailInput = {
+  band: { name: string; contactEmail: string };
+  event: { name: string; venue: string; startsAt: string; thankYouNote: string | null };
+  order: { shortCode: string; quantity: number; expectedAmount: number };
+  attendees: { name: string; note: string | null; qrToken: string }[];
+  origin: string;
+};
+
+/**
+ * Email HTML is not web HTML. Constraints driving every choice below:
+ *  - Gmail strips <style> blocks and refuses SVG and data: URIs, so QR codes
+ *    are hosted PNGs and every rule is an inline style attribute.
+ *  - Outlook ignores flexbox and grid, so layout is tables.
+ *  - Dark mode is not reliably controllable, so the ticket panel is explicitly
+ *    light with dark text rather than inheriting anything.
+ */
+export function ticketEmailHtml(i: TicketEmailInput): string {
+  const when = `${formatEventDate(i.event.startsAt)} · ${formatEventTime(i.event.startsAt)}`;
+
+  const tickets = i.attendees
+    .map(
+      (a, n) => `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;margin:0 0 16px">
+        <tr><td style="background:#ffffff;border:1px solid #ddd8cf;border-radius:12px;padding:20px">
+          <div style="font:600 17px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#191713">
+            ${escapeHtml(a.name)}
+          </div>
+          <div style="font:400 13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6f6a60;padding-top:3px">
+            Boleto ${n + 1} de ${i.attendees.length}
+          </div>
+          ${
+            a.note
+              ? `<div style="font:italic 400 13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#a8701f;padding-top:5px">${escapeHtml(a.note)}</div>`
+              : ""
+          }
+          <div style="padding:16px 0 6px;text-align:center">
+            <img src="${i.origin}/t/${a.qrToken}.png"
+                 width="220" height="220" alt="Código QR de ${escapeHtml(a.name)}"
+                 style="display:block;margin:0 auto;width:220px;height:220px;border:0" />
+          </div>
+          <div style="font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;color:#9a948a;text-align:center;text-transform:uppercase">
+            ${escapeHtml(i.order.shortCode)}
+          </div>
+        </td></tr>
+      </table>`,
+    )
+    .join("");
+
+  return `<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tus boletos</title></head>
+<body style="margin:0;padding:0;background:#f3f1ea">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">Tus ${i.order.quantity === 1 ? "boleto" : `${i.order.quantity} boletos`} para ${escapeHtml(i.event.name)} — ${when}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f1ea;padding:24px 12px">
+  <tr><td align="center">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;text-align:left">
+
+      <tr><td style="padding:0 0 20px">
+        <div style="font:600 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#b0651a">
+          ${escapeHtml(i.band.name)}
+        </div>
+        <h1 style="font:700 25px/1.15 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#191713;margin:10px 0 8px;letter-spacing:-.02em">
+          ${escapeHtml(i.event.name)}
+        </h1>
+        <div style="font:400 15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#57534b">
+          ${when}<br>${escapeHtml(i.event.venue)}
+        </div>
+      </td></tr>
+
+      <tr><td style="padding:0 0 18px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="background:#fbf6e8;border:1px solid #e4d5ab;border-radius:9px;padding:13px 15px;font:400 14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6d5518">
+            Guardá este correo. En la entrada te escanean el código desde el teléfono — no necesitás imprimir nada.
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <tr><td>${tickets}</td></tr>
+
+      <tr><td style="padding:6px 0 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #ddd8cf;border-radius:12px">
+          <tr><td style="padding:16px 20px;font:400 14px/1.9 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#57534b">
+            <b style="color:#191713">Boletos:</b> ${i.order.quantity}<br>
+            <b style="color:#191713">Total:</b> ${formatLpsShort(i.order.expectedAmount)}<br>
+            <b style="color:#191713">Código:</b> ${escapeHtml(i.order.shortCode)}
+          </td></tr>
+        </table>
+      </td></tr>
+
+      ${
+        i.event.thankYouNote
+          ? `<tr><td style="padding:18px 4px 0;font:400 14px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#57534b">
+               ${escapeHtml(i.event.thankYouNote)}
+             </td></tr>`
+          : ""
+      }
+
+      <tr><td style="padding:22px 4px 0;border-top:1px solid #ddd8cf;margin-top:20px;font:400 12px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#8a857b">
+        ¿Perdiste tus boletos? Recuperalos en
+        <a href="${i.origin}/recuperar" style="color:#b0651a">${i.origin.replace(/^https?:\/\//, "")}/recuperar</a><br>
+        ¿Algún problema? Escribinos a
+        <a href="mailto:${escapeHtml(i.band.contactEmail)}" style="color:#b0651a">${escapeHtml(i.band.contactEmail)}</a>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+}
+
+/** Plain-text alternative. Improves deliverability and is what a screen reader gets. */
+export function ticketEmailText(i: TicketEmailInput): string {
+  const when = `${formatEventDate(i.event.startsAt)} · ${formatEventTime(i.event.startsAt)}`;
+  const lines = [
+    `${i.band.name} — ${i.event.name}`,
+    `${when}`,
+    `${i.event.venue}`,
+    "",
+    `Tus ${i.order.quantity === 1 ? "boleto" : `${i.order.quantity} boletos`}:`,
+    "",
+  ];
+  i.attendees.forEach((a, n) => {
+    lines.push(`  ${n + 1}. ${a.name}${a.note ? ` (${a.note})` : ""}`);
+    lines.push(`     ${i.origin}/t/${a.qrToken}.png`);
+  });
+  lines.push(
+    "",
+    `Total: ${formatLpsShort(i.order.expectedAmount)}`,
+    `Código: ${i.order.shortCode}`,
+    "",
+    "En la entrada te escanean el código desde el teléfono.",
+    "",
+    `¿Perdiste tus boletos? ${i.origin}/recuperar`,
+    `¿Algún problema? ${i.band.contactEmail}`,
+  );
+  return lines.join("\n");
+}
+
+export function ticketEmailSubject(i: TicketEmailInput): string {
+  return `Tus ${i.order.quantity === 1 ? "boleto" : `${i.order.quantity} boletos`} — ${i.event.name}`;
+}

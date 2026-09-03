@@ -4,7 +4,10 @@ import { eq, and, sql } from "drizzle-orm";
 import * as s from "./db/schema";
 import { BuyPage } from "./views/buy";
 import { ConfirmPage } from "./views/confirm";
-import { qrSvg } from "./lib/qr";
+import { RecoverPage } from "./views/recover";
+import { qrSvg, qrPng } from "./lib/qr";
+import { makeTransport } from "./lib/email";
+import { ticketEmailHtml, ticketEmailText, ticketEmailSubject } from "./views/email";
 import {
   newId,
   newQrToken,
@@ -21,6 +24,8 @@ type Bindings = {
   PROOFS: R2Bucket;
   ASSETS: Fetcher;
   APP_ORIGIN: string;
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -78,6 +83,50 @@ async function loadEvent(db: DrizzleD1Database<typeof s>, slug: string) {
     .where(eq(s.events.slug, slug))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * Sends one order's tickets. Never throws into the request path: a mail failure
+ * must not cost the buyer their confirmation page, since they have already
+ * paid by the time we get here. Failures are logged for the admin to chase.
+ */
+async function sendTickets(env: Bindings, orderId: string): Promise<boolean> {
+  const db = drizzle(env.DB, { schema: s });
+  const rows = await db
+    .select({ order: s.orders, event: s.events, band: s.bands })
+    .from(s.orders)
+    .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+    .innerJoin(s.bands, eq(s.events.bandId, s.bands.id))
+    .where(eq(s.orders.id, orderId))
+    .limit(1);
+  const row = rows[0];
+  if (!row || row.order.status !== "confirmed") return false;
+
+  const atts = await db.select().from(s.attendees).where(eq(s.attendees.orderId, orderId));
+  if (atts.length === 0) return false;
+
+  const input = {
+    band: row.band,
+    event: row.event,
+    order: row.order,
+    attendees: atts,
+    origin: env.APP_ORIGIN,
+  };
+
+  const result = await makeTransport(env).send({
+    to: row.order.payerEmail,
+    subject: ticketEmailSubject(input),
+    html: ticketEmailHtml(input),
+    text: ticketEmailText(input),
+    replyTo: row.band.contactEmail,
+  });
+
+  if (!result.ok) {
+    console.error(`[tickets] send failed order=${row.order.shortCode} ${result.error}`);
+    return false;
+  }
+  console.log(`[tickets] sent order=${row.order.shortCode} to=${row.order.payerEmail}`);
+  return true;
 }
 
 // ---------------------------------------------------------------- buyer page
@@ -288,6 +337,10 @@ app.post("/e/:slug/comprar", async (c) => {
       .where(eq(s.orders.id, orderId));
   }
 
+  // The buyer sees their QR codes on the next screen regardless — email is the
+  // backup copy, so it must never delay or block the confirmation.
+  c.executionCtx.waitUntil(sendTickets(c.env, orderId));
+
   return c.redirect(`/boletos/${orderId}`, 303);
 });
 
@@ -331,6 +384,52 @@ app.get("/t/:token{.+\\.svg}", async (c) => {
     "Content-Type": "image/svg+xml; charset=utf-8",
     "Cache-Control": "private, max-age=31536000, immutable",
   });
+});
+
+app.get("/t/:token{.+\\.png}", async (c) => {
+  const token = c.req.param("token").replace(/\.png$/, "");
+  const db = drizzle(c.env.DB, { schema: s });
+  const hit = await db
+    .select({ id: s.attendees.id })
+    .from(s.attendees)
+    .where(eq(s.attendees.qrToken, token))
+    .limit(1);
+  if (hit.length === 0) return c.notFound();
+
+  const png = await qrPng(token, 8);
+  return c.body(png, 200, {
+    "Content-Type": "image/png",
+    "Cache-Control": "public, max-age=31536000, immutable",
+  });
+});
+
+// ------------------------------------------------------------------ recovery
+
+app.get("/recuperar", (c) => c.html(<RecoverPage sent={c.req.query("ok") === "1"} />));
+
+app.post("/recuperar", async (c) => {
+  const body = await c.req.parseBody();
+  const email = typeof body["email"] === "string" ? normalizeEmail(body["email"]) : "";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return c.html(<RecoverPage error="Revisá el correo que escribiste." />, 400);
+  }
+
+  const db = drizzle(c.env.DB, { schema: s });
+  const found = await db
+    .select({ id: s.orders.id })
+    .from(s.orders)
+    .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+    .where(and(eq(s.orders.payerEmail, email), eq(s.orders.status, "confirmed")));
+
+  // Resend every live order on that address, then answer identically whether or
+  // not anything matched.
+  c.executionCtx.waitUntil(
+    (async () => {
+      for (const o of found) await sendTickets(c.env, o.id);
+    })(),
+  );
+
+  return c.redirect("/recuperar?ok=1", 303);
 });
 
 app.get("/", (c) =>

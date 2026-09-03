@@ -1,4 +1,5 @@
 import qrcode from "qrcode-generator";
+import { matrixToPng } from "./png";
 
 /**
  * Renders a QR as a standalone SVG string. Server-rendered so the buyer's
@@ -40,4 +41,12 @@ export function qrSvg(text: string, opts: { size?: number; dark?: string; light?
 export function qrDataUri(text: string, size = 320): string {
   const svg = qrSvg(text, { size });
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+}
+
+/** QR as a PNG. The only format email clients reliably render — see lib/png.ts. */
+export async function qrPng(text: string, scale = 8): Promise<Uint8Array> {
+  const qr = qrcode(0, "M");
+  qr.addData(text);
+  qr.make();
+  return matrixToPng((r, c) => qr.isDark(r, c), qr.getModuleCount(), { scale });
 }

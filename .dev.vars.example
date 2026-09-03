@@ -1,0 +1,8 @@
+# Copy to .dev.vars (gitignored) and fill in. Never commit the real file.
+#
+# Without RESEND_API_KEY + EMAIL_FROM the app falls back to a dev transport
+# that logs the email and writes the rendered HTML to the local R2 bucket
+# under outbox/ — so the flow works and can be inspected without an account.
+
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
+EMAIL_FROM=Jungla <boletos@tudominio.com>
