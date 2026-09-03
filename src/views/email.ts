@@ -3,7 +3,7 @@ import { formatLpsShort, formatEventDate, formatEventTime, escapeHtml } from "..
 type TicketEmailInput = {
   band: { name: string; contactEmail: string };
   event: { name: string; venue: string; startsAt: string; thankYouNote: string | null };
-  order: { shortCode: string; quantity: number; expectedAmount: number };
+  order: { id: string; shortCode: string; quantity: number; expectedAmount: number };
   attendees: { name: string; note: string | null; qrToken: string }[];
   origin: string;
 };
@@ -42,6 +42,12 @@ export function ticketEmailHtml(i: TicketEmailInput): string {
           </div>
           <div style="font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;color:#9a948a;text-align:center;text-transform:uppercase">
             ${escapeHtml(i.order.shortCode)}
+          </div>
+          <div style="text-align:center;padding-top:12px">
+            <a href="${i.origin}/boletos/${i.order.id}"
+               style="display:inline-block;padding:9px 18px;border-radius:8px;background:#f5efe2;border:1px solid #e0d3b4;color:#8a5a12;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;text-decoration:none">
+              ¿No ves el código? Abrilo aquí
+            </a>
           </div>
         </td></tr>
       </table>`,
@@ -129,6 +135,8 @@ export function ticketEmailText(i: TicketEmailInput): string {
     "",
     `Total: ${formatLpsShort(i.order.expectedAmount)}`,
     `Código: ${i.order.shortCode}`,
+    "",
+    `Ver tus boletos: ${i.origin}/boletos/${i.order.id}`,
     "",
     "En la entrada te escanean el código desde el teléfono.",
     "",

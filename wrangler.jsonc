@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "coverr",
+  "account_id": "f1b142072a65e92e0f2913f67917d8e1",
   "main": "src/index.tsx",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -14,7 +15,7 @@
     {
       "binding": "DB",
       "database_name": "coverr-db",
-      "database_id": "PLACEHOLDER_RUN_WRANGLER_D1_CREATE",
+      "database_id": "f823e8a0-b581-4950-beaa-d2f340f57396",
       "migrations_dir": "migrations"
     }
   ],
@@ -25,6 +26,6 @@
     }
   ],
   "vars": {
-    "APP_ORIGIN": "http://localhost:8787"
+    "APP_ORIGIN": "https://coverr.a-mencias99.workers.dev"
   }
 }

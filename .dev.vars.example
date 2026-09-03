@@ -6,3 +6,7 @@
 
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
 EMAIL_FROM=Jungla <boletos@tudominio.com>
+
+# Overrides wrangler.jsonc vars during local dev, so QR links and email
+# point at localhost instead of production.
+APP_ORIGIN=http://localhost:8787
