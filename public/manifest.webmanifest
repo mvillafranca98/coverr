@@ -1,0 +1,9 @@
+{
+  "name": "Coverr — Entrada",
+  "short_name": "Coverr",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0C0B09",
+  "theme_color": "#0C0B09",
+  "orientation": "portrait"
+}

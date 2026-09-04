@@ -5,6 +5,7 @@ import * as s from "./db/schema";
 import { BuyPage } from "./views/buy";
 import { ConfirmPage } from "./views/confirm";
 import { RecoverPage } from "./views/recover";
+import { scanApi } from "./routes/scan";
 import { qrSvg, qrPng } from "./lib/qr";
 import { makeTransport } from "./lib/email";
 import { ticketEmailHtml, ticketEmailText, ticketEmailSubject } from "./views/email";
@@ -430,6 +431,91 @@ app.post("/recuperar", async (c) => {
   );
 
   return c.redirect("/recuperar?ok=1", 303);
+});
+
+
+// -------------------------------------------------------------- door scanner
+
+app.route("/api/scan", scanApi);
+
+/**
+ * Scanner shell. Access is a per-event staff token in the URL rather than an
+ * account: staff arrive with no login, often on a borrowed phone, at a venue
+ * where a magic-link round-trip through an inbox is exactly what you cannot do.
+ */
+app.get("/scan/:token", async (c) => {
+  const token = c.req.param("token");
+  const db = drizzle(c.env.DB, { schema: s });
+  const rows = await db
+    .select({ event: s.events, band: s.bands })
+    .from(s.events)
+    .innerJoin(s.bands, eq(s.events.bandId, s.bands.id))
+    .where(eq(s.events.staffToken, token))
+    .limit(1);
+  const found = rows[0];
+  if (!found) return c.notFound();
+
+  return c.html(`<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#0C0B09">
+<meta name="robots" content="noindex,nofollow">
+<title>Entrada — ${found.event.name}</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/scanner.css">
+</head>
+<body data-token="${token}">
+<div class="wrap">
+  <header>
+    <div class="ev">${found.event.name}</div>
+    <div class="vn">${found.event.venue} · ${found.band.name}</div>
+    <span class="net" id="net">Cargando…</span>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><b id="statInside">0</b><span>Adentro</span></div>
+    <div class="stat"><b id="statTotal">0</b><span>Vendidos</span></div>
+    <div class="stat"><b id="statBands">—</b><span>Brazaletes</span></div>
+  </div>
+  <div id="queueRow" hidden><b id="statQueue">0</b> escaneos esperando conexión</div>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="escanear">Escanear</button>
+    <button class="tab" data-tab="buscar">Buscar</button>
+    <button class="tab" data-tab="efectivo">Efectivo</button>
+  </div>
+
+  <section class="pane" data-pane="escanear">
+    <button class="big" id="startBtn">Abrir cámara</button>
+    <div id="cam" hidden><video id="video" muted playsinline></video></div>
+    <canvas id="canvas" hidden></canvas>
+    <div class="result" id="result" hidden></div>
+  </section>
+
+  <section class="pane" data-pane="buscar" hidden>
+    <h2>Buscar por nombre</h2>
+    <p class="hint" style="margin-top:0">Para quien no encuentra su código.</p>
+    <input type="text" id="searchInput" placeholder="Nombre o código" autocomplete="off">
+    <div id="searchResults"></div>
+  </section>
+
+  <section class="pane" data-pane="efectivo" hidden>
+    <h2>Venta en efectivo</h2>
+    <p class="hint" style="margin-top:0">Cobrás, registrás, ponés el brazalete.</p>
+    <div class="qty">
+      <button type="button" id="cashMinus" aria-label="Menos">−</button>
+      <input type="number" id="cashQty" value="1" min="1" max="20" inputmode="numeric">
+      <button type="button" id="cashPlus" aria-label="Más">+</button>
+    </div>
+    <button class="big" id="cashBtn">Registrar venta</button>
+    <button class="ghost" id="compBtn">Registrar cortesía</button>
+    <p class="hint" id="cashNote"></p>
+  </section>
+</div>
+<script src="/vendor/jsQR.js"></script>
+<script src="/scanner.js"></script>
+</body></html>`);
 });
 
 app.get("/", (c) =>

@@ -77,11 +77,17 @@ export const events = sqliteTable(
     refundPolicy: text("refund_policy").notNull().default("none"),
     refundPolicyText: text("refund_policy_text"),
     wristbandsStart: integer("wristbands_start"),
+    /** Door-staff access. A shared URL beats magic links at a venue with no
+     *  signal: staff open one link, no inbox, no account, no round-trip. */
+    staffToken: text("staff_token"),
     /** draft | live | closed | settled */
     status: text("status").notNull().default("draft"),
     createdAt: text("created_at").notNull(),
   },
-  (t) => [index("idx_events_band").on(t.bandId)],
+  (t) => [
+    index("idx_events_band").on(t.bandId),
+    uniqueIndex("idx_events_staff_token").on(t.staffToken),
+  ],
 );
 
 /**

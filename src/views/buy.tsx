@@ -70,6 +70,10 @@ export const BuyPage: FC<BuyProps> = ({ band, event, rule, accounts, shortCode, 
     var n = parseInt(qty.value,10) || 1;
     qtyVal.textContent = n;
     qtyTotal.textContent = money(n*UNIT);
+    var echo = document.getElementById('qtyEcho');
+    echo.textContent = n === 1
+      ? 'Vas a poner el nombre de 1 persona más abajo.'
+      : 'Vas a poner los nombres de las ' + n + ' personas más abajo.';
     minus.disabled = n <= 1;
     plus.disabled = n >= MAX;
     var blocks = atts.querySelectorAll('.att');
@@ -255,6 +259,9 @@ export const BuyPage: FC<BuyProps> = ({ band, event, rule, accounts, shortCode, 
               <span>total a transferir</span>
             </span>
           </div>
+          <p class="hint" id="qtyEcho" style="margin:12px 0 0">
+            Vas a poner el nombre de 1 persona más abajo.
+          </p>
         </section>
 
         <section class="step">

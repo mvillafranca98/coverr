@@ -44,7 +44,7 @@ export function qrDataUri(text: string, size = 320): string {
 }
 
 /** QR as a PNG. The only format email clients reliably render — see lib/png.ts. */
-export async function qrPng(text: string, scale = 8): Promise<Uint8Array> {
+export async function qrPng(text: string, scale = 8): Promise<Uint8Array<ArrayBuffer>> {
   const qr = qrcode(0, "M");
   qr.addData(text);
   qr.make();

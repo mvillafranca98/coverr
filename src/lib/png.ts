@@ -37,7 +37,7 @@ function chunk(type: string, data: Uint8Array): Uint8Array {
   return out;
 }
 
-async function deflate(data: Uint8Array): Promise<Uint8Array> {
+async function deflate(data: Uint8Array): Promise<Uint8Array<ArrayBuffer>> {
   const cs = new CompressionStream("deflate");
   const writer = cs.writable.getWriter();
   void writer.write(data);
@@ -55,7 +55,7 @@ export async function matrixToPng(
   isDark: (row: number, col: number) => boolean,
   count: number,
   opts: { scale?: number; quiet?: number } = {},
-): Promise<Uint8Array> {
+): Promise<Uint8Array<ArrayBuffer>> {
   const scale = opts.scale ?? 8;
   const quiet = opts.quiet ?? 4;
   const dim = (count + quiet * 2) * scale;
