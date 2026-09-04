@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
-import { eq, and, sql, isNull } from "drizzle-orm";
+import { eq, and, sql, isNull, ne } from "drizzle-orm";
 import * as s from "../db/schema";
 import { newId, newQrToken, newShortCode, nowIso } from "../lib/core";
 
@@ -55,11 +55,22 @@ scanApi.get("/:token/manifest", async (c) => {
 
   // Open flags become the amber reason shown at the door. Staff resolving a
   // flag in five seconds is the point; staff phoning the admin is the failure.
+  //
+  // Info-severity flags are excluded deliberately. NAME_MISMATCH is the one
+  // that matters: one person paying for four is the common case, not the
+  // suspicious one, and surfacing it here would have staff questioning people
+  // who did nothing wrong. It stays a weak signal in the admin view only.
   const flags = await db
     .select({ orderId: s.verificationFlags.orderId, detail: s.verificationFlags.detail })
     .from(s.verificationFlags)
     .innerJoin(s.orders, eq(s.verificationFlags.orderId, s.orders.id))
-    .where(and(eq(s.orders.eventId, event.id), isNull(s.verificationFlags.resolvedAt)));
+    .where(
+      and(
+        eq(s.orders.eventId, event.id),
+        isNull(s.verificationFlags.resolvedAt),
+        ne(s.verificationFlags.severity, "info"),
+      ),
+    );
 
   const reasonByOrder = new Map<string, string>();
   for (const f of flags) if (!reasonByOrder.has(f.orderId)) reasonByOrder.set(f.orderId, f.detail);

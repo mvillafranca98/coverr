@@ -10,6 +10,7 @@ import { admin } from "./routes/admin";
 import { LandingPage } from "./views/home";
 import { qrSvg, qrPng } from "./lib/qr";
 import { makeTransport } from "./lib/email";
+import { runVerification } from "./lib/pipeline";
 import { ticketEmailHtml, ticketEmailText, ticketEmailSubject } from "./views/email";
 import {
   newId,
@@ -30,6 +31,7 @@ type Bindings = {
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
   SESSION_SECRET?: string;
+  ANTHROPIC_API_KEY?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -344,6 +346,10 @@ app.post("/e/:slug/comprar", async (c) => {
   // The buyer sees their QR codes on the next screen regardless — email is the
   // backup copy, so it must never delay or block the confirmation.
   c.executionCtx.waitUntil(sendTickets(c.env, orderId));
+  // Reads the proof and raises flags. Runs after the response for the same
+  // reason mail does: the buyer already has their QR codes and nothing here
+  // can take them away.
+  c.executionCtx.waitUntil(runVerification(c.env, orderId));
 
   return c.redirect(`/boletos/${orderId}`, 303);
 });

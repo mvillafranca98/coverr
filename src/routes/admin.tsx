@@ -25,6 +25,7 @@ import {
   readCookie,
 } from "../lib/auth";
 import { newId, nowIso, normalizeEmail, escapeHtml } from "../lib/core";
+import { runVerification } from "../lib/pipeline";
 
 type Bindings = {
   DB: D1Database;
@@ -34,6 +35,7 @@ type Bindings = {
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
   SESSION_SECRET?: string;
+  ANTHROPIC_API_KEY?: string;
 };
 
 type Vars = { bandId: string };
@@ -542,6 +544,15 @@ admin.post("/e/:slug/orden/:id/resolver", async (c) => {
 });
 
 /** Renaming an attendee is the whole of "transfer this ticket to someone else". */
+/** Re-run extraction — useful after a failed read or a fixed upload. */
+admin.post("/e/:slug/orden/:id/revisar", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const event = await eventOf(db, c.get("bandId"), c.req.param("slug"));
+  if (!event) return c.notFound();
+  await runVerification(c.env, c.req.param("id"));
+  return c.redirect(`/admin/e/${event.slug}/orden/${c.req.param("id")}`, 303);
+});
+
 admin.post("/e/:slug/orden/:id/asistente", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const bandId = c.get("bandId");

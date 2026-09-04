@@ -517,6 +517,14 @@ export const OrderPage: FC<{
     xAmount: number | null;
     xReference: string | null;
     xSenderName: string | null;
+    xSenderAccount: string | null;
+    xDestAccount: string | null;
+    xDestName: string | null;
+    xCurrency: string | null;
+    xDatetime: string | null;
+    xDetail: string | null;
+    xBank: string | null;
+    ocrConfidence: number | null;
   } | null;
   flags: { id: string; code: string; severity: string; detail: string; resolvedAt: string | null }[];
 }> = ({ bandName, event, order, attendees, proof, flags }) => (
@@ -624,13 +632,70 @@ export const OrderPage: FC<{
         <dl class="kv" style="margin-bottom:14px">
           <dt>Subido</dt>
           <dd>{new Date(proof.uploadedAt).toLocaleString("es-HN")}</dd>
-          <dt>Tipo</dt>
+          <dt>Archivo</dt>
           <dd>
             {proof.contentType} · {Math.round(proof.fileSize / 1024)} KB
           </dd>
-          <dt>Referencia</dt>
-          <dd>{proof.xReference ?? <span class="muted">sin leer todavía</span>}</dd>
         </dl>
+
+        <h4
+          style="font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0 0 8px;font-weight:600"
+        >
+          Lo que dice el comprobante
+        </h4>
+        {proof.xReference || proof.xAmount != null || proof.xSenderName ? (
+          <dl class="kv" style="margin-bottom:14px">
+            <dt>Formato</dt>
+            <dd>
+              {proof.docType}
+              {proof.xBank ? ` · ${proof.xBank}` : ""}
+            </dd>
+            <dt>Envió</dt>
+            <dd>
+              {proof.xSenderName ?? <span class="muted">—</span>}
+              {proof.xSenderAccount ? (
+                <span class="muted"> · cta {proof.xSenderAccount}</span>
+              ) : null}
+            </dd>
+            <dt>Recibió</dt>
+            <dd>
+              {proof.xDestAccount ?? <span class="muted">—</span>}
+              {proof.xDestName ? <span class="muted"> · {proof.xDestName}</span> : null}
+            </dd>
+            <dt>Monto</dt>
+            <dd>
+              {proof.xAmount == null ? (
+                <span class="muted">—</span>
+              ) : (
+                <>
+                  {formatLps(proof.xAmount)}
+                  {proof.xAmount !== order.expectedAmount ? (
+                    <span class="muted"> · se esperaba {formatLps(order.expectedAmount)}</span>
+                  ) : null}
+                </>
+              )}
+            </dd>
+            <dt>Fecha</dt>
+            <dd>{proof.xDatetime ?? <span class="muted">—</span>}</dd>
+            <dt>Referencia</dt>
+            <dd>{proof.xReference ?? <span class="muted">—</span>}</dd>
+            <dt>Detalle</dt>
+            <dd>{proof.xDetail ?? <span class="muted">sin detalle</span>}</dd>
+          </dl>
+        ) : (
+          <p class="muted" style="margin-bottom:14px">
+            Todavía no se ha leído este comprobante.
+          </p>
+        )}
+        <form
+          method="post"
+          action={`/admin/e/${event.slug}/orden/${order.id}/revisar`}
+          style="margin-bottom:14px"
+        >
+          <button class="btn sm ghost" type="submit">
+            Volver a leer el comprobante
+          </button>
+        </form>
         {proof.contentType.startsWith("image/") ? (
           <img
             class="proof"
