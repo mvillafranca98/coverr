@@ -10,3 +10,7 @@ EMAIL_FROM=Jungla <boletos@tudominio.com>
 # Overrides wrangler.jsonc vars during local dev, so QR links and email
 # point at localhost instead of production.
 APP_ORIGIN=http://localhost:8787
+
+# HMAC key for admin sessions and magic links. Generate with:
+#   python3 -c "import secrets;print(secrets.token_urlsafe(48))"
+SESSION_SECRET=change-me

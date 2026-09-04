@@ -6,6 +6,7 @@ import { BuyPage } from "./views/buy";
 import { ConfirmPage } from "./views/confirm";
 import { RecoverPage } from "./views/recover";
 import { scanApi } from "./routes/scan";
+import { admin } from "./routes/admin";
 import { qrSvg, qrPng } from "./lib/qr";
 import { makeTransport } from "./lib/email";
 import { ticketEmailHtml, ticketEmailText, ticketEmailSubject } from "./views/email";
@@ -27,6 +28,7 @@ type Bindings = {
   APP_ORIGIN: string;
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
+  SESSION_SECRET?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -437,6 +439,8 @@ app.post("/recuperar", async (c) => {
 // -------------------------------------------------------------- door scanner
 
 app.route("/api/scan", scanApi);
+app.get("/admin/", (c) => c.redirect("/admin", 301));
+app.route("/admin", admin);
 
 /**
  * Scanner shell. Access is a per-event staff token in the URL rather than an
@@ -538,7 +542,7 @@ app.notFound((c) =>
 );
 
 app.onError((err, c) => {
-  console.error("unhandled", err);
+  console.error(`unhandled: ${err instanceof Error ? err.stack ?? err.message : String(err)}`);
   return c.html(
     `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
      <body style="font-family:system-ui;background:#0C0B09;color:#F6F2EB;padding:48px 24px;text-align:center">
