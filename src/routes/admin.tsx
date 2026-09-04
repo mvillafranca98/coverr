@@ -5,12 +5,13 @@ import * as s from "../db/schema";
 import {
   AdminLayout,
   LoginPage,
-  EventsPage,
   DashboardPage,
   OrdersPage,
   OrderPage,
   MoneyPage,
 } from "../views/admin";
+import { BandHomePage } from "../views/home";
+import { eventMetrics, costsByCategory, fanStats } from "../lib/stats";
 import { computeSettlement, priceBracket } from "../lib/settlement";
 import { makeTransport } from "../lib/email";
 import {
@@ -240,32 +241,16 @@ admin.get("/", async (c) => {
   const band = await bandOf(db, c.get("bandId"));
   if (!band) return c.redirect("/admin/salir", 302);
 
-  const evs = await db
-    .select()
-    .from(s.events)
-    .where(eq(s.events.bandId, band.id))
-    .orderBy(desc(s.events.startsAt));
+  const events = await eventMetrics(c.env.DB, band.id);
+  const played = events.filter((e) => e.attendance > 0);
+  const [categories, fans] = await Promise.all([
+    costsByCategory(c.env.DB, band.id),
+    fanStats(c.env.DB, band.id, played[0]?.id ?? null),
+  ]);
 
-  const rows = [];
-  for (const e of evs) {
-    const [agg] = await db
-      .select({
-        sold: sql<number>`coalesce(sum(${s.orders.quantity}), 0)`,
-        gross: sql<number>`coalesce(sum(${s.orders.expectedAmount}), 0)`,
-      })
-      .from(s.orders)
-      .where(and(eq(s.orders.eventId, e.id), eq(s.orders.status, "confirmed")));
-    rows.push({
-      slug: e.slug,
-      name: e.name,
-      venue: e.venue,
-      startsAt: e.startsAt,
-      status: e.status,
-      sold: Number(agg?.sold ?? 0),
-      gross: Number(agg?.gross ?? 0),
-    });
-  }
-  return c.html(<EventsPage bandName={band.name} events={rows} />);
+  return c.html(
+    <BandHomePage bandName={band.name} events={events} categories={categories} fans={fans} />,
+  );
 });
 
 // -------------------------------------------------------------- dashboard

@@ -7,6 +7,7 @@ import { ConfirmPage } from "./views/confirm";
 import { RecoverPage } from "./views/recover";
 import { scanApi } from "./routes/scan";
 import { admin } from "./routes/admin";
+import { LandingPage } from "./views/home";
 import { qrSvg, qrPng } from "./lib/qr";
 import { makeTransport } from "./lib/email";
 import { ticketEmailHtml, ticketEmailText, ticketEmailSubject } from "./views/email";
@@ -522,14 +523,7 @@ app.get("/scan/:token", async (c) => {
 </body></html>`);
 });
 
-app.get("/", (c) =>
-  c.html(
-    `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-     <body style="font-family:system-ui;background:#0C0B09;color:#F6F2EB;padding:48px 24px;text-align:center">
-     <h1 style="letter-spacing:-.02em">Coverr</h1>
-     <p style="color:#A79E90">Preventa, entrada y cuentas claras para bandas.</p></body>`,
-  ),
-);
+app.get("/", (c) => c.html(<LandingPage />));
 
 app.notFound((c) =>
   c.html(
