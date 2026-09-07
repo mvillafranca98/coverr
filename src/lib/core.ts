@@ -120,3 +120,47 @@ export function formatEventTime(iso: string): string {
   h = h % 12 || 12;
   return m === 0 ? `${h}${ampm}` : `${h}:${String(m).padStart(2, "0")}${ampm}`;
 }
+
+/** Door-staff scanner credential. Long enough that guessing is hopeless. */
+export function newStaffToken(): string {
+  return randomBase32(18);
+}
+
+/**
+ * URL slug from an event name. Honduras writes accents; strip them so the link
+ * stays typable and shareable.
+ */
+export function slugify(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "evento";
+}
+
+/**
+ * Honduras is UTC-6 all year — no daylight saving — so a `datetime-local`
+ * value can be pinned to that offset without a timezone library.
+ */
+export const HN_OFFSET = "-06:00";
+
+export function localInputToIso(value: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return null;
+  return `${value}:00${HN_OFFSET}`;
+}
+
+/** Back to the `YYYY-MM-DDTHH:MM` shape a datetime-local input expects. */
+export function isoToLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const m = iso.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+  return m ? `${m[1]}T${m[2]}` : "";
+}
+
+/** Lempiras typed into a form -> centavos. Money never round-trips as a float. */
+export function lpsToCentavos(value: unknown): number | null {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 100);
+}

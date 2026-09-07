@@ -104,10 +104,15 @@ export const AdminLayout: FC<
                 <a href={`/admin/e/${eventSlug}/dinero`} class={active === "money" ? "on" : ""}>
                   Dinero
                 </a>
+                <a href={`/admin/e/${eventSlug}/ajustes`} class={active === "settings" ? "on" : ""}>
+                  Ajustes
+                </a>
               </>
             ) : null}
             <span class="sp" />
             <a href="/admin">Eventos</a>
+            <a href="/admin/nuevo">+ Evento</a>
+            <a href="/admin/banda">Banda</a>
             <a href="/admin/salir">Salir</a>
           </nav>
         ) : null}

@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { eq, and, sql, isNull, desc } from "drizzle-orm";
 import * as s from "../db/schema";
@@ -11,6 +11,7 @@ import {
   MoneyPage,
 } from "../views/admin";
 import { BandHomePage } from "../views/home";
+import { NewEventPage, EventSettingsPage, BandSettingsPage } from "../views/setup";
 import { eventMetrics, costsByCategory, fanStats } from "../lib/stats";
 import { computeSettlement, priceBracket } from "../lib/settlement";
 import { makeTransport } from "../lib/email";
@@ -24,7 +25,10 @@ import {
   clearCookie,
   readCookie,
 } from "../lib/auth";
-import { newId, nowIso, normalizeEmail, escapeHtml } from "../lib/core";
+import {
+  newId, nowIso, normalizeEmail, escapeHtml,
+  newStaffToken, slugify, localInputToIso, lpsToCentavos,
+} from "../lib/core";
 import { runVerification } from "../lib/pipeline";
 
 type Bindings = {
@@ -39,6 +43,8 @@ type Bindings = {
 };
 
 type Vars = { bandId: string };
+
+type Ctx = Context<{ Bindings: Bindings; Variables: Vars }>;
 
 export const admin = new Hono<{ Bindings: Bindings; Variables: Vars }>();
 
@@ -700,4 +706,479 @@ admin.post("/e/:slug/dinero/desbloquear", async (c) => {
     reference: null,
   });
   return c.redirect(`/admin/e/${event.slug}/dinero`, 303);
+});
+
+// ------------------------------------------------------------- event setup
+
+/** Slug from the name, with a numeric suffix if that one is taken. */
+async function uniqueSlug(db: DrizzleD1Database<typeof s>, name: string): Promise<string> {
+  const base = slugify(name);
+  for (let i = 0; i < 40; i++) {
+    const candidate = i === 0 ? base : `${base}-${i + 1}`;
+    const hit = await db
+      .select({ id: s.events.id })
+      .from(s.events)
+      .where(eq(s.events.slug, candidate))
+      .limit(1);
+    if (hit.length === 0) return candidate;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
+type EventInput = {
+  name: string; venue: string; startsAt: string; doorsAt: string | null;
+  description: string | null; musicType: string | null; thankYouNote: string | null;
+  capacityCap: number | null; refundPolicy: string; wristbandsStart: number | null;
+  presaleAmount: number; presaleMaxQty: number | null; doorAmount: number;
+};
+
+function readEventForm(body: Record<string, unknown>): EventInput | string {
+  const str = (k: string) => (typeof body[k] === "string" ? (body[k] as string).trim() : "");
+  const int = (k: string) => {
+    const v = str(k);
+    if (!v) return null;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+
+  const name = str("name");
+  const venue = str("venue");
+  if (!name) return "Falta el nombre del evento.";
+  if (!venue) return "Falta el lugar.";
+
+  const startsAt = localInputToIso(str("starts_at"));
+  if (!startsAt) return "Revisá la fecha de inicio.";
+  const doorsAt = str("doors_at") ? localInputToIso(str("doors_at")) : null;
+
+  const presaleAmount = lpsToCentavos(str("presale_amount"));
+  const doorAmount = lpsToCentavos(str("door_amount"));
+  if (presaleAmount == null) return "Revisá el precio de preventa.";
+  if (doorAmount == null) return "Revisá el precio de taquilla.";
+
+  return {
+    name, venue, startsAt, doorsAt,
+    description: str("description") || null,
+    musicType: str("music_type") || null,
+    thankYouNote: str("thank_you") || null,
+    capacityCap: int("capacity"),
+    refundPolicy: str("refund_policy") === "24h" ? "24h" : "none",
+    wristbandsStart: int("wristbands"),
+    presaleAmount,
+    presaleMaxQty: int("presale_max"),
+    doorAmount,
+  };
+}
+
+const REFUND_TEXT: Record<string, string | null> = {
+  none: "Esta compra no admite reembolsos.",
+  "24h": "Podés solicitar reembolso dentro de las 24 horas siguientes a tu compra escribiendo al correo de la banda.",
+};
+
+admin.get("/nuevo", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const band = await bandOf(db, c.get("bandId"));
+  if (!band) return c.redirect("/admin/salir", 302);
+  return c.html(<NewEventPage bandName={band.name} error={c.req.query("error") ?? undefined} />);
+});
+
+admin.post("/nuevo", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const band = await bandOf(db, bandId);
+  if (!band) return c.redirect("/admin/salir", 302);
+
+  const parsed = readEventForm(await c.req.parseBody());
+  if (typeof parsed === "string") {
+    return c.html(<NewEventPage bandName={band.name} error={parsed} />, 400);
+  }
+
+  const eventId = newId("evt");
+  const slug = await uniqueSlug(db, parsed.name);
+  const ts = nowIso();
+
+  // Created as a draft: /e/:slug 404s until it is published, so a half-built
+  // event can never be bought from.
+  await db.insert(s.events).values({
+    id: eventId,
+    bandId,
+    name: parsed.name,
+    slug,
+    venue: parsed.venue,
+    startsAt: parsed.startsAt,
+    doorsAt: parsed.doorsAt,
+    description: parsed.description,
+    musicType: parsed.musicType,
+    flyerUrl: null,
+    thankYouNote: parsed.thankYouNote,
+    capacityCap: parsed.capacityCap,
+    refundPolicy: parsed.refundPolicy,
+    refundPolicyText: REFUND_TEXT[parsed.refundPolicy] ?? null,
+    wristbandsStart: parsed.wristbandsStart,
+    staffToken: newStaffToken(),
+    status: "draft",
+    createdAt: ts,
+  });
+
+  // Two price rules, as the model expects: presale runs until doors (or until
+  // it sells out), then box office takes over on either trigger.
+  const presaleId = newId("pr");
+  await db.insert(s.priceRules).values([
+    {
+      id: presaleId,
+      eventId,
+      label: "Preventa",
+      amount: parsed.presaleAmount,
+      maxQty: parsed.presaleMaxQty,
+      startsAt: ts,
+      endsAt: parsed.doorsAt ?? parsed.startsAt,
+      activatesOnSelloffOf: null,
+      sortOrder: 0,
+    },
+    {
+      id: newId("pr"),
+      eventId,
+      label: "Taquilla",
+      amount: parsed.doorAmount,
+      maxQty: null,
+      startsAt: parsed.doorsAt ?? parsed.startsAt,
+      endsAt: null,
+      activatesOnSelloffOf: presaleId,
+      sortOrder: 1,
+    },
+  ]);
+
+  return c.redirect(`/admin/e/${slug}/ajustes?saved=1`, 303);
+});
+
+async function eventSettingsView(
+  c: Ctx,
+  opts: { error?: string; saved?: boolean } = {},
+) {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const slug = c.req.param("slug");
+  const band = await bandOf(db, bandId);
+  const event = slug ? await eventOf(db, bandId, slug) : null;
+  if (!band || !event) return c.notFound();
+
+  const rules = await db
+    .select()
+    .from(s.priceRules)
+    .where(eq(s.priceRules.eventId, event.id))
+    .orderBy(s.priceRules.sortOrder);
+  const [sold] = await db
+    .select({ n: sql<number>`coalesce(sum(${s.orders.quantity}), 0)` })
+    .from(s.orders)
+    .where(and(eq(s.orders.eventId, event.id), eq(s.orders.status, "confirmed")));
+
+  return c.html(
+    <EventSettingsPage
+      bandName={band.name}
+      event={event}
+      origin={c.env.APP_ORIGIN}
+      soldCount={Number(sold?.n ?? 0)}
+      error={opts.error}
+      saved={opts.saved}
+      values={{
+        name: event.name,
+        venue: event.venue,
+        startsAt: event.startsAt,
+        doorsAt: event.doorsAt,
+        description: event.description,
+        musicType: event.musicType,
+        thankYouNote: event.thankYouNote,
+        capacityCap: event.capacityCap,
+        refundPolicy: event.refundPolicy,
+        refundPolicyText: event.refundPolicyText,
+        wristbandsStart: event.wristbandsStart,
+        presaleAmount: rules[0]?.amount ?? 20000,
+        presaleMaxQty: rules[0]?.maxQty ?? null,
+        doorAmount: rules[1]?.amount ?? 25000,
+      }}
+    />,
+  );
+}
+
+admin.get("/e/:slug/ajustes", (c) =>
+  eventSettingsView(c, { saved: c.req.query("saved") === "1" }),
+);
+
+admin.post("/e/:slug/ajustes", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const event = await eventOf(db, bandId, c.req.param("slug"));
+  if (!event) return c.notFound();
+
+  const parsed = readEventForm(await c.req.parseBody());
+  if (typeof parsed === "string") return eventSettingsView(c, { error: parsed });
+
+  await db
+    .update(s.events)
+    .set({
+      name: parsed.name,
+      venue: parsed.venue,
+      startsAt: parsed.startsAt,
+      doorsAt: parsed.doorsAt,
+      description: parsed.description,
+      musicType: parsed.musicType,
+      thankYouNote: parsed.thankYouNote,
+      capacityCap: parsed.capacityCap,
+      refundPolicy: parsed.refundPolicy,
+      refundPolicyText: REFUND_TEXT[parsed.refundPolicy] ?? null,
+      wristbandsStart: parsed.wristbandsStart,
+    })
+    .where(eq(s.events.id, event.id));
+
+  // Price changes affect new orders only — every existing order stores the
+  // amount it was quoted, so nobody's past purchase silently reprices.
+  const rules = await db
+    .select()
+    .from(s.priceRules)
+    .where(eq(s.priceRules.eventId, event.id))
+    .orderBy(s.priceRules.sortOrder);
+  if (rules[0]) {
+    await db
+      .update(s.priceRules)
+      .set({
+        amount: parsed.presaleAmount,
+        maxQty: parsed.presaleMaxQty,
+        endsAt: parsed.doorsAt ?? parsed.startsAt,
+      })
+      .where(eq(s.priceRules.id, rules[0].id));
+  }
+  if (rules[1]) {
+    await db
+      .update(s.priceRules)
+      .set({ amount: parsed.doorAmount, startsAt: parsed.doorsAt ?? parsed.startsAt })
+      .where(eq(s.priceRules.id, rules[1].id));
+  }
+
+  return c.redirect(`/admin/e/${event.slug}/ajustes?saved=1`, 303);
+});
+
+admin.post("/e/:slug/ajustes/estado", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const event = await eventOf(db, bandId, c.req.param("slug"));
+  if (!event) return c.notFound();
+
+  const body = await c.req.parseBody();
+  const wanted = String(body["status"] ?? "");
+  const status = wanted === "live" ? "live" : wanted === "closed" ? "closed" : event.status;
+
+  if (status === "live") {
+    // Publishing with no bank account would show a buyer a page they cannot
+    // pay from, so refuse rather than half-open the sale.
+    const accounts = await db
+      .select({ id: s.bankAccounts.id })
+      .from(s.bankAccounts)
+      .where(and(eq(s.bankAccounts.bandId, bandId), eq(s.bankAccounts.active, 1)))
+      .limit(1);
+    if (accounts.length === 0) {
+      return eventSettingsView(c, {
+        error: "Agregá al menos una cuenta bancaria antes de publicar — si no, el comprador no tiene a dónde transferir.",
+      });
+    }
+  }
+
+  await db.update(s.events).set({ status }).where(eq(s.events.id, event.id));
+  return c.redirect(`/admin/e/${event.slug}/ajustes?saved=1`, 303);
+});
+
+admin.post("/e/:slug/ajustes/token", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const event = await eventOf(db, c.get("bandId"), c.req.param("slug"));
+  if (!event) return c.notFound();
+  // Regenerating invalidates the old link immediately — that is the point when
+  // a staff member leaves or a link gets shared too widely.
+  await db.update(s.events).set({ staffToken: newStaffToken() }).where(eq(s.events.id, event.id));
+  return c.redirect(`/admin/e/${event.slug}/ajustes?saved=1`, 303);
+});
+
+// -------------------------------------------------------------- band setup
+
+async function bandSettingsView(
+  c: Ctx,
+  opts: { error?: string; saved?: boolean } = {},
+) {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const band = await bandOf(db, bandId);
+  if (!band) return c.redirect("/admin/salir", 302);
+
+  const [accounts, members, evs] = await Promise.all([
+    db.select().from(s.bankAccounts).where(eq(s.bankAccounts.bandId, bandId)).orderBy(s.bankAccounts.sortOrder),
+    db.select().from(s.bandMembers).where(eq(s.bandMembers.bandId, bandId)).orderBy(s.bandMembers.sortOrder),
+    db.select().from(s.events).where(eq(s.events.bandId, bandId)).orderBy(desc(s.events.startsAt)),
+  ]);
+
+  const advRows = await db
+    .select({ adv: s.advances, member: s.bandMembers })
+    .from(s.advances)
+    .innerJoin(s.bandMembers, eq(s.advances.memberId, s.bandMembers.id))
+    .where(eq(s.advances.bandId, bandId))
+    .orderBy(desc(s.advances.date));
+  const eventName = new Map(evs.map((e) => [e.id, e.name]));
+
+  return c.html(
+    <BandSettingsPage
+      band={band}
+      accounts={accounts}
+      members={members}
+      events={evs}
+      advances={advRows.map((r) => ({
+        id: r.adv.id,
+        memberName: r.member.name,
+        amount: r.adv.amount,
+        date: r.adv.date,
+        eventName: r.adv.eventId ? (eventName.get(r.adv.eventId) ?? null) : null,
+      }))}
+      error={opts.error}
+      saved={opts.saved}
+    />,
+  );
+}
+
+admin.get("/banda", (c) => bandSettingsView(c, { saved: c.req.query("saved") === "1" }));
+
+admin.post("/banda", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const body = await c.req.parseBody();
+  const name = String(body["name"] ?? "").trim();
+  const email = normalizeEmail(String(body["contact_email"] ?? ""));
+  if (!name) return bandSettingsView(c, { error: "Falta el nombre de la banda." });
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return bandSettingsView(c, { error: "Revisá el correo." });
+  }
+  await db
+    .update(s.bands)
+    .set({ name, contactEmail: email })
+    .where(eq(s.bands.id, c.get("bandId")));
+  return c.redirect("/admin/banda?saved=1", 303);
+});
+
+admin.post("/banda/cuenta", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const body = await c.req.parseBody();
+  const accountNumber = String(body["account_number"] ?? "").replace(/\s/g, "");
+  const holderName = String(body["holder_name"] ?? "").trim();
+  const bank = String(body["bank"] ?? "BAC");
+  if (!accountNumber || !holderName) {
+    return bandSettingsView(c, { error: "Falta el número de cuenta o el titular." });
+  }
+
+  const existing = await db
+    .select({ id: s.bankAccounts.id })
+    .from(s.bankAccounts)
+    .where(eq(s.bankAccounts.bandId, bandId));
+
+  await db.insert(s.bankAccounts).values({
+    id: newId("acc"),
+    bandId,
+    bank,
+    accountNumber,
+    holderName,
+    // First account added becomes the one shown to buyers who pick "Otro".
+    isDefault: existing.length === 0 ? 1 : 0,
+    active: 1,
+    sortOrder: existing.length,
+  });
+  return c.redirect("/admin/banda?saved=1", 303);
+});
+
+admin.post("/banda/cuenta/borrar", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const id = String((await c.req.parseBody())["id"] ?? "");
+  await db
+    .delete(s.bankAccounts)
+    .where(and(eq(s.bankAccounts.id, id), eq(s.bankAccounts.bandId, bandId)));
+
+  // Never leave the band without a default, or "Otro" has nothing to show.
+  const left = await db
+    .select()
+    .from(s.bankAccounts)
+    .where(eq(s.bankAccounts.bandId, bandId))
+    .orderBy(s.bankAccounts.sortOrder);
+  if (left.length > 0 && !left.some((a) => a.isDefault === 1)) {
+    await db
+      .update(s.bankAccounts)
+      .set({ isDefault: 1 })
+      .where(eq(s.bankAccounts.id, left[0]!.id));
+  }
+  return c.redirect("/admin/banda?saved=1", 303);
+});
+
+admin.post("/banda/integrante", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const body = await c.req.parseBody();
+  const id = String(body["id"] ?? "");
+  const name = String(body["name"] ?? "").trim();
+  const pct = Number(body["split_pct"]);
+  if (!name || !Number.isFinite(pct) || pct < 0 || pct > 100) {
+    return bandSettingsView(c, { error: "Revisá el nombre y el porcentaje (0 a 100)." });
+  }
+
+  if (id) {
+    await db
+      .update(s.bandMembers)
+      .set({ name, splitPct: pct })
+      .where(and(eq(s.bandMembers.id, id), eq(s.bandMembers.bandId, bandId)));
+  } else {
+    const existing = await db
+      .select({ id: s.bandMembers.id })
+      .from(s.bandMembers)
+      .where(eq(s.bandMembers.bandId, bandId));
+    await db.insert(s.bandMembers).values({
+      id: newId("mem"),
+      bandId,
+      name,
+      splitPct: pct,
+      isCore: 1,
+      sortOrder: existing.length,
+    });
+  }
+  return c.redirect("/admin/banda?saved=1", 303);
+});
+
+admin.post("/banda/integrante/borrar", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const id = String((await c.req.parseBody())["id"] ?? "");
+  await db
+    .delete(s.bandMembers)
+    .where(and(eq(s.bandMembers.id, id), eq(s.bandMembers.bandId, c.get("bandId"))));
+  return c.redirect("/admin/banda?saved=1", 303);
+});
+
+admin.post("/banda/adelanto", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const body = await c.req.parseBody();
+  const memberId = String(body["member_id"] ?? "");
+  const eventId = String(body["event_id"] ?? "") || null;
+  const amount = lpsToCentavos(String(body["amount"] ?? ""));
+  if (!memberId || amount == null || amount === 0) {
+    return bandSettingsView(c, { error: "Revisá el integrante y el monto." });
+  }
+  await db.insert(s.advances).values({
+    id: newId("adv"),
+    bandId,
+    memberId,
+    eventId,
+    amount,
+    date: nowIso().slice(0, 10),
+    note: null,
+  });
+  return c.redirect("/admin/banda?saved=1", 303);
+});
+
+admin.post("/banda/adelanto/borrar", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const id = String((await c.req.parseBody())["id"] ?? "");
+  await db
+    .delete(s.advances)
+    .where(and(eq(s.advances.id, id), eq(s.advances.bandId, c.get("bandId"))));
+  return c.redirect("/admin/banda?saved=1", 303);
 });
