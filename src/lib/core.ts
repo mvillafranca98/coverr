@@ -164,3 +164,20 @@ export function lpsToCentavos(value: unknown): number | null {
   if (!Number.isFinite(n) || n < 0) return null;
   return Math.round(n * 100);
 }
+
+/**
+ * Formats we can both send to the vision model and render in an <img> for a
+ * human to check. HEIC is the notable exclusion: iPhone photos default to it,
+ * the vision API rejects it, and Chrome and Firefox cannot display it — so a
+ * HEIC proof breaks the automatic path *and* the manual fallback.
+ */
+const READABLE_IMAGE = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+export function isReadableProof(contentType: string): boolean {
+  const t = contentType.toLowerCase().split(";")[0]!.trim();
+  return t === "application/pdf" || READABLE_IMAGE.includes(t);
+}
+
+export function isRenderableImage(contentType: string): boolean {
+  return READABLE_IMAGE.includes(contentType.toLowerCase().split(";")[0]!.trim());
+}

@@ -3,7 +3,7 @@ import { eq, and, sql, ne } from "drizzle-orm";
 import * as s from "../db/schema";
 import { extractProof } from "./extract";
 import { verifyProof, worstSeverity, type Flag } from "./verify";
-import { newId, nowIso } from "./core";
+import { newId, nowIso, isReadableProof } from "./core";
 
 type Env = {
   DB: D1Database;
@@ -39,6 +39,20 @@ export async function runVerification(env: Env, orderId: string): Promise<void> 
 
   if (!env.ANTHROPIC_API_KEY) {
     console.warn(`[verify] ANTHROPIC_API_KEY unset — skipping extraction for ${order.shortCode}`);
+    return;
+  }
+
+  // A format we cannot read is not the buyer's problem — they have already paid
+  // and already have their QR. Flag it so the admin asks for a re-send.
+  if (!isReadableProof(proof.contentType)) {
+    console.warn(`[verify] unreadable format ${proof.contentType} for ${order.shortCode}`);
+    await replaceMachineFlags(db, order.id, proof.id, nowIso(), [
+      {
+        code: "UNREADABLE",
+        severity: "info",
+        detail: `El comprobante viene en formato ${proof.contentType}, que no podemos abrir — pedile una captura de pantalla (PNG o JPG)`,
+      },
+    ]);
     return;
   }
 

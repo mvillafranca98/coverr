@@ -1,5 +1,7 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
-import { formatLps, formatLpsShort, formatEventDate, bankLabel } from "../lib/core";
+import {
+  formatLps, formatLpsShort, formatEventDate, bankLabel, isRenderableImage,
+} from "../lib/core";
 import type { Settlement } from "../lib/settlement";
 
 export const ADMIN_CSS = `
@@ -701,16 +703,22 @@ export const OrderPage: FC<{
             Volver a leer el comprobante
           </button>
         </form>
-        {proof.contentType.startsWith("image/") ? (
+        {isRenderableImage(proof.contentType) ? (
           <img
             class="proof"
             src={`/admin/e/${event.slug}/orden/${order.id}/comprobante`}
             alt="Comprobante de pago"
           />
         ) : (
-          <a class="btn ghost" href={`/admin/e/${event.slug}/orden/${order.id}/comprobante`}>
-            Abrir comprobante
-          </a>
+          <div class="note warn">
+            El navegador no puede mostrar <span class="mono">{proof.contentType}</span> — descargalo
+            para verlo.
+            <div style="margin-top:10px">
+              <a class="btn sm ghost" href={`/admin/e/${event.slug}/orden/${order.id}/comprobante`}>
+                Descargar comprobante
+              </a>
+            </div>
+          </div>
         )}
       </>
     ) : (

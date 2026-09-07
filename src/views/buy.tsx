@@ -341,7 +341,7 @@ export const BuyPage: FC<BuyProps> = ({ band, event, rule, accounts, shortCode, 
               type="file"
               name="proof"
               id="proof"
-              accept="image/*,application/pdf"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
               required
             />
             <div class="drop-t">Tocá para elegir el archivo</div>
