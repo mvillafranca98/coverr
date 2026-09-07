@@ -1,6 +1,6 @@
 # Payment confirmations from real buyers.
 # These contain full names, bank account numbers and personal email
-# addresses of third parties. This repo is public — never commit them.
+# addresses of third parties — never commit them, private repo or not.
 screenshots/
 *.xlsx
 
