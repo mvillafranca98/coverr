@@ -5,6 +5,7 @@ import * as s from "./db/schema";
 import { BuyPage } from "./views/buy";
 import { ConfirmPage } from "./views/confirm";
 import { RecoverPage } from "./views/recover";
+import { RefundRequestPage, RefundSentPage, RefundClosedPage } from "./views/refund";
 import { scanApi } from "./routes/scan";
 import { admin } from "./routes/admin";
 import { LandingPage } from "./views/home";
@@ -13,6 +14,8 @@ import { makeTransport } from "./lib/email";
 import { runVerification } from "./lib/pipeline";
 import { ticketEmailHtml, ticketEmailText, ticketEmailSubject } from "./views/email";
 import {
+  formatLpsShort,
+  escapeHtml,
   newId,
   newQrToken,
   newShortCode,
@@ -446,6 +449,146 @@ app.post("/recuperar", async (c) => {
 // -------------------------------------------------------------- door scanner
 
 app.route("/api/scan", scanApi);
+
+// -------------------------------------------------------------- refunds
+
+const REFUND_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+async function loadForRefund(db: DrizzleD1Database<typeof s>, orderId: string) {
+  const rows = await db
+    .select({ order: s.orders, event: s.events, band: s.bands })
+    .from(s.orders)
+    .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+    .innerJoin(s.bands, eq(s.events.bandId, s.bands.id))
+    .where(eq(s.orders.id, orderId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Decides whether a refund can still be asked for. The policy shown at checkout
+ * is stored on the order, so changing the band's policy later never retroactively
+ * closes a window someone already bought under.
+ */
+function refundGate(
+  order: { status: string; createdAt: string; channel: string },
+  policy: string,
+): { open: true } | { open: false; headline: string; detail: string } {
+  if (order.status === "refunded") {
+    return { open: false, headline: "Ya está reembolsado", detail: "Esta orden ya fue devuelta." };
+  }
+  if (order.status === "void") {
+    return { open: false, headline: "Orden anulada", detail: "Esta orden ya no está activa." };
+  }
+  if (order.channel === "comp") {
+    return { open: false, headline: "Cortesía", detail: "Esta entrada no se pagó, así que no hay nada que devolver." };
+  }
+  if (policy === "none") {
+    return {
+      open: false,
+      headline: "Esta compra no admite reembolsos",
+      detail: "Así estaba indicado al momento de comprar.",
+    };
+  }
+  const age = Date.now() - new Date(order.createdAt).getTime();
+  if (age > REFUND_WINDOW_MS) {
+    return {
+      open: false,
+      headline: "Pasaron más de 24 horas",
+      detail: "El plazo para pedir reembolso ya venció.",
+    };
+  }
+  return { open: true };
+}
+
+app.get("/reembolso/:orderId", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const found = await loadForRefund(db, c.req.param("orderId"));
+  if (!found) return c.notFound();
+  const { order, event, band } = found;
+  const common = { band, event, order };
+
+  const existing = await db
+    .select()
+    .from(s.refundRequests)
+    .where(and(eq(s.refundRequests.orderId, order.id), eq(s.refundRequests.status, "open")))
+    .limit(1);
+  if (existing[0]) return c.html(<RefundSentPage {...common} />);
+
+  const gate = refundGate(order, event.refundPolicy);
+  if (!gate.open) {
+    return c.html(<RefundClosedPage {...common} headline={gate.headline} detail={gate.detail} />);
+  }
+  return c.html(<RefundRequestPage {...common} policyText={event.refundPolicyText} />);
+});
+
+app.post("/reembolso/:orderId", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const found = await loadForRefund(db, c.req.param("orderId"));
+  if (!found) return c.notFound();
+  const { order, event, band } = found;
+  const common = { band, event, order };
+
+  const gate = refundGate(order, event.refundPolicy);
+  if (!gate.open) {
+    return c.html(<RefundClosedPage {...common} headline={gate.headline} detail={gate.detail} />);
+  }
+
+  const reason = String((await c.req.parseBody())["reason"] ?? "").trim().slice(0, 2000);
+  if (!reason) {
+    return c.html(
+      <RefundRequestPage
+        {...common}
+        policyText={event.refundPolicyText}
+        error="Contanos brevemente por qué."
+      />,
+      400,
+    );
+  }
+
+  await db.insert(s.refundRequests).values({
+    id: newId("ref"),
+    orderId: order.id,
+    requestedAt: nowIso(),
+    reason,
+    status: "open",
+    handledBy: null,
+    handledAt: null,
+  });
+
+  // The band decides and moves the money themselves; this just makes sure they
+  // hear about it rather than finding it in the dashboard days later.
+  c.executionCtx.waitUntil(
+    makeTransport(c.env)
+      .send({
+        to: band.contactEmail,
+        replyTo: order.payerEmail,
+        subject: `Solicitud de reembolso — ${order.shortCode}`,
+        html: `<!doctype html><html lang="es"><body style="margin:0;background:#f3f1ea;padding:26px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:460px;text-align:left">
+<tr><td style="font:700 20px/1.25 inherit;color:#191713;padding-bottom:12px">Solicitud de reembolso</td></tr>
+<tr><td style="font:400 15px/1.7 inherit;color:#57534b;padding-bottom:16px">
+<b style="color:#191713">Orden:</b> ${escapeHtml(order.shortCode)}<br>
+<b style="color:#191713">Evento:</b> ${escapeHtml(event.name)}<br>
+<b style="color:#191713">Compró:</b> ${escapeHtml(order.payerName)} (${escapeHtml(order.payerEmail)})<br>
+<b style="color:#191713">Boletos:</b> ${order.quantity} · ${formatLpsShort(order.expectedAmount)}
+</td></tr>
+<tr><td style="background:#fff;border:1px solid #ddd8cf;border-radius:10px;padding:14px 16px;font:400 15px/1.6 inherit;color:#57534b">
+${escapeHtml(reason)}
+</td></tr>
+<tr><td style="padding-top:18px"><a href="${c.env.APP_ORIGIN}/admin/e/${event.slug}/orden/${order.id}" style="display:inline-block;padding:12px 20px;border-radius:9px;background:#191713;color:#fff;font:600 15px/1 inherit;text-decoration:none">Ver la orden</a></td></tr>
+<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:20px">Respondé este correo para contactar directamente a quien compró.</td></tr>
+</table></td></tr></table></body></html>`,
+        text: `Solicitud de reembolso — ${order.shortCode}\n\nEvento: ${event.name}\nCompró: ${order.payerName} (${order.payerEmail})\nBoletos: ${order.quantity} · ${formatLpsShort(order.expectedAmount)}\n\n${reason}\n\nVer la orden: ${c.env.APP_ORIGIN}/admin/e/${event.slug}/orden/${order.id}`,
+      })
+      .then((r) => {
+        if (!r.ok) console.error(`[refund] alert failed for ${order.shortCode}: ${r.error}`);
+      }),
+  );
+
+  return c.html(<RefundSentPage {...common} />);
+});
+
 app.get("/admin/", (c) => c.redirect("/admin", 301));
 app.route("/admin", admin);
 

@@ -294,9 +294,16 @@ admin.get("/e/:slug", async (c) => {
     .innerJoin(s.orders, eq(s.verificationFlags.orderId, s.orders.id))
     .where(and(eq(s.orders.eventId, event.id), isNull(s.verificationFlags.resolvedAt)));
 
+  const [refundCount] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(s.refundRequests)
+    .innerJoin(s.orders, eq(s.refundRequests.orderId, s.orders.id))
+    .where(and(eq(s.orders.eventId, event.id), eq(s.refundRequests.status, "open")));
+
   return c.html(
     <DashboardPage
       bandName={band.name}
+      openRefunds={Number(refundCount?.n ?? 0)}
       event={event}
       counts={counts}
       channels={channels}
@@ -369,6 +376,13 @@ async function orderRows(
   const flagBy = new Map<string, string>();
   for (const f of flags) if (!flagBy.has(f.orderId)) flagBy.set(f.orderId, f.detail);
 
+  const openRefunds = await db
+    .select({ orderId: s.refundRequests.orderId })
+    .from(s.refundRequests)
+    .innerJoin(s.orders, eq(s.refundRequests.orderId, s.orders.id))
+    .where(and(eq(s.orders.eventId, eventId), eq(s.refundRequests.status, "open")));
+  const refundSet = new Set(openRefunds.map((r) => r.orderId));
+
   let out = rows.map((r) => {
     const list = byOrder.get(r.id) ?? [];
     return {
@@ -395,6 +409,9 @@ async function orderRows(
       break;
     case "inside":
       out = out.filter((o) => o.checkedIn > 0);
+      break;
+    case "refunds":
+      out = out.filter((o) => refundSet.has(o.id));
       break;
     case "online":
     case "door_cash":
@@ -483,6 +500,12 @@ admin.get("/e/:slug/orden/:id", async (c) => {
     .select()
     .from(s.verificationFlags)
     .where(eq(s.verificationFlags.orderId, order.id));
+  const refunds = await db
+    .select()
+    .from(s.refundRequests)
+    .where(eq(s.refundRequests.orderId, order.id))
+    .orderBy(desc(s.refundRequests.requestedAt))
+    .limit(1);
 
   return c.html(
     <OrderPage
@@ -492,6 +515,7 @@ admin.get("/e/:slug/orden/:id", async (c) => {
       attendees={attendees}
       proof={proofs[0] ?? null}
       flags={flags}
+      refund={refunds[0] ?? null}
     />,
   );
 });
@@ -1181,4 +1205,37 @@ admin.post("/banda/adelanto/borrar", async (c) => {
     .delete(s.advances)
     .where(and(eq(s.advances.id, id), eq(s.advances.bandId, c.get("bandId"))));
   return c.redirect("/admin/banda?saved=1", 303);
+});
+
+/**
+ * Decide a refund. Approving marks the order `refunded`, which drops it from
+ * every total and stops its QR codes scanning, because each aggregate and the
+ * scanner manifest filter on status = 'confirmed'. The money itself moves in
+ * the band's banking app — Coverr never held it.
+ */
+admin.post("/e/:slug/orden/:id/reembolso", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const event = await eventOf(db, bandId, c.req.param("slug"));
+  if (!event) return c.notFound();
+
+  const orderId = c.req.param("id");
+  const decision = String((await c.req.parseBody())["decision"] ?? "");
+  if (decision !== "approved" && decision !== "denied") {
+    return c.redirect(`/admin/e/${event.slug}/orden/${orderId}`, 303);
+  }
+
+  const ts = nowIso();
+  await db
+    .update(s.refundRequests)
+    .set({ status: decision, handledBy: bandId, handledAt: ts })
+    .where(and(eq(s.refundRequests.orderId, orderId), eq(s.refundRequests.status, "open")));
+
+  if (decision === "approved") {
+    await db
+      .update(s.orders)
+      .set({ status: "refunded" })
+      .where(and(eq(s.orders.id, orderId), eq(s.orders.eventId, event.id)));
+  }
+  return c.redirect(`/admin/e/${event.slug}/orden/${orderId}`, 303);
 });

@@ -122,7 +122,12 @@ scanApi.post("/:token/checkin", async (c) => {
     scans?: { t: string; at: string; device?: string }[];
   };
   const scans = Array.isArray(body.scans) ? body.scans.slice(0, 500) : [];
-  const results: { t: string; status: "ok" | "already" | "unknown"; at?: string; by?: string }[] = [];
+  const results: {
+    t: string;
+    status: "ok" | "already" | "unknown" | "voided";
+    at?: string;
+    by?: string;
+  }[] = [];
 
   for (const scan of scans) {
     if (typeof scan?.t !== "string") continue;
@@ -131,6 +136,7 @@ scanApi.post("/:token/checkin", async (c) => {
         id: s.attendees.id,
         checkedInAt: s.attendees.checkedInAt,
         checkedInDevice: s.attendees.checkedInDevice,
+        orderStatus: s.orders.status,
       })
       .from(s.attendees)
       .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
@@ -140,6 +146,13 @@ scanApi.post("/:token/checkin", async (c) => {
     const row = hit[0];
     if (!row) {
       results.push({ t: scan.t, status: "unknown" });
+      continue;
+    }
+    // The manifest already excludes refunded and voided orders, but a device
+    // holding a stale cache would still queue the scan — so the server refuses
+    // it rather than trusting whatever the client had downloaded.
+    if (row.orderStatus !== "confirmed") {
+      results.push({ t: scan.t, status: "voided" });
       continue;
     }
     if (row.checkedInAt) {

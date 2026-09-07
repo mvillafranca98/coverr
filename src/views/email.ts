@@ -2,7 +2,10 @@ import { formatLpsShort, formatEventDate, formatEventTime, escapeHtml } from "..
 
 type TicketEmailInput = {
   band: { name: string; contactEmail: string };
-  event: { name: string; venue: string; startsAt: string; thankYouNote: string | null };
+  event: {
+    name: string; venue: string; startsAt: string;
+    thankYouNote: string | null; refundPolicy: string;
+  };
   order: { id: string; shortCode: string; quantity: number; expectedAmount: number };
   attendees: { name: string; note: string | null; qrToken: string }[];
   origin: string;
@@ -106,6 +109,7 @@ export function ticketEmailHtml(i: TicketEmailInput): string {
       <tr><td style="padding:22px 4px 0;border-top:1px solid #ddd8cf;margin-top:20px;font:400 12px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#8a857b">
         ¿Perdiste tus boletos? Recuperalos en
         <a href="${i.origin}/recuperar" style="color:#b0651a">${i.origin.replace(/^https?:\/\//, "")}/recuperar</a><br>
+        ${i.event.refundPolicy === "none" ? "" : `¿Necesitás un reembolso? <a href="${i.origin}/reembolso/${i.order.id}" style="color:#b0651a">Solicitalo aquí</a><br>`}
         ¿Algún problema? Escribinos a
         <a href="mailto:${escapeHtml(i.band.contactEmail)}" style="color:#b0651a">${escapeHtml(i.band.contactEmail)}</a>
       </td></tr>
@@ -141,6 +145,9 @@ export function ticketEmailText(i: TicketEmailInput): string {
     "En la entrada te escanean el código desde el teléfono.",
     "",
     `¿Perdiste tus boletos? ${i.origin}/recuperar`,
+    ...(i.event.refundPolicy === "none"
+      ? []
+      : [`¿Necesitás un reembolso? ${i.origin}/reembolso/${i.order.id}`]),
     `¿Algún problema? ${i.band.contactEmail}`,
   );
   return lines.join("\n");

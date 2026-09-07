@@ -124,6 +124,7 @@
       // A conflict here means another device already scanned this ticket while
       // both were offline. Surfaced, not silently dropped.
       var conflicts = (data.results || []).filter(function (r) { return r.status === "already"; });
+      var voided = (data.results || []).filter(function (r) { return r.status === "voided"; });
       state.queue = state.queue.filter(function (q) {
         return !batch.some(function (b) { return b.t === q.t && b.at === q.at; });
       });
@@ -136,7 +137,9 @@
         indexManifest();
       }
       renderStats(data);
-      if (conflicts.length) {
+      if (voided.length) {
+        setNet(voided.length + " boleto(s) anulado(s) o reembolsado(s) — no deben entrar", "off");
+      } else if (conflicts.length) {
         setNet(conflicts.length + " ya estaban adentro — revisá brazaletes", "warn");
       } else {
         setNet("Sincronizado", "ok");

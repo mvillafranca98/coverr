@@ -224,6 +224,7 @@ export type DashProps = {
   byAccount: { bank: string; count: number; amount: number }[];
   wristbands: { start: number | null; left: number | null };
   openFlags: number;
+  openRefunds: number;
   settlement: Settlement;
   scanUrl: string | null;
 };
@@ -242,6 +243,15 @@ export const DashboardPage: FC<DashProps> = (p) => {
         {formatEventDate(p.event.startsAt)} · {p.event.venue} ·{" "}
         <span class={`chip ${p.event.status === "live" ? "ok" : "info"}`}>{p.event.status}</span>
       </p>
+
+      {p.openRefunds > 0 ? (
+        <div class="note warn">
+          <b>
+            {p.openRefunds} {p.openRefunds === 1 ? "solicitud" : "solicitudes"} de reembolso
+          </b>{" "}
+          — <a href={`/admin/e/${p.event.slug}/ordenes?filtro=refunds`}>revisarlas</a>.
+        </div>
+      ) : null}
 
       {p.openFlags > 0 ? (
         <div class="note warn">
@@ -441,6 +451,9 @@ export const OrdersPage: FC<{
           <option value="inside" selected={filter === "inside"}>
             Ya entraron
           </option>
+          <option value="refunds" selected={filter === "refunds"}>
+            Reembolsos pedidos
+          </option>
         </select>
       </div>
       <button class="btn" type="submit">
@@ -534,7 +547,8 @@ export const OrderPage: FC<{
     ocrConfidence: number | null;
   } | null;
   flags: { id: string; code: string; severity: string; detail: string; resolvedAt: string | null }[];
-}> = ({ bandName, event, order, attendees, proof, flags }) => (
+  refund: { id: string; requestedAt: string; reason: string | null; status: string } | null;
+}> = ({ bandName, event, order, attendees, proof, flags, refund }) => (
   <AdminLayout
     title={`${order.shortCode} — ${event.name}`}
     bandName={bandName}
@@ -560,6 +574,43 @@ export const OrderPage: FC<{
           </form>
         </div>
       ))}
+
+    {refund ? (
+      <>
+        <h2>Solicitud de reembolso</h2>
+        <div class={`note ${refund.status === "open" ? "warn" : ""}`}>
+          <div style="font-size:12px;color:var(--dim);font-family:var(--mono)">
+            {new Date(refund.requestedAt).toLocaleString("es-HN")} ·{" "}
+            {refund.status === "open"
+              ? "pendiente"
+              : refund.status === "approved"
+                ? "aprobada"
+                : "rechazada"}
+          </div>
+          <p style="margin:8px 0 0;color:var(--text)">{refund.reason ?? "Sin motivo."}</p>
+          {refund.status === "open" ? (
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+              <form method="post" action={`/admin/e/${event.slug}/orden/${order.id}/reembolso`}>
+                <input type="hidden" name="decision" value="approved" />
+                <button class="btn sm" type="submit">
+                  Aprobar y anular los boletos
+                </button>
+              </form>
+              <form method="post" action={`/admin/e/${event.slug}/orden/${order.id}/reembolso`}>
+                <input type="hidden" name="decision" value="denied" />
+                <button class="btn sm ghost" type="submit">
+                  Rechazar
+                </button>
+              </form>
+            </div>
+          ) : null}
+          <p class="sub" style="margin:10px 0 0">
+            Aprobar invalida los códigos QR y saca la orden de los totales. El dinero lo devolvés
+            vos desde tu banco — Coverr nunca lo tuvo.
+          </p>
+        </div>
+      </>
+    ) : null}
 
     <h2>Comprador</h2>
     <dl class="kv">

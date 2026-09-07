@@ -5,8 +5,14 @@ import { formatLpsShort, formatEventDate, formatEventTime } from "../lib/core";
 
 export type ConfirmProps = {
   band: { name: string };
-  event: { name: string; venue: string; startsAt: string; thankYouNote: string | null };
-  order: { shortCode: string; quantity: number; expectedAmount: number; payerEmail: string };
+  event: {
+    name: string; venue: string; startsAt: string;
+    thankYouNote: string | null; refundPolicy: string;
+  };
+  order: {
+    id: string; shortCode: string; quantity: number;
+    expectedAmount: number; payerEmail: string;
+  };
   attendees: { name: string; note: string | null; qrToken: string }[];
 };
 
@@ -86,6 +92,14 @@ export const ConfirmPage: FC<ConfirmProps> = ({ band, event, order, attendees })
         <p style="margin:0;font-size:14.5px;color:var(--muted)">{event.thankYouNote}</p>
       </div>
     ) : null}
+
+    {event.refundPolicy === "none" ? null : (
+      <p class="hint" style="text-align:center;margin-top:20px">
+        <a href={`/reembolso/${order.id}`} style="color:var(--muted)">
+          Solicitar un reembolso
+        </a>
+      </p>
+    )}
 
     <footer>
       <div>{band.name} · Coverr</div>
