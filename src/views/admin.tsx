@@ -2,7 +2,7 @@ import type { FC, PropsWithChildren } from "hono/jsx";
 import {
   formatLps, formatLpsShort, formatEventDate, bankLabel, isRenderableImage,
 } from "../lib/core";
-import type { Settlement } from "../lib/settlement";
+import { BILLING_ENABLED, type Settlement } from "../lib/settlement";
 
 export const ADMIN_CSS = `
 :root{
@@ -930,7 +930,7 @@ export const MoneyPage: FC<{
       </div>
     ) : null}
 
-    {unlocked ? (
+    {unlocked || !BILLING_ENABLED ? (
       <>
         <div class="cards">
           <div class="card">

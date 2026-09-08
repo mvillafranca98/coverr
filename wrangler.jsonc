@@ -26,6 +26,7 @@
     }
   ],
   "vars": {
-    "APP_ORIGIN": "https://coverr.a-mencias99.workers.dev"
+    "APP_ORIGIN": "https://coverr.a-mencias99.workers.dev",
+    "EMAIL_FROM": "Coverr <coverr@macawly.dev>"
   }
 }

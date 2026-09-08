@@ -14,7 +14,7 @@ import { BandHomePage } from "../views/home";
 import { ManualSalePage } from "../views/manual";
 import { NewEventPage, EventSettingsPage, BandSettingsPage } from "../views/setup";
 import { eventMetrics, costsByCategory, fanStats } from "../lib/stats";
-import { computeSettlement, priceBracket } from "../lib/settlement";
+import { computeSettlement, priceBracket, BILLING_ENABLED } from "../lib/settlement";
 import { makeTransport } from "../lib/email";
 import {
   sign,
@@ -674,7 +674,7 @@ admin.get("/e/:slug/dinero", async (c) => {
       expenses={expenses}
       settlement={settlement}
       advancesByMember={advancesByMember}
-      unlocked={!!unlock[0]}
+      unlocked={!BILLING_ENABLED || !!unlock[0]}
       bracket={priceBracket(paidTickets)}
       isFirstEvent={Number(priorUnlocks[0]?.n ?? 0) === 0}
     />,
@@ -723,6 +723,8 @@ admin.post("/e/:slug/dinero/desbloquear", async (c) => {
   const bandId = c.get("bandId");
   const event = await eventOf(db, bandId, c.req.param("slug"));
   if (!event) return c.notFound();
+  // Nothing to unlock while billing is off; the report is already showing.
+  if (!BILLING_ENABLED) return c.redirect(`/admin/e/${event.slug}/dinero`, 303);
 
   const existing = await db
     .select()
