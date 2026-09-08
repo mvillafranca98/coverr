@@ -20,6 +20,7 @@ export type EventMetrics = {
   presalePeople: number;
   doorOnlinePeople: number;
   doorCashPeople: number;
+  manualPeople: number;
   compPeople: number;
   gross: number;
   costs: number;
@@ -45,6 +46,7 @@ export async function eventMetrics(db: D1Database, bandId: string): Promise<Even
               COALESCE(SUM(CASE WHEN o.channel='online'      THEN o.quantity END),0) AS presale_people,
               COALESCE(SUM(CASE WHEN o.channel='door_online' THEN o.quantity END),0) AS door_online_people,
               COALESCE(SUM(CASE WHEN o.channel='door_cash'   THEN o.quantity END),0) AS door_cash_people,
+              COALESCE(SUM(CASE WHEN o.channel='manual'      THEN o.quantity END),0) AS manual_people,
               COALESCE(SUM(CASE WHEN o.channel='comp'        THEN o.quantity END),0) AS comp_people,
               COALESCE(SUM(o.expected_amount),0) AS gross
          FROM events e
@@ -57,7 +59,7 @@ export async function eventMetrics(db: D1Database, bandId: string): Promise<Even
     .all<{
       id: string; slug: string; name: string; venue: string; starts_at: string; status: string;
       presale_people: number; door_online_people: number; door_cash_people: number;
-      comp_people: number; gross: number;
+      manual_people: number; comp_people: number; gross: number;
     }>();
 
   const costs = await db
@@ -91,8 +93,9 @@ export async function eventMetrics(db: D1Database, bandId: string): Promise<Even
     const presale = Number(r.presale_people);
     const doorOnline = Number(r.door_online_people);
     const doorCash = Number(r.door_cash_people);
+    const manual = Number(r.manual_people);
     const comp = Number(r.comp_people);
-    const attendance = presale + doorOnline + doorCash + comp;
+    const attendance = presale + doorOnline + doorCash + manual + comp;
     const gross = Number(r.gross);
     const cost = costBy.get(r.id) ?? 0;
     const a = attBy.get(r.id);
@@ -110,6 +113,7 @@ export async function eventMetrics(db: D1Database, bandId: string): Promise<Even
       presalePeople: presale,
       doorOnlinePeople: doorOnline,
       doorCashPeople: doorCash,
+      manualPeople: manual,
       compPeople: comp,
       gross,
       costs: cost,

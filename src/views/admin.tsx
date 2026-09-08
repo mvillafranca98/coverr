@@ -103,6 +103,9 @@ export const AdminLayout: FC<
                 <a href={`/admin/e/${eventSlug}/ordenes`} class={active === "orders" ? "on" : ""}>
                   Órdenes
                 </a>
+                <a href={`/admin/e/${eventSlug}/venta`} class={active === "manual" ? "on" : ""}>
+                  Venta
+                </a>
                 <a href={`/admin/e/${eventSlug}/dinero`} class={active === "money" ? "on" : ""}>
                   Dinero
                 </a>
@@ -221,9 +224,12 @@ export type DashProps = {
     presale: number;
     doorCash: number;
     doorOnline: number;
+    manual: number;
     comp: number;
   };
-  channels: { presale: number; doorTransfer: number; doorCash: number; comp: number };
+  channels: {
+    presale: number; doorTransfer: number; doorCash: number; manual: number; comp: number;
+  };
   byAccount: { bank: string; count: number; amount: number }[];
   wristbands: { start: number | null; left: number | null };
   openFlags: number;
@@ -319,6 +325,11 @@ export const DashboardPage: FC<DashProps> = (p) => {
               <td class="n">{formatLps(p.channels.doorCash)}</td>
             </tr>
             <tr>
+              <td>Venta manual</td>
+              <td class="n">{p.counts.manual}</td>
+              <td class="n">{formatLps(p.channels.manual)}</td>
+            </tr>
+            <tr>
               <td>Cortesías</td>
               <td class="n">{p.counts.comp}</td>
               <td class="n">L0.00</td>
@@ -393,6 +404,7 @@ export type OrderRow = {
   verificationStatus: string;
   bankSelected: string | null;
   createdAt: string;
+  note: string | null;
   attendees: string;
   checkedIn: number;
   flag: string | null;
@@ -402,6 +414,7 @@ const CHANNEL_LABEL: Record<string, string> = {
   online: "Preventa",
   door_online: "Taquilla",
   door_cash: "Efectivo",
+  manual: "Manual",
   comp: "Cortesía",
 };
 
@@ -446,7 +459,10 @@ export const OrdersPage: FC<{
             Preventa
           </option>
           <option value="door_cash" selected={filter === "door_cash"}>
-            Efectivo
+            Efectivo en puerta
+          </option>
+          <option value="manual" selected={filter === "manual"}>
+            Venta manual
           </option>
           <option value="comp" selected={filter === "comp"}>
             Cortesías
@@ -613,6 +629,15 @@ export const OrderPage: FC<{
           </p>
         </div>
       </>
+    ) : null}
+
+    {order.note ? (
+      <div class="note">
+        <div style="font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">
+          Motivo
+        </div>
+        <div style="color:var(--text);margin-top:4px">{order.note}</div>
+      </div>
     ) : null}
 
     <h2>Comprador</h2>

@@ -136,7 +136,7 @@ export const orders = sqliteTable(
     priceRuleId: text("price_rule_id").references(() => priceRules.id),
     /** centavos; quantity * rule amount at time of purchase */
     expectedAmount: integer("expected_amount").notNull(),
-    /** online | door_online | door_cash | comp */
+    /** online | door_online | door_cash | manual | comp */
     channel: text("channel").notNull(),
     /** confirmed | refunded | void */
     status: text("status").notNull().default("confirmed"),
@@ -145,6 +145,9 @@ export const orders = sqliteTable(
     /** Which bank the buyer said they'd pay from. Narrows reconciliation later. */
     bankSelected: text("bank_selected"),
     soldBy: text("sold_by"),
+    /** Why this order exists, for manual sales: cash to the admin, tickets
+     *  traded against a bill, a favour. Meaningless for online orders. */
+    note: text("note"),
     createdAt: text("created_at").notNull(),
   },
   (t) => [

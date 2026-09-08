@@ -20,6 +20,9 @@ export type ChannelTotals = {
   presale: number;
   doorTransfer: number;
   doorCash: number;
+  /** Sold by the band away from the link and the door — cash in hand, or a
+   *  trade. Separate from doorCash so the cash drawer still reconciles. */
+  manual: number;
   comp: number;
 };
 
@@ -56,7 +59,8 @@ export function computeSettlement(input: {
   headcount: number;
 }): Settlement {
   const { channels, costs, members, headcount } = input;
-  const gross = channels.presale + channels.doorTransfer + channels.doorCash;
+  const gross =
+    channels.presale + channels.doorTransfer + channels.doorCash + channels.manual;
   const net = gross - costs;
 
   const pctTotal = members.reduce((n, m) => n + m.splitPct, 0);

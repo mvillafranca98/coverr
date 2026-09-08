@@ -11,6 +11,7 @@ import {
   MoneyPage,
 } from "../views/admin";
 import { BandHomePage } from "../views/home";
+import { ManualSalePage } from "../views/manual";
 import { NewEventPage, EventSettingsPage, BandSettingsPage } from "../views/setup";
 import { eventMetrics, costsByCategory, fanStats } from "../lib/stats";
 import { computeSettlement, priceBracket } from "../lib/settlement";
@@ -28,8 +29,10 @@ import {
 import {
   newId, nowIso, normalizeEmail, escapeHtml,
   newStaffToken, slugify, localInputToIso, lpsToCentavos,
+  newShortCode, newQrToken,
 } from "../lib/core";
 import { runVerification } from "../lib/pipeline";
+import { sendTickets } from "../lib/tickets";
 
 type Bindings = {
   DB: D1Database;
@@ -171,16 +174,19 @@ async function channelTotals(db: DrizzleD1Database<typeof s>, eventId: string) {
     presale: Number(by("online")?.people ?? 0),
     doorOnline: Number(by("door_online")?.people ?? 0),
     doorCash: Number(by("door_cash")?.people ?? 0),
+    manual: Number(by("manual")?.people ?? 0),
     comp: Number(by("comp")?.people ?? 0),
     sold: 0,
     inside: 0,
   };
-  counts.sold = counts.presale + counts.doorOnline + counts.doorCash + counts.comp;
+  counts.sold =
+    counts.presale + counts.doorOnline + counts.doorCash + counts.manual + counts.comp;
 
   const channels = {
     presale: Number(by("online")?.amount ?? 0),
     doorTransfer: Number(by("door_online")?.amount ?? 0),
     doorCash: Number(by("door_cash")?.amount ?? 0),
+    manual: Number(by("manual")?.amount ?? 0),
     comp: 0,
   };
 
@@ -355,6 +361,7 @@ async function orderRows(
       status: s.orders.status,
       verificationStatus: s.orders.verificationStatus,
       bankSelected: s.orders.bankSelected,
+      note: s.orders.note,
       createdAt: s.orders.createdAt,
     })
     .from(s.orders)
@@ -427,6 +434,7 @@ async function orderRows(
       break;
     case "online":
     case "door_cash":
+    case "manual":
     case "comp":
       out = out.filter((o) => o.channel === opts.filter);
       break;
@@ -466,14 +474,14 @@ admin.get("/e/:slug/ordenes.csv", async (c) => {
   const rows = await orderRows(db, event.id);
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const csv = [
-    ["codigo", "comprador", "correo", "telefono", "asistentes", "cantidad", "adentro", "canal", "monto_lps", "estado", "banco", "fecha", "alerta"]
+    ["codigo", "comprador", "correo", "telefono", "asistentes", "cantidad", "adentro", "canal", "monto_lps", "estado", "banco", "fecha", "nota", "alerta"]
       .map(esc)
       .join(","),
     ...rows.map((r) =>
       [
         r.shortCode, r.payerName, r.payerEmail, r.payerPhone ?? "", r.attendees,
         r.quantity, r.checkedIn, r.channel, (r.expectedAmount / 100).toFixed(2),
-        r.status, r.bankSelected ?? "", r.createdAt, r.flag ?? "",
+        r.status, r.bankSelected ?? "", r.createdAt, r.note ?? "", r.flag ?? "",
       ]
         .map(esc)
         .join(","),
@@ -1250,4 +1258,121 @@ admin.post("/e/:slug/orden/:id/reembolso", async (c) => {
       .where(and(eq(s.orders.id, orderId), eq(s.orders.eventId, event.id)));
   }
   return c.redirect(`/admin/e/${event.slug}/orden/${orderId}`, 303);
+});
+
+// --------------------------------------------------------------- manual sale
+
+async function manualSaleView(c: Ctx, opts: { error?: string; created?: any } = {}) {
+  const db = drizzle(c.env.DB, { schema: s });
+  const slug = c.req.param("slug");
+  const band = await bandOf(db, c.get("bandId"));
+  const event = slug ? await eventOf(db, c.get("bandId"), slug) : null;
+  if (!band || !event) return c.notFound();
+
+  const rule = await resolveActiveRuleFor(db, event.id);
+  return c.html(
+    <ManualSalePage
+      bandName={band.name}
+      event={event}
+      defaultPrice={rule?.amount ?? 0}
+      priceLabel={rule?.label ?? "Taquilla"}
+      created={opts.created ?? null}
+      error={opts.error}
+    />,
+  );
+}
+
+/** Whichever price rule is live now, so the form opens with the sensible default. */
+async function resolveActiveRuleFor(db: DrizzleD1Database<typeof s>, eventId: string) {
+  const rules = await db
+    .select()
+    .from(s.priceRules)
+    .where(eq(s.priceRules.eventId, eventId))
+    .orderBy(s.priceRules.sortOrder);
+  const now = new Date();
+  for (const r of rules) {
+    const started = !r.startsAt || new Date(r.startsAt) <= now;
+    const ended = r.endsAt != null && new Date(r.endsAt) <= now;
+    if (started && !ended) return r;
+  }
+  return rules[rules.length - 1] ?? null;
+}
+
+admin.get("/e/:slug/venta", (c) => manualSaleView(c));
+
+admin.post("/e/:slug/venta", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const band = await bandOf(db, bandId);
+  const event = await eventOf(db, bandId, c.req.param("slug"));
+  if (!band || !event) return c.notFound();
+
+  const body = await c.req.parseBody();
+  const str = (k: string) => (typeof body[k] === "string" ? (body[k] as string).trim() : "");
+
+  const names = str("names")
+    .split("\n")
+    .map((n) => n.trim())
+    .filter(Boolean)
+    .slice(0, 40);
+  if (names.length === 0) return manualSaleView(c, { error: "Poné al menos un nombre." });
+
+  const unit = lpsToCentavos(str("unit_price"));
+  if (unit == null) return manualSaleView(c, { error: "Revisá el monto." });
+
+  const note = str("note");
+  if (!note) return manualSaleView(c, { error: "Escribí por qué — sin eso la orden no se explica después." });
+
+  const payerEmail = str("payer_email");
+  if (payerEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(payerEmail)) {
+    return manualSaleView(c, { error: "Revisá el correo." });
+  }
+
+  const ts = nowIso();
+  const orderId = newId("ord");
+  const quantity = names.length;
+
+  // Zero-value goes in as a comp so it counts as attendance and never as
+  // revenue; anything paid is its own `manual` channel, kept separate from the
+  // door take so the cash drawer still reconciles on the night.
+  const channel = unit === 0 ? "comp" : "manual";
+
+  await db.insert(s.orders).values({
+    id: orderId,
+    eventId: event.id,
+    shortCode: newShortCode(band.slug),
+    payerName: str("payer_name") || names[0]!,
+    payerEmail: payerEmail || `manual+${orderId}@local`,
+    payerPhone: null,
+    quantity,
+    priceRuleId: null,
+    expectedAmount: unit * quantity,
+    channel,
+    status: "confirmed",
+    verificationStatus: "manual_ok",
+    bankSelected: null,
+    soldBy: bandId,
+    note,
+    createdAt: ts,
+  });
+
+  // Never checked in: nobody is at the door yet, so these scan like any other.
+  await db.insert(s.attendees).values(
+    names.map((name) => ({
+      id: newId("att"),
+      orderId,
+      name,
+      note,
+      qrToken: newQrToken(),
+      checkedInAt: null,
+      checkedInBy: null,
+      checkedInDevice: null,
+    })),
+  );
+
+  if (payerEmail) c.executionCtx.waitUntil(sendTickets(c.env, orderId));
+
+  return manualSaleView(c, {
+    created: { shortCode: "", quantity, amount: unit * quantity, orderId },
+  });
 });
