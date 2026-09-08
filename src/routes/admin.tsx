@@ -250,6 +250,12 @@ admin.get("/", async (c) => {
   if (!band) return c.redirect("/admin/salir", 302);
 
   const events = await eventMetrics(c.env.DB, band.id);
+  const [accts, mems] = await Promise.all([
+    db.select({ id: s.bankAccounts.id }).from(s.bankAccounts)
+      .where(and(eq(s.bankAccounts.bandId, band.id), eq(s.bankAccounts.active, 1))).limit(1),
+    db.select({ id: s.bandMembers.id }).from(s.bandMembers)
+      .where(eq(s.bandMembers.bandId, band.id)).limit(1),
+  ]);
   const played = events.filter((e) => e.attendance > 0);
   const [categories, fans] = await Promise.all([
     costsByCategory(c.env.DB, band.id),
@@ -257,7 +263,13 @@ admin.get("/", async (c) => {
   ]);
 
   return c.html(
-    <BandHomePage bandName={band.name} events={events} categories={categories} fans={fans} />,
+    <BandHomePage
+      bandName={band.name}
+      events={events}
+      categories={categories}
+      fans={fans}
+      setup={{ hasAccount: accts.length > 0, hasMembers: mems.length > 0 }}
+    />,
   );
 });
 

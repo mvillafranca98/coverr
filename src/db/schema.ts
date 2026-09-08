@@ -8,13 +8,18 @@ import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-or
  * - booleans are integers, 0/1.
  */
 
-export const bands = sqliteTable("bands", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  contactEmail: text("contact_email").notNull(),
-  createdAt: text("created_at").notNull(),
-});
+export const bands = sqliteTable(
+  "bands",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    /** The login identity — unique, or a band becomes unreachable. */
+    contactEmail: text("contact_email").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [uniqueIndex("idx_bands_contact_email").on(t.contactEmail)],
+);
 
 export const bandMembers = sqliteTable(
   "band_members",

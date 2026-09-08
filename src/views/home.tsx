@@ -2,6 +2,7 @@ import type { FC } from "hono/jsx";
 import { AdminLayout } from "./admin";
 import { formatLps, formatLpsShort, formatEventDate } from "../lib/core";
 import type { EventMetrics, CategoryRow, FanStats } from "../lib/stats";
+import { OnboardingChecklist } from "./signup";
 
 const pct = (v: number | null, digits = 0): string =>
   v == null ? "—" : `${(v * 100).toFixed(digits)}%`;
@@ -24,7 +25,8 @@ export const BandHomePage: FC<{
   events: EventMetrics[];
   categories: CategoryRow[];
   fans: FanStats;
-}> = ({ bandName, events, categories, fans }) => {
+  setup: { hasAccount: boolean; hasMembers: boolean };
+}> = ({ bandName, events, categories, fans, setup }) => {
   const played = events.filter((e) => e.attendance > 0);
   const totals = played.reduce(
     (t, e) => ({
@@ -49,6 +51,12 @@ export const BandHomePage: FC<{
         {played.length} {played.length === 1 ? "evento" : "eventos"} · {totals.attendance} personas
         en total
       </p>
+
+      <OnboardingChecklist
+        hasAccount={setup.hasAccount}
+        hasMembers={setup.hasMembers}
+        hasEvent={events.length > 0}
+      />
 
       <h2>Acumulado</h2>
       <div class="cards">
@@ -374,8 +382,11 @@ a{color:var(--accent)}
           evento es gratis completo.
         </p>
 
-        <a class="cta" href="/admin">
-          Entrar
+        <a class="cta" href="/registro">
+          Crear mi banda
+        </a>
+        <a class="cta ghost" href="/admin/acceso">
+          Ya tengo banda
         </a>
 
         <footer>Coverr · Honduras</footer>

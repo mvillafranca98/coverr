@@ -6,16 +6,19 @@ import { BuyPage } from "./views/buy";
 import { ConfirmPage } from "./views/confirm";
 import { RecoverPage } from "./views/recover";
 import { RefundRequestPage, RefundSentPage, RefundClosedPage } from "./views/refund";
+import { SignupPage, SignupSentPage } from "./views/signup";
 import { scanApi } from "./routes/scan";
 import { admin } from "./routes/admin";
 import { LandingPage } from "./views/home";
 import { qrSvg, qrPng } from "./lib/qr";
 import { makeTransport } from "./lib/email";
+import { sign, LOGIN_TTL } from "./lib/auth";
 import { runVerification } from "./lib/pipeline";
 import { ticketEmailHtml, ticketEmailText, ticketEmailSubject } from "./views/email";
 import {
   formatLpsShort,
   escapeHtml,
+  slugify,
   newId,
   newQrToken,
   newShortCode,
@@ -449,6 +452,91 @@ app.post("/recuperar", async (c) => {
 // -------------------------------------------------------------- door scanner
 
 app.route("/api/scan", scanApi);
+
+// --------------------------------------------------------------- band signup
+
+/**
+ * Creating a band is the one flow a new user hits before they have anything,
+ * so it asks for two fields and nothing else.
+ *
+ * An email that already belongs to a band does not error and does not say so —
+ * it just sends that band a login link. Same response either way, so the page
+ * cannot be used to discover which addresses run a band.
+ */
+app.get("/registro", (c) => c.html(<SignupPage />));
+
+app.post("/registro", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const body = await c.req.parseBody();
+  const name = String(body["name"] ?? "").trim().slice(0, 80);
+  const email = normalizeEmail(String(body["email"] ?? ""));
+
+  if (!name) return c.html(<SignupPage error="Falta el nombre de la banda." email={email} />, 400);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return c.html(<SignupPage error="Revisá el correo." name={name} />, 400);
+  }
+  if (!c.env.SESSION_SECRET) return c.text("SESSION_SECRET no está configurado.", 500);
+
+  const existing = await db
+    .select()
+    .from(s.bands)
+    .where(eq(s.bands.contactEmail, email))
+    .limit(1);
+
+  let bandId: string;
+  let bandName: string;
+  if (existing[0]) {
+    bandId = existing[0].id;
+    bandName = existing[0].name;
+  } else {
+    bandId = newId("bnd");
+    bandName = name;
+    let slug = slugify(name);
+    for (let i = 0; i < 40; i++) {
+      const candidate = i === 0 ? slug : `${slug}-${i + 1}`;
+      const clash = await db
+        .select({ id: s.bands.id })
+        .from(s.bands)
+        .where(eq(s.bands.slug, candidate))
+        .limit(1);
+      if (clash.length === 0) {
+        slug = candidate;
+        break;
+      }
+    }
+    await db.insert(s.bands).values({
+      id: bandId,
+      name,
+      slug,
+      contactEmail: email,
+      createdAt: nowIso(),
+    });
+  }
+
+  const token = await sign(c.env.SESSION_SECRET, { b: bandId }, LOGIN_TTL);
+  const url = `${c.env.APP_ORIGIN}/admin/entrar?t=${encodeURIComponent(token)}`;
+  c.executionCtx.waitUntil(
+    makeTransport(c.env)
+      .send({
+        to: email,
+        subject: `Entrar a Coverr — ${bandName}`,
+        html: `<!doctype html><html lang="es"><body style="margin:0;background:#f3f1ea;padding:28px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:440px;text-align:left">
+<tr><td style="font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#b0651a;padding-bottom:10px">Coverr</td></tr>
+<tr><td style="font:700 22px/1.2 inherit;color:#191713;padding-bottom:10px">Entrar al panel de ${escapeHtml(bandName)}</td></tr>
+<tr><td style="font:400 15px/1.5 inherit;color:#57534b;padding-bottom:20px">Tocá el botón para entrar. El enlace vence en 15 minutos.</td></tr>
+<tr><td><a href="${url}" style="display:inline-block;padding:13px 22px;border-radius:9px;background:#191713;color:#fff;font:600 15px/1 inherit;text-decoration:none">Entrar</a></td></tr>
+<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:22px">Si no pediste esto, ignoralo — nadie puede entrar sin este correo.</td></tr>
+</table></td></tr></table></body></html>`,
+        text: `Entrar al panel de ${bandName}:\n\n${url}\n\nEl enlace vence en 15 minutos.`,
+      })
+      .then((r) => {
+        if (!r.ok) console.error(`[signup] link failed for ${email}: ${r.error}`);
+      }),
+  );
+
+  return c.html(<SignupSentPage email={email} />);
+});
 
 // -------------------------------------------------------------- refunds
 

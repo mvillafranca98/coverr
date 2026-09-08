@@ -150,6 +150,9 @@ export const LoginPage: FC<{ sent?: boolean; error?: string }> = ({ sent, error 
           <button class="btn" style="margin-top:12px;width:100%" type="submit">
             Enviar enlace
           </button>
+          <p class="sub" style="margin-top:18px">
+            ¿Todavía no tenés banda? <a href="/registro">Creala acá</a>
+          </p>
         </form>
       )}
     </div>
