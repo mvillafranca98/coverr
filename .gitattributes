@@ -1,0 +1,30 @@
+# Every text file is LF, in the index and in the working tree.
+#
+# `eol=lf` rather than bare `text=auto` because the second leaves the working
+# tree up to each machine's core.autocrlf, which is how the same file ends up
+# looking modified on one checkout and clean on another. Everything in this
+# stack — node, wrangler, esbuild, VS Code — reads LF on Windows without
+# complaint, so there is nothing to trade away by pinning it.
+#
+# The repo's blobs are already LF, so this changes no committed content.
+* text=auto eol=lf
+
+# Formats that must never be line-ending converted. None are tracked yet;
+# they are listed so the first flyer or font someone adds is not corrupted
+# on checkout.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.zip   binary
+
+# Generated, and noise in a diff.
+package-lock.json linguist-generated=true
+migrations/meta/** linguist-generated=true
