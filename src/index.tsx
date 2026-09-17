@@ -15,6 +15,7 @@ import { makeTransport } from "./lib/email";
 import { sendTickets } from "./lib/tickets";
 import { sign, LOGIN_TTL } from "./lib/auth";
 import { runVerification } from "./lib/pipeline";
+import { resolveSellableRule } from "./db/queries/price-rules";
 import {
   formatLpsShort,
   escapeHtml,
@@ -45,48 +46,6 @@ const app = new Hono<{ Bindings: Bindings }>();
 const MAX_PROOF_BYTES = 10 * 1024 * 1024;
 const MAX_TICKETS = 10;
 
-/**
- * Which price applies right now. Presale runs until its window closes or it
- * sells out; box office takes over on its own start time or on presale
- * selloff, whichever comes first. Never trust the rule id the client submits —
- * it is re-resolved server-side at purchase.
- */
-async function resolveActiveRule(db: DrizzleD1Database<typeof s>, eventId: string) {
-  const rules = await db
-    .select()
-    .from(s.priceRules)
-    .where(eq(s.priceRules.eventId, eventId))
-    .orderBy(s.priceRules.sortOrder);
-  if (rules.length === 0) return null;
-
-  const now = new Date();
-  const soldByRule = new Map<string, number>();
-  const counts = await db
-    .select({
-      ruleId: s.orders.priceRuleId,
-      qty: sql<number>`coalesce(sum(${s.orders.quantity}), 0)`,
-    })
-    .from(s.orders)
-    .where(and(eq(s.orders.eventId, eventId), eq(s.orders.status, "confirmed")))
-    .groupBy(s.orders.priceRuleId);
-  for (const c of counts) if (c.ruleId) soldByRule.set(c.ruleId, Number(c.qty));
-
-  const isSoldOut = (r: (typeof rules)[number]) =>
-    r.maxQty != null && (soldByRule.get(r.id) ?? 0) >= r.maxQty;
-
-  for (const r of rules) {
-    const started = !r.startsAt || new Date(r.startsAt) <= now;
-    const ended = r.endsAt != null && new Date(r.endsAt) <= now;
-    const predecessorSoldOut = r.activatesOnSelloffOf
-      ? isSoldOut(rules.find((x) => x.id === r.activatesOnSelloffOf) ?? r)
-      : false;
-
-    if (isSoldOut(r) || ended) continue;
-    if (started || predecessorSoldOut) return r;
-  }
-  return null;
-}
-
 async function loadEvent(db: DrizzleD1Database<typeof s>, slug: string) {
   const rows = await db
     .select({ event: s.events, band: s.bands })
@@ -113,7 +72,7 @@ app.get("/e/:slug", async (c) => {
     );
   }
 
-  const rule = await resolveActiveRule(db, event.id);
+  const rule = await resolveSellableRule(db, event.id);
   if (!rule) {
     return c.html(
       `<!doctype html><meta charset=utf-8><body style="font-family:system-ui;background:#0C0B09;color:#F6F2EB;padding:40px;text-align:center">
@@ -179,7 +138,7 @@ app.post("/e/:slug/comprar", async (c) => {
   if (proof.size > MAX_PROOF_BYTES) return fail("El archivo es muy grande (máximo 10 MB).");
 
   // Re-resolve the price server-side. The client tells us nothing about money.
-  const rule = await resolveActiveRule(db, event.id);
+  const rule = await resolveSellableRule(db, event.id);
   if (!rule) return fail("Ya no hay boletos disponibles.");
   const expectedAmount = rule.amount * quantity;
 

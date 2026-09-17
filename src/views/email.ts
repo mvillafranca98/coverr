@@ -156,3 +156,32 @@ export function ticketEmailText(i: TicketEmailInput): string {
 export function ticketEmailSubject(i: TicketEmailInput): string {
   return `Tus ${i.order.quantity === 1 ? "boleto" : `${i.order.quantity} boletos`} — ${i.event.name}`;
 }
+
+// ------------------------------------------------------------ admin sign-in
+
+type LoginEmailInput = { bandName: string; url: string; minutes: number };
+
+/**
+ * The magic link that signs a band admin in. Kept to one button and one
+ * sentence: anything longer reads like a phishing attempt, which is exactly
+ * what an unexpected "click here to sign in" mail looks like.
+ */
+export function loginEmailHtml(i: LoginEmailInput): string {
+  const sans = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif";
+  return `<!doctype html>
+<html lang="es"><body style="margin:0;background:#f3f1ea;padding:28px 14px;font-family:${sans}">
+<table role="presentation" width="100%"><tr><td align="center">
+<table role="presentation" width="100%" style="max-width:440px;text-align:left">
+<tr><td style="font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#b0651a;padding-bottom:10px">Coverr</td></tr>
+<tr><td style="font:700 22px/1.2 inherit;color:#191713;padding-bottom:10px">Entrar al panel de ${escapeHtml(i.bandName)}</td></tr>
+<tr><td style="font:400 15px/1.5 inherit;color:#57534b;padding-bottom:20px">Tocá el botón para entrar. El enlace vence en ${i.minutes} minutos.</td></tr>
+<tr><td><a href="${i.url}" style="display:inline-block;padding:13px 22px;border-radius:9px;background:#191713;color:#fff;font:600 15px/1 inherit;text-decoration:none">Entrar</a></td></tr>
+<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:22px">Si no pediste esto, ignoralo — nadie puede entrar sin este correo.</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export function loginEmailText(i: LoginEmailInput): string {
+  return `Entrar al panel de ${i.bandName}:\n\n${i.url}\n\nEl enlace vence en ${i.minutes} minutos. Si no pediste esto, ignoralo.`;
+}
+
+export const LOGIN_EMAIL_SUBJECT = "Entrar a Coverr";

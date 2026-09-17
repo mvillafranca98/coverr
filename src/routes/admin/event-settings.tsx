@@ -1,0 +1,250 @@
+import { Hono } from "hono";
+import { drizzle } from "drizzle-orm/d1";
+import { and, eq, sql } from "drizzle-orm";
+import * as s from "../../db/schema";
+import { NewEventPage, EventSettingsPage } from "../../views/setup";
+import { findBand } from "../../db/queries/bands";
+import { findEventBySlug, uniqueEventSlug } from "../../db/queries/events";
+import { readEventForm, REFUND_TEXT, type EventInput } from "../../lib/event-form";
+import { newId, newStaffToken, nowIso } from "../../lib/core";
+import type { AdminContext, AdminEnv } from "./context";
+
+export const eventSettingsRoutes = new Hono<AdminEnv>();
+
+const settingsPath = (slug: string) => `/admin/e/${slug}/ajustes?saved=1`;
+
+async function renderSettings(c: AdminContext, opts: { error?: string; saved?: boolean } = {}) {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const slug = c.req.param("slug");
+  const band = await findBand(db, bandId);
+  const event = slug ? await findEventBySlug(db, bandId, slug) : null;
+  if (!band || !event) return c.notFound();
+
+  const rules = await db
+    .select()
+    .from(s.priceRules)
+    .where(eq(s.priceRules.eventId, event.id))
+    .orderBy(s.priceRules.sortOrder);
+
+  const [sold] = await db
+    .select({ n: sql<number>`coalesce(sum(${s.orders.quantity}), 0)` })
+    .from(s.orders)
+    .where(and(eq(s.orders.eventId, event.id), eq(s.orders.status, "confirmed")));
+
+  return c.html(
+    <EventSettingsPage
+      bandName={band.name}
+      event={event}
+      origin={c.env.APP_ORIGIN}
+      soldCount={Number(sold?.n ?? 0)}
+      error={opts.error}
+      saved={opts.saved}
+      values={{
+        name: event.name,
+        venue: event.venue,
+        startsAt: event.startsAt,
+        doorsAt: event.doorsAt,
+        description: event.description,
+        musicType: event.musicType,
+        thankYouNote: event.thankYouNote,
+        capacityCap: event.capacityCap,
+        refundPolicy: event.refundPolicy,
+        refundPolicyText: event.refundPolicyText,
+        wristbandsStart: event.wristbandsStart,
+        presaleAmount: rules[0]?.amount ?? 20000,
+        presaleMaxQty: rules[0]?.maxQty ?? null,
+        doorAmount: rules[1]?.amount ?? 25000,
+      }}
+    />,
+  );
+}
+
+/**
+ * Two rules, as the model expects: presale runs until doors (or until it sells
+ * out), then box office takes over on either trigger. Modelled as a list rather
+ * than an enum so adding tiers later is configuration, not a rewrite.
+ */
+function initialPriceRules(eventId: string, values: EventInput, createdAt: string) {
+  const presaleId = newId("pr");
+  const boxOfficeStart = values.doorsAt ?? values.startsAt;
+  return [
+    {
+      id: presaleId,
+      eventId,
+      label: "Preventa",
+      amount: values.presaleAmount,
+      maxQty: values.presaleMaxQty,
+      startsAt: createdAt,
+      endsAt: boxOfficeStart,
+      activatesOnSelloffOf: null,
+      sortOrder: 0,
+    },
+    {
+      id: newId("pr"),
+      eventId,
+      label: "Taquilla",
+      amount: values.doorAmount,
+      maxQty: null,
+      startsAt: boxOfficeStart,
+      endsAt: null,
+      activatesOnSelloffOf: presaleId,
+      sortOrder: 1,
+    },
+  ];
+}
+
+// --------------------------------------------------------------- new event
+
+eventSettingsRoutes.get("/nuevo", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const band = await findBand(db, c.get("bandId"));
+  if (!band) return c.redirect("/admin/salir", 302);
+
+  return c.html(<NewEventPage bandName={band.name} error={c.req.query("error") ?? undefined} />);
+});
+
+eventSettingsRoutes.post("/nuevo", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const band = await findBand(db, bandId);
+  if (!band) return c.redirect("/admin/salir", 302);
+
+  const parsed = readEventForm(await c.req.parseBody());
+  if (!parsed.ok) {
+    return c.html(<NewEventPage bandName={band.name} error={parsed.message} />, 400);
+  }
+  const values = parsed.values;
+
+  const eventId = newId("evt");
+  const slug = await uniqueEventSlug(db, values.name);
+  const createdAt = nowIso();
+
+  // Created as a draft: /e/:slug 404s until it is published, so a half-built
+  // event can never be bought from.
+  await db.insert(s.events).values({
+    id: eventId,
+    bandId,
+    slug,
+    name: values.name,
+    venue: values.venue,
+    startsAt: values.startsAt,
+    doorsAt: values.doorsAt,
+    description: values.description,
+    musicType: values.musicType,
+    flyerUrl: null,
+    thankYouNote: values.thankYouNote,
+    capacityCap: values.capacityCap,
+    refundPolicy: values.refundPolicy,
+    refundPolicyText: REFUND_TEXT[values.refundPolicy] ?? null,
+    wristbandsStart: values.wristbandsStart,
+    staffToken: newStaffToken(),
+    status: "draft",
+    createdAt,
+  });
+
+  await db.insert(s.priceRules).values(initialPriceRules(eventId, values, createdAt));
+
+  return c.redirect(settingsPath(slug), 303);
+});
+
+// ---------------------------------------------------------------- settings
+
+eventSettingsRoutes.get("/e/:slug/ajustes", (c) =>
+  renderSettings(c, { saved: c.req.query("saved") === "1" }),
+);
+
+eventSettingsRoutes.post("/e/:slug/ajustes", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const event = await findEventBySlug(db, c.get("bandId"), c.req.param("slug"));
+  if (!event) return c.notFound();
+
+  const parsed = readEventForm(await c.req.parseBody());
+  if (!parsed.ok) return renderSettings(c, { error: parsed.message });
+  const values = parsed.values;
+
+  await db
+    .update(s.events)
+    .set({
+      name: values.name,
+      venue: values.venue,
+      startsAt: values.startsAt,
+      doorsAt: values.doorsAt,
+      description: values.description,
+      musicType: values.musicType,
+      thankYouNote: values.thankYouNote,
+      capacityCap: values.capacityCap,
+      refundPolicy: values.refundPolicy,
+      refundPolicyText: REFUND_TEXT[values.refundPolicy] ?? null,
+      wristbandsStart: values.wristbandsStart,
+    })
+    .where(eq(s.events.id, event.id));
+
+  // Price changes affect new orders only — every existing order stores the
+  // amount it was quoted, so nobody's past purchase silently reprices.
+  const rules = await db
+    .select()
+    .from(s.priceRules)
+    .where(eq(s.priceRules.eventId, event.id))
+    .orderBy(s.priceRules.sortOrder);
+  const boxOfficeStart = values.doorsAt ?? values.startsAt;
+
+  if (rules[0]) {
+    await db
+      .update(s.priceRules)
+      .set({
+        amount: values.presaleAmount,
+        maxQty: values.presaleMaxQty,
+        endsAt: boxOfficeStart,
+      })
+      .where(eq(s.priceRules.id, rules[0].id));
+  }
+  if (rules[1]) {
+    await db
+      .update(s.priceRules)
+      .set({ amount: values.doorAmount, startsAt: boxOfficeStart })
+      .where(eq(s.priceRules.id, rules[1].id));
+  }
+
+  return c.redirect(settingsPath(event.slug), 303);
+});
+
+eventSettingsRoutes.post("/e/:slug/ajustes/estado", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const event = await findEventBySlug(db, bandId, c.req.param("slug"));
+  if (!event) return c.notFound();
+
+  const wanted = String((await c.req.parseBody())["status"] ?? "");
+  const status = wanted === "live" ? "live" : wanted === "closed" ? "closed" : event.status;
+
+  if (status === "live") {
+    // Publishing with no bank account would show a buyer a page they cannot
+    // pay from, so refuse rather than half-open the sale.
+    const accounts = await db
+      .select({ id: s.bankAccounts.id })
+      .from(s.bankAccounts)
+      .where(and(eq(s.bankAccounts.bandId, bandId), eq(s.bankAccounts.active, 1)))
+      .limit(1);
+    if (accounts.length === 0) {
+      return renderSettings(c, {
+        error:
+          "Agregá al menos una cuenta bancaria antes de publicar — si no, el comprador no tiene a dónde transferir.",
+      });
+    }
+  }
+
+  await db.update(s.events).set({ status }).where(eq(s.events.id, event.id));
+  return c.redirect(settingsPath(event.slug), 303);
+});
+
+eventSettingsRoutes.post("/e/:slug/ajustes/token", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const event = await findEventBySlug(db, c.get("bandId"), c.req.param("slug"));
+  if (!event) return c.notFound();
+
+  // Regenerating invalidates the old link immediately — that is the point when
+  // a staff member leaves or a link gets shared too widely.
+  await db.update(s.events).set({ staffToken: newStaffToken() }).where(eq(s.events.id, event.id));
+  return c.redirect(settingsPath(event.slug), 303);
+});

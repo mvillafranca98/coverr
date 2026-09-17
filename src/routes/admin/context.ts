@@ -1,0 +1,19 @@
+import type { Context } from "hono";
+
+export type Bindings = {
+  DB: D1Database;
+  PROOFS: R2Bucket;
+  ASSETS: Fetcher;
+  APP_ORIGIN: string;
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
+  SESSION_SECRET?: string;
+  ANTHROPIC_API_KEY?: string;
+};
+
+/** Set by the session middleware; every handler below it can rely on it. */
+export type Vars = { bandId: string };
+
+export type AdminEnv = { Bindings: Bindings; Variables: Vars };
+
+export type AdminContext = Context<AdminEnv>;
