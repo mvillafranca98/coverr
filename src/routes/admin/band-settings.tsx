@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
 import { and, desc, eq } from "drizzle-orm";
 import * as s from "../../db/schema";
-import { BandSettingsPage } from "../../views/setup";
+import { BandSettingsPage } from "../../views/setup/band-settings";
 import { findBand } from "../../db/queries/bands";
 import { newId, nowIso, normalizeEmail, lpsToCentavos } from "../../lib/core";
 import type { AdminContext, AdminEnv } from "./context";
