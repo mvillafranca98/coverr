@@ -1,6 +1,64 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as s from "../schema";
+import { newShortCode } from "../../lib/core";
+
+/**
+ * One order with the event and band it belongs to — what every buyer-facing
+ * page keyed by an order id needs, since the order id is the only thing the
+ * buyer carries.
+ */
+export async function findOrderWithEventAndBand(
+  db: DrizzleD1Database<typeof s>,
+  orderId: string,
+) {
+  const rows = await db
+    .select({ order: s.orders, event: s.events, band: s.bands })
+    .from(s.orders)
+    .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+    .innerJoin(s.bands, eq(s.events.bandId, s.bands.id))
+    .where(eq(s.orders.id, orderId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** Tickets already sold on an event, for the capacity check at purchase. */
+export async function confirmedTicketCount(
+  db: DrizzleD1Database<typeof s>,
+  eventId: string,
+): Promise<number> {
+  const [sold] = await db
+    .select({ n: sql<number>`coalesce(sum(${s.orders.quantity}), 0)` })
+    .from(s.orders)
+    .where(and(eq(s.orders.eventId, eventId), eq(s.orders.status, "confirmed")));
+  return Number(sold?.n ?? 0);
+}
+
+/**
+ * A short code no other order is using, starting from the one the buyer may
+ * have already pasted into the transfer's "Detalle".
+ *
+ * A collision regenerates rather than failing the sale: Detalle is a matching
+ * hint, never authoritative, so a rare mismatch only degrades to matching on
+ * name, amount and reference.
+ */
+export async function uniqueShortCode(
+  db: DrizzleD1Database<typeof s>,
+  bandSlug: string,
+  preferred: string,
+): Promise<string> {
+  let shortCode = preferred;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const clash = await db
+      .select({ id: s.orders.id })
+      .from(s.orders)
+      .where(eq(s.orders.shortCode, shortCode))
+      .limit(1);
+    if (clash.length === 0) break;
+    shortCode = newShortCode(bandSlug);
+  }
+  return shortCode;
+}
 
 export type EventOrderRow = {
   id: string;
