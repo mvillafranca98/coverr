@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
 import { and, eq } from "drizzle-orm";
 import * as s from "../../db/schema";
-import { BuyPage } from "../../views/buy";
+import { BuyPage } from "../../views/buy/page";
 import { findEventWithBand } from "../../db/queries/events";
 import { resolveSellableRule } from "../../db/queries/price-rules";
 import { newShortCode } from "../../lib/core";
