@@ -1,0 +1,35 @@
+/**
+ * How an order is described across the admin screens. Shared by the list and
+ * the detail page so the two never drift — a channel renamed here is renamed
+ * in both.
+ *
+ * Structural rather than imported from the query layer: a view states the
+ * shape it needs and nothing more, which keeps presentation independent of how
+ * the rows were fetched.
+ */
+export type OrderRow = {
+  id: string;
+  shortCode: string;
+  payerName: string;
+  payerEmail: string;
+  payerPhone: string | null;
+  quantity: number;
+  expectedAmount: number;
+  channel: string;
+  status: string;
+  verificationStatus: string;
+  bankSelected: string | null;
+  createdAt: string;
+  note: string | null;
+  attendees: string;
+  checkedIn: number;
+  flag: string | null;
+};
+
+export const CHANNEL_LABEL: Record<string, string> = {
+  online: "Preventa",
+  door_online: "Taquilla",
+  door_cash: "Efectivo",
+  manual: "Manual",
+  comp: "Cortesía",
+};

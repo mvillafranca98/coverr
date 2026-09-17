@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import { AdminLayout } from "./admin";
+import { AdminLayout } from "./admin/layout";
 import { BANKS, bankLabel, formatLps, isoToLocalInput, formatEventDate } from "../lib/core";
 
 /** Deliberately plain markup — the visual pass comes later. */

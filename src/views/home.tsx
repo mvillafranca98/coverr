@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import { AdminLayout } from "./admin";
+import { AdminLayout } from "./admin/layout";
 import { formatLpsShort, formatEventDate } from "../lib/core";
 import type { EventMetrics, CategoryRow, FanStats } from "../lib/stats";
 import { OnboardingChecklist } from "./signup";

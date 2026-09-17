@@ -2,7 +2,7 @@ import { Hono, type MiddlewareHandler } from "hono";
 import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import * as s from "../../db/schema";
-import { LoginPage } from "../../views/admin";
+import { LoginPage } from "../../views/admin/login";
 import { loginEmailHtml, loginEmailText, LOGIN_EMAIL_SUBJECT } from "../../views/email";
 import { makeTransport } from "../../lib/email";
 import {

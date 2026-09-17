@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { and, eq, sql } from "drizzle-orm";
 import * as s from "../../db/schema";
-import { MoneyPage } from "../../views/admin";
+import { MoneyPage } from "../../views/admin/money";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug } from "../../db/queries/events";
 import { settlementFor } from "../../db/queries/event-totals";

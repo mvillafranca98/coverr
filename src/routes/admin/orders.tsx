@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
 import * as s from "../../db/schema";
-import { OrdersPage } from "../../views/admin";
+import { OrdersPage } from "../../views/admin/orders";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug } from "../../db/queries/events";
 import { listOrdersForEvent, type EventOrderRow } from "../../db/queries/orders";
