@@ -488,3 +488,12 @@ INSERT INTO attendees (id,order_id,name,note,qr_token,checked_in_at,checked_in_b
 ('att_h_dc13_2','ord_h_dc13','Efectivo 13-3',NULL,'HISTC132000000000000000000','2026-08-01T22:30:00Z',NULL,'seed'),
 ('att_h_dc13_3','ord_h_dc13','Efectivo 13-4',NULL,'HISTC133000000000000000000','2026-08-01T22:30:00Z',NULL,'seed'),
 ('att_h_dc14_0','ord_h_dc14','Efectivo 14-1',NULL,'HISTC140000000000000000000','2026-08-01T22:30:00Z',NULL,'seed');
+
+-- Orders carry the refund policy they were sold under. The inserts above name
+-- it nowhere, so copy it down from each order's event rather than let the
+-- column default to 'none' — seeded data should look like data the app made.
+UPDATE orders SET
+  refund_policy = coalesce(
+    (SELECT refund_policy FROM events WHERE events.id = orders.event_id), 'none'),
+  refund_policy_text =
+    (SELECT refund_policy_text FROM events WHERE events.id = orders.event_id);

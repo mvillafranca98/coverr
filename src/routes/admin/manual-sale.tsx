@@ -108,6 +108,10 @@ manualSaleRoutes.post("/e/:slug/venta", async (c) => {
     verificationStatus: "manual_ok",
     bankSelected: null,
     soldBy: bandId,
+    // A manual sale with an email gets ticket mail, and that mail carries the
+    // refund link — so it needs the policy frozen on it like any other order.
+    refundPolicy: event.refundPolicy,
+    refundPolicyText: event.refundPolicyText,
     note,
     createdAt,
   });

@@ -8,14 +8,16 @@ export type RefundWindow =
 /**
  * Decides whether a refund can still be asked for.
  *
- * `policy` is the event's refund policy as it stands now — the orders table
- * holds no policy of its own — so editing the event also moves the window for
- * orders that were already sold.
+ * Reads the policy off the order, not off the event: each order stores the
+ * policy it was sold under, so a band editing the event later never closes a
+ * window a buyer was shown and agreed to at checkout.
  */
-export function refundGate(
-  order: { status: string; createdAt: string; channel: string },
-  policy: string,
-): RefundWindow {
+export function refundGate(order: {
+  status: string;
+  createdAt: string;
+  channel: string;
+  refundPolicy: string;
+}): RefundWindow {
   if (order.status === "refunded") {
     return { open: false, headline: "Ya está reembolsado", detail: "Esta orden ya fue devuelta." };
   }
@@ -25,7 +27,7 @@ export function refundGate(
   if (order.channel === "comp") {
     return { open: false, headline: "Cortesía", detail: "Esta entrada no se pagó, así que no hay nada que devolver." };
   }
-  if (policy === "none") {
+  if (order.refundPolicy === "none") {
     return {
       open: false,
       headline: "Esta compra no admite reembolsos",

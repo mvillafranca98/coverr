@@ -148,6 +148,14 @@ export const orders = sqliteTable(
     /** Why this order exists, for manual sales: cash to the admin, tickets
      *  traded against a bill, a favour. Meaningless for online orders. */
     note: text("note"),
+    /**
+     * The refund policy as it stood when this order was placed, copied off the
+     * event. Frozen here rather than read live so that editing the event never
+     * retroactively closes a window the buyer was shown and consented to —
+     * the same reason `expectedAmount` is stored rather than recomputed.
+     */
+    refundPolicy: text("refund_policy").notNull().default("none"),
+    refundPolicyText: text("refund_policy_text"),
     createdAt: text("created_at").notNull(),
   },
   (t) => [

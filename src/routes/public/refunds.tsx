@@ -35,11 +35,11 @@ refundRoutes.get("/reembolso/:orderId", async (c) => {
     .limit(1);
   if (existing[0]) return c.html(<RefundSentPage {...common} />);
 
-  const gate = refundGate(order, event.refundPolicy);
+  const gate = refundGate(order);
   if (!gate.open) {
     return c.html(<RefundClosedPage {...common} headline={gate.headline} detail={gate.detail} />);
   }
-  return c.html(<RefundRequestPage {...common} policyText={event.refundPolicyText} />);
+  return c.html(<RefundRequestPage {...common} policyText={order.refundPolicyText} />);
 });
 
 refundRoutes.post("/reembolso/:orderId", async (c) => {
@@ -49,7 +49,7 @@ refundRoutes.post("/reembolso/:orderId", async (c) => {
   const { order, event, band } = found;
   const common = { band, event, order };
 
-  const gate = refundGate(order, event.refundPolicy);
+  const gate = refundGate(order);
   if (!gate.open) {
     return c.html(<RefundClosedPage {...common} headline={gate.headline} detail={gate.detail} />);
   }
@@ -59,7 +59,7 @@ refundRoutes.post("/reembolso/:orderId", async (c) => {
     return c.html(
       <RefundRequestPage
         {...common}
-        policyText={event.refundPolicyText}
+        policyText={order.refundPolicyText}
         error="Contanos brevemente por qué."
       />,
       400,

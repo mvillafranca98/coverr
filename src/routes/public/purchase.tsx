@@ -98,6 +98,10 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
     verificationStatus: "unmatched",
     bankSelected,
     soldBy: null,
+    // Frozen at purchase: the buyer consented to this exact wording, so editing
+    // the event later must not move the window under them.
+    refundPolicy: event.refundPolicy,
+    refundPolicyText: event.refundPolicyText,
     createdAt: ts,
   });
   await db.insert(s.attendees).values(

@@ -7,11 +7,13 @@ export type ConfirmProps = {
   band: { name: string };
   event: {
     name: string; venue: string; startsAt: string;
-    thankYouNote: string | null; refundPolicy: string;
+    thankYouNote: string | null;
   };
   order: {
     id: string; shortCode: string; quantity: number;
     expectedAmount: number; payerEmail: string;
+    /** The policy this order was sold under, not the event's current one. */
+    refundPolicy: string;
   };
   attendees: { name: string; note: string | null; qrToken: string }[];
 };
@@ -93,7 +95,7 @@ export const ConfirmPage: FC<ConfirmProps> = ({ band, event, order, attendees })
       </div>
     ) : null}
 
-    {event.refundPolicy === "none" ? null : (
+    {order.refundPolicy === "none" ? null : (
       <p class="hint" style="text-align:center;margin-top:20px">
         <a href={`/reembolso/${order.id}`} style="color:var(--muted)">
           Solicitar un reembolso
