@@ -185,3 +185,78 @@ export function loginEmailText(i: LoginEmailInput): string {
 }
 
 export const LOGIN_EMAIL_SUBJECT = "Entrar a Coverr";
+
+// ------------------------------------------------------------- band sign-up
+
+type SignupEmailInput = { bandName: string; url: string };
+
+/**
+ * The link that puts a brand-new band into its panel. It repeats most of the
+ * sign-in mail above; the two are kept apart because sign-up names the band in
+ * the subject line, which the sign-in mail does not.
+ */
+export function signupEmailHtml(i: SignupEmailInput): string {
+  return `<!doctype html><html lang="es"><body style="margin:0;background:#f3f1ea;padding:28px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:440px;text-align:left">
+<tr><td style="font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#b0651a;padding-bottom:10px">Coverr</td></tr>
+<tr><td style="font:700 22px/1.2 inherit;color:#191713;padding-bottom:10px">Entrar al panel de ${escapeHtml(i.bandName)}</td></tr>
+<tr><td style="font:400 15px/1.5 inherit;color:#57534b;padding-bottom:20px">Tocá el botón para entrar. El enlace vence en 15 minutos.</td></tr>
+<tr><td><a href="${i.url}" style="display:inline-block;padding:13px 22px;border-radius:9px;background:#191713;color:#fff;font:600 15px/1 inherit;text-decoration:none">Entrar</a></td></tr>
+<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:22px">Si no pediste esto, ignoralo — nadie puede entrar sin este correo.</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export function signupEmailText(i: SignupEmailInput): string {
+  return `Entrar al panel de ${i.bandName}:\n\n${i.url}\n\nEl enlace vence en 15 minutos.`;
+}
+
+export function signupEmailSubject(i: SignupEmailInput): string {
+  return `Entrar a Coverr — ${i.bandName}`;
+}
+
+// ------------------------------------------------------------ refund request
+
+type RefundAlertInput = {
+  event: { name: string; slug: string };
+  order: {
+    id: string;
+    shortCode: string;
+    payerName: string;
+    payerEmail: string;
+    quantity: number;
+    expectedAmount: number;
+  };
+  reason: string;
+  origin: string;
+};
+
+/**
+ * Tells the band someone wants their money back. The band decides and moves the
+ * money themselves, so this only has to reach them — hence the reply-to the
+ * caller sets to the buyer and the direct link to the order.
+ */
+export function refundAlertEmailHtml(i: RefundAlertInput): string {
+  return `<!doctype html><html lang="es"><body style="margin:0;background:#f3f1ea;padding:26px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:460px;text-align:left">
+<tr><td style="font:700 20px/1.25 inherit;color:#191713;padding-bottom:12px">Solicitud de reembolso</td></tr>
+<tr><td style="font:400 15px/1.7 inherit;color:#57534b;padding-bottom:16px">
+<b style="color:#191713">Orden:</b> ${escapeHtml(i.order.shortCode)}<br>
+<b style="color:#191713">Evento:</b> ${escapeHtml(i.event.name)}<br>
+<b style="color:#191713">Compró:</b> ${escapeHtml(i.order.payerName)} (${escapeHtml(i.order.payerEmail)})<br>
+<b style="color:#191713">Boletos:</b> ${i.order.quantity} · ${formatLpsShort(i.order.expectedAmount)}
+</td></tr>
+<tr><td style="background:#fff;border:1px solid #ddd8cf;border-radius:10px;padding:14px 16px;font:400 15px/1.6 inherit;color:#57534b">
+${escapeHtml(i.reason)}
+</td></tr>
+<tr><td style="padding-top:18px"><a href="${i.origin}/admin/e/${i.event.slug}/orden/${i.order.id}" style="display:inline-block;padding:12px 20px;border-radius:9px;background:#191713;color:#fff;font:600 15px/1 inherit;text-decoration:none">Ver la orden</a></td></tr>
+<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:20px">Respondé este correo para contactar directamente a quien compró.</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export function refundAlertEmailText(i: RefundAlertInput): string {
+  return `Solicitud de reembolso — ${i.order.shortCode}\n\nEvento: ${i.event.name}\nCompró: ${i.order.payerName} (${i.order.payerEmail})\nBoletos: ${i.order.quantity} · ${formatLpsShort(i.order.expectedAmount)}\n\n${i.reason}\n\nVer la orden: ${i.origin}/admin/e/${i.event.slug}/orden/${i.order.id}`;
+}
+
+export function refundAlertEmailSubject(i: RefundAlertInput): string {
+  return `Solicitud de reembolso — ${i.order.shortCode}`;
+}
