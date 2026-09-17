@@ -1,3 +1,5 @@
+import { escapeHtml } from "../lib/core";
+
 type ScannerShellInput = {
   eventName: string;
   venue: string;
@@ -11,6 +13,12 @@ type ScannerShellInput = {
  * token: the attendee list, the counts and every decision at the door come
  * from `/api/scan`, cached on the device so the page keeps working with no
  * signal.
+ *
+ * Every interpolation below is escaped. The event name, venue and band name
+ * are free text the band typed, and this is a hand-written template rather
+ * than JSX, so nothing escapes them for us. An unescaped apostrophe in a venue
+ * name would break the page at the door, mid-show — and a tag would run in the
+ * browser of whoever is scanning.
  */
 export function scannerShellHtml(i: ScannerShellInput): string {
   return `<!doctype html>
@@ -19,15 +27,15 @@ export function scannerShellHtml(i: ScannerShellInput): string {
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
 <meta name="theme-color" content="#0C0B09">
 <meta name="robots" content="noindex,nofollow">
-<title>Entrada — ${i.eventName}</title>
+<title>Entrada — ${escapeHtml(i.eventName)}</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="/scanner.css">
 </head>
-<body data-token="${i.token}">
+<body data-token="${escapeHtml(i.token)}">
 <div class="wrap">
   <header>
-    <div class="ev">${i.eventName}</div>
-    <div class="vn">${i.venue} · ${i.bandName}</div>
+    <div class="ev">${escapeHtml(i.eventName)}</div>
+    <div class="vn">${escapeHtml(i.venue)} · ${escapeHtml(i.bandName)}</div>
     <span class="net" id="net">Cargando…</span>
   </header>
 
