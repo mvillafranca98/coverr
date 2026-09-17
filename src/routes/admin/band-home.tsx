@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
 import { and, eq } from "drizzle-orm";
 import * as s from "../../db/schema";
-import { BandHomePage } from "../../views/home";
+import { BandHomePage } from "../../views/band-home";
 import { eventMetrics, costsByCategory, fanStats } from "../../db/queries/stats";
 import { findBand } from "../../db/queries/bands";
 import type { AdminEnv } from "./context";
