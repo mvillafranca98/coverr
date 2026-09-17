@@ -13,11 +13,12 @@ Cloudflare Workers · Hono + `hono/jsx` server-rendered HTML · D1 (SQLite) via 
 R2 for payment proofs · Resend for email · Anthropic vision for proof extraction.
 
 ```
-src/lib/      pure logic — money, verification rules, settlement, stats, formatting
-src/db/       Drizzle schema; migrations/ holds the generated SQL
-src/routes/   HTTP — admin app, scanner API
-src/index.tsx HTTP — public buyer flow, QR files, recovery
+src/lib/      pure logic — money, verification rules, settlement, formatting
+src/db/       Drizzle schema and every query; migrations/ holds the generated SQL
+src/jobs/     background work run from waitUntil, after the response has gone
+src/routes/   HTTP — one router per flow, under public/ and admin/
 src/views/    presentation only; a view must never touch the database
+src/index.tsx the entry point: creates the app, mounts the routers, handles 404
 public/       PWA scanner assets, service worker
 ```
 
@@ -33,9 +34,14 @@ These are non-negotiable for every change in this repo.
 2. **Readability and naming.** Descriptive, intention-revealing names. No cryptic
    abbreviations. `unavailableItemIds` beats `badIds`; `markAllAvailable` beats `reset`.
 3. **Clean structure.** Group related functions. Separate business logic from I/O: pure logic
-   belongs in `src/lib`, database access in `src/db` and the route that owns the query, HTTP in
-   `src/routes` and `src/index.tsx`, markup in `src/views`. A route handler should read as a
-   sequence of named steps, not an algorithm.
+   belongs in `src/lib`, database access in `src/db/queries`, HTTP in `src/routes`, markup in
+   `src/views`, and work that outlives the response in `src/jobs`. A route handler should read
+   as a sequence of named steps, not an algorithm.
+
+   The line between `lib` and `jobs`: `src/lib` never touches the database, and an adapter
+   there speaks to exactly one outside thing (`email.ts` to Resend, `extract.ts` to the vision
+   API). The moment something reads the database, coordinates two of those adapters, and runs
+   after the response has been sent, it is a job.
 4. **Documentation.** Comments explain *why*, not *what*. Document the non-obvious: an
    ordering that matters, a security boundary, a decision that looks wrong but is not. Public
    functions get a docstring. Do not narrate code that speaks for itself.

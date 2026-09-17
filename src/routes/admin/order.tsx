@@ -6,7 +6,7 @@ import { OrderPage } from "../../views/admin/order";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug } from "../../db/queries/events";
 import { listOrdersForEvent } from "../../db/queries/orders";
-import { runVerification } from "../../lib/pipeline";
+import { runVerification } from "../../jobs/verify-proof";
 import { nowIso } from "../../lib/core";
 import type { AdminEnv } from "./context";
 

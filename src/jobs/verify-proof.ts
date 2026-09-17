@@ -1,9 +1,9 @@
 import { drizzle } from "drizzle-orm/d1";
 import { eq, and, sql, ne } from "drizzle-orm";
 import * as s from "../db/schema";
-import { extractProof } from "./extract";
-import { verifyProof, worstSeverity, type Flag } from "./verify";
-import { newId, nowIso, isReadableProof } from "./core";
+import { extractProof } from "../lib/extract";
+import { verifyProof, worstSeverity, type Flag } from "../lib/verify";
+import { newId, nowIso, isReadableProof } from "../lib/core";
 
 type Env = {
   DB: D1Database;

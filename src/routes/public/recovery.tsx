@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { and, eq } from "drizzle-orm";
 import * as s from "../../db/schema";
 import { RecoverPage } from "../../views/recover";
-import { sendTickets } from "../../lib/tickets";
+import { sendTickets } from "../../jobs/send-tickets";
 import { normalizeEmail } from "../../lib/core";
 import type { PublicEnv } from "./context";
 

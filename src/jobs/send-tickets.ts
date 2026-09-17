@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import * as s from "../db/schema";
-import { makeTransport } from "./email";
+import { makeTransport } from "../lib/email";
 import { ticketEmailHtml, ticketEmailText, ticketEmailSubject } from "../views/email";
 
 type Env = {

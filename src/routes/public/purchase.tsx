@@ -7,8 +7,8 @@ import { confirmedTicketCount, uniqueShortCode } from "../../db/queries/orders";
 import { findDuplicateProof, insertUnreadProof } from "../../db/queries/proofs";
 import { resolveSellableRule } from "../../db/queries/price-rules";
 import { readPurchaseForm } from "../../lib/purchase-form";
-import { runVerification } from "../../lib/pipeline";
-import { sendTickets } from "../../lib/tickets";
+import { runVerification } from "../../jobs/verify-proof";
+import { sendTickets } from "../../jobs/send-tickets";
 import {
   newId,
   newQrToken,

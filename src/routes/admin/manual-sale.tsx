@@ -5,7 +5,7 @@ import { ManualSalePage } from "../../views/manual";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug } from "../../db/queries/events";
 import { currentPriceRule } from "../../db/queries/price-rules";
-import { sendTickets } from "../../lib/tickets";
+import { sendTickets } from "../../jobs/send-tickets";
 import { newId, newQrToken, newShortCode, nowIso, lpsToCentavos } from "../../lib/core";
 import type { AdminContext, AdminEnv } from "./context";
 
