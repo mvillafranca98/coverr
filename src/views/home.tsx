@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
 import { AdminLayout } from "./admin/layout";
 import { formatLpsShort, formatEventDate } from "../lib/core";
-import type { EventMetrics, CategoryRow, FanStats } from "../lib/stats";
+import type { EventMetrics, CategoryRow, FanStats } from "../db/queries/stats";
 import { OnboardingChecklist } from "./signup";
 
 const pct = (v: number | null, digits = 0): string =>
