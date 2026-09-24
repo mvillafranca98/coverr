@@ -159,7 +159,18 @@ export function isoToLocalInput(iso: string | null): string {
 }
 
 /** Lempiras typed into a form -> centavos. Money never round-trips as a float. */
+/**
+ * Lempiras as typed into a form, to centavos. Null when the input is not a
+ * usable amount, so the caller can say which field to fix.
+ *
+ * Blank is rejected before Number() ever sees it, because `Number("")` and
+ * `Number("   ")` are both 0 — an empty price field would otherwise parse as a
+ * free ticket rather than as a mistake. An explicit "0" is still accepted:
+ * a manual sale priced at zero is how a comp gets issued.
+ */
 export function lpsToCentavos(value: unknown): number | null {
+  if (value == null) return null;
+  if (typeof value === "string" && value.trim() === "") return null;
   const n = Number(value);
   if (!Number.isFinite(n) || n < 0) return null;
   return Math.round(n * 100);

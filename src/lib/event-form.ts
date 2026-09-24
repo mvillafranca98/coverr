@@ -57,6 +57,11 @@ export function readEventForm(body: Record<string, unknown>): EventFormResult {
   if (!startsAt) return { ok: false, message: "Revisá la fecha de inicio." };
   const doorsAt = text("doors_at") ? localInputToIso(text("doors_at")) : null;
 
+  // Both prices are required. A blank one used to reach the database as L0,
+  // which published an event whose door tickets were free.
+  if (!text("presale_amount")) return { ok: false, message: "Falta el precio de preventa." };
+  if (!text("door_amount")) return { ok: false, message: "Falta el precio de taquilla." };
+
   const presaleAmount = lpsToCentavos(text("presale_amount"));
   const doorAmount = lpsToCentavos(text("door_amount"));
   if (presaleAmount == null) return { ok: false, message: "Revisá el precio de preventa." };
