@@ -24,6 +24,22 @@ public/       PWA scanner assets, service worker
 
 Commands: `npm run dev`, `npm run typecheck`, `npm run db:generate`, `npm run db:reset`.
 
+## Project docs
+- `docs/SPEC.md`: what we're building, and the open questions. Read it before adding or changing
+  features. The long-form reasoning stays in `coverr-spec.html`.
+- `DESIGN.md`: tokens, the two surfaces and the contrast rules. Follow it for all UI work.
+- `docs/STANDARDS.md`: which dev-standards items apply and their status. Update it when a change
+  affects an item — a new service, a new paid API, auth, uploads, AI.
+
+## Project rules
+- **Honduras only.** Money is lempiras, copy is Honduran Spanish, banks are the six in
+  `lib/core.ts`. No EU or UK users, so GDPR items are out of scope until that changes.
+- **18+ only.** Decided, but not yet stated or enforced anywhere in the product — see LEG-11.
+- **No animation library, no webfonts, no icon set.** Deliberate, not an oversight: buyers open
+  these pages on venue wifi moments before paying. See DESIGN.md.
+- **Light or dark is chosen by audience, not by preference.** Light for anything a buyer sees,
+  dark for anything the band sees. There is no theme toggle and should not be one.
+
 ## Code standards
 
 These are non-negotiable for every change in this repo.
