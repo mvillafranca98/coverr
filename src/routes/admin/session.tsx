@@ -17,6 +17,7 @@ import {
 } from "../../lib/auth";
 import { normalizeEmail } from "../../lib/core";
 import type { AdminEnv, Bindings } from "./context";
+import { withinLimit, clientIp, TOO_MANY_REQUESTS } from "../../lib/rate-limit";
 
 function secretOf(env: Bindings): string {
   // Without a configured secret the admin is not safe to serve at all, so fail
@@ -58,6 +59,10 @@ export const sessionRoutes = new Hono<AdminEnv>();
 sessionRoutes.get("/acceso", (c) => c.html(<LoginPage sent={c.req.query("ok") === "1"} />));
 
 sessionRoutes.post("/login", async (c) => {
+  if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
+    return c.html(<LoginPage error={TOO_MANY_REQUESTS} />, 429);
+  }
+
   const body = await c.req.parseBody();
   const email = typeof body["email"] === "string" ? normalizeEmail(body["email"]) : "";
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {

@@ -1,3 +1,4 @@
+import type { Limiter } from "../../lib/rate-limit";
 import type { Context } from "hono";
 
 export type Bindings = {
@@ -9,6 +10,9 @@ export type Bindings = {
   EMAIL_FROM?: string;
   SESSION_SECRET?: string;
   ANTHROPIC_API_KEY?: string;
+  /** Rate limiters. Optional: `unsafe` bindings may be absent in local dev. */
+  PURCHASE_LIMIT?: Limiter;
+  EMAIL_LIMIT?: Limiter;
 };
 
 /** Set by the session middleware; every handler below it can rely on it. */

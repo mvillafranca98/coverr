@@ -20,6 +20,7 @@ import {
   normalizePhone,
 } from "../../lib/core";
 import type { PublicEnv } from "./context";
+import { withinLimit, clientIp, TOO_MANY_REQUESTS } from "../../lib/rate-limit";
 
 export const purchaseRoutes = new Hono<PublicEnv>();
 
@@ -40,6 +41,11 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
 
   const backToForm = (message: string) =>
     c.redirect(`/e/${slug}?error=${encodeURIComponent(message)}`, 303);
+
+  // Every upload costs a vision call. This is the ceiling on that bill.
+  if (!(await withinLimit(c.env.PURCHASE_LIMIT, `buy:${clientIp(c)}`))) {
+    return backToForm(TOO_MANY_REQUESTS);
+  }
 
   const form = readPurchaseForm(await c.req.parseBody());
   if (!form.ok) return backToForm(form.message);

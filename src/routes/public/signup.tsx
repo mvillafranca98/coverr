@@ -8,6 +8,7 @@ import { makeTransport } from "../../lib/email";
 import { sign, LOGIN_TTL } from "../../lib/auth";
 import { newId, nowIso, normalizeEmail } from "../../lib/core";
 import type { PublicEnv } from "./context";
+import { withinLimit, clientIp, TOO_MANY_REQUESTS } from "../../lib/rate-limit";
 
 export const signupRoutes = new Hono<PublicEnv>();
 
@@ -22,6 +23,10 @@ export const signupRoutes = new Hono<PublicEnv>();
 signupRoutes.get("/registro", (c) => c.html(<SignupPage />));
 
 signupRoutes.post("/registro", async (c) => {
+  if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
+    return c.html(<SignupPage error={TOO_MANY_REQUESTS} />, 429);
+  }
+
   const db = drizzle(c.env.DB, { schema: s });
   const body = await c.req.parseBody();
   const name = String(body["name"] ?? "").trim().slice(0, 80);

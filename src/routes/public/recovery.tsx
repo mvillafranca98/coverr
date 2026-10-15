@@ -6,6 +6,7 @@ import { RecoverPage } from "../../views/recover";
 import { sendTickets } from "../../jobs/send-tickets";
 import { normalizeEmail } from "../../lib/core";
 import type { PublicEnv } from "./context";
+import { withinLimit, clientIp, TOO_MANY_REQUESTS } from "../../lib/rate-limit";
 
 export const recoveryRoutes = new Hono<PublicEnv>();
 
@@ -20,6 +21,10 @@ recoveryRoutes.post("/recuperar", async (c) => {
   const email = typeof body["email"] === "string" ? normalizeEmail(body["email"]) : "";
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return c.html(<RecoverPage error="Revisá el correo que escribiste." />, 400);
+  }
+
+  if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
+    return c.html(<RecoverPage error={TOO_MANY_REQUESTS} />, 429);
   }
 
   const db = drizzle(c.env.DB, { schema: s });

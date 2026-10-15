@@ -25,6 +25,31 @@
       "bucket_name": "coverr-proofs"
     }
   ],
+  // Cloudflare's native rate limiter. Still an `unsafe` binding: it is in the
+  // Workers runtime types but not yet in wrangler's config schema. Periods are
+  // limited to 10 or 60 seconds, hence the per-minute windows.
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "PURCHASE_LIMIT",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        // Deliberately loose. Walk-up buyers at the door self-serve through
+        // this same flow on one venue wifi, so they all share an IP — a tight
+        // cap would stall the queue the product exists to unstall. This is a
+        // ceiling on a runaway bill, not a precision control.
+        "simple": { "limit": 20, "period": 60 }
+      },
+      {
+        "name": "EMAIL_LIMIT",
+        "type": "ratelimit",
+        "namespace_id": "1002",
+        // Sign-in, sign-up and ticket recovery each send mail. A human needs
+        // one or two a minute; nothing legitimate needs five.
+        "simple": { "limit": 5, "period": 60 }
+      }
+    ]
+  },
   "vars": {
     "APP_ORIGIN": "https://coverr.a-mencias99.workers.dev",
     "EMAIL_FROM": "Coverr <coverr@macawly.dev>"

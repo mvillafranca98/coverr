@@ -1,3 +1,4 @@
+import type { Limiter } from "../../lib/rate-limit";
 /**
  * The worker's bindings, shared by every public router and by the root app in
  * `src/index.tsx`. `/admin` layers its own session variables on top of the same
@@ -12,6 +13,9 @@ export type Bindings = {
   EMAIL_FROM?: string;
   SESSION_SECRET?: string;
   ANTHROPIC_API_KEY?: string;
+  /** Rate limiters. Optional: `unsafe` bindings may be absent in local dev. */
+  PURCHASE_LIMIT?: Limiter;
+  EMAIL_LIMIT?: Limiter;
 };
 
 /** Nothing public runs behind middleware, so there are no context variables. */
