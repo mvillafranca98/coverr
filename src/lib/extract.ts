@@ -43,7 +43,12 @@ export const ProofSchema = z.object({
   datetime: z
     .string()
     .nullable()
-    .describe("Transaction date and time as ISO-8601. Use the document's own timezone if shown."),
+    .describe(
+        "Transaction date and time as ISO-8601 with a four-digit year. Use the " +
+          "document's own timezone if shown. Many receipts print only a day and " +
+          "month — if the year is not written on the document, return null rather " +
+          "than guessing or emitting a partial date.",
+      ),
   reference: z.string().nullable().describe("Reference or transaction number, digits only."),
   detail: z
     .string()

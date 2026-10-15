@@ -74,6 +74,13 @@ function nameLooselyMatches(a: string, b: string): boolean {
   return wa.some((w) => wb.includes(w));
 }
 
+/**
+ * An extracted datetime we can actually place in time: ISO-8601 beginning with
+ * a four-digit year. Anything shorter is discarded rather than guessed at,
+ * because JavaScript will happily invent a year for a partial date.
+ */
+const HAS_FULL_YEAR = /^\d{4}-\d{2}-\d{2}/;
+
 export function verifyProof(input: VerifyInput): Flag[] {
   const { fields, expectedAmount, payerName, bandAccounts, eventCreatedAt, knownReferences } = input;
   const flags: Flag[] = [];
@@ -140,7 +147,12 @@ export function verifyProof(input: VerifyInput): Flag[] {
   }
 
   // --- transfer older than the sale ----------------------------------------
-  if (fields.datetime) {
+  // Only a date carrying its own year can be compared. BAC's app notification
+  // prints "15 octubre" and nothing else, which the extractor faithfully
+  // returns as "10-15" — and `new Date("10-15")` is the year 2001, which read
+  // as a transfer made twenty-five years before the sale opened. A date we
+  // cannot place is not evidence of a stale one, so it raises nothing.
+  if (fields.datetime && HAS_FULL_YEAR.test(fields.datetime)) {
     const when = new Date(fields.datetime);
     const opened = new Date(eventCreatedAt);
     if (!Number.isNaN(when.getTime()) && when.getTime() < opened.getTime() - 86400000) {
