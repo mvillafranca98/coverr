@@ -221,8 +221,14 @@ export const AttendeesStep: FC = () => (
 );
 
 /**
- * The refund policy is shown before purchase and consented to explicitly.
- * Falls back to the 24h wording when the band set a policy but no custom text.
+ * The refund policy is shown before purchase and consented to explicitly — the
+ * exact wording of that checkbox is frozen onto the order, so a later change
+ * never moves a window a buyer was already shown.
+ *
+ * The terms and privacy notice sit outside the label on purpose: a link inside
+ * a <label> toggles the checkbox instead of opening, which would make reading
+ * what you are agreeing to actively hard. They attach to the submit button
+ * instead, which is the moment of acceptance (LEG-03).
  */
 export const ConsentStep: FC<ConsentStepProps> = ({ refundPolicy, refundPolicyText }) => (
     <section class="step">
@@ -235,6 +241,10 @@ export const ConsentStep: FC<ConsentStepProps> = ({ refundPolicy, refundPolicyTe
               "Puedo solicitar reembolso dentro de las 24 horas siguientes a mi compra.")}
         </span>
       </label>
+      <p class="accept">
+        Al confirmar aceptás los <a href="/terminos">términos</a> y el{" "}
+        <a href="/privacidad">aviso de privacidad</a>. Tenés que tener 18 años o más.
+      </p>
       <button type="submit" class="submit" id="submitBtn">
         Confirmar compra
       </button>

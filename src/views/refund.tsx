@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { Layout } from "./layout";
+import { LegalLinks } from "./legal/links";
 import { formatLpsShort, formatEventDate } from "../lib/core";
 
 /**
@@ -72,6 +73,7 @@ export const RefundRequestPage: FC<
     </section>
     <footer>
       <div>{band.name} · Coverr</div>
+      <LegalLinks />
     </footer>
   </Layout>
 );
@@ -90,6 +92,7 @@ export const RefundSentPage: FC<Common> = ({ band, event, order }) => (
     </section>
     <footer>
       <div>{band.name} · Coverr</div>
+      <LegalLinks />
     </footer>
   </Layout>
 );
@@ -116,6 +119,7 @@ export const RefundClosedPage: FC<Common & { headline: string; detail: string }>
     </section>
     <footer>
       <div>{band.name} · Coverr</div>
+      <LegalLinks />
     </footer>
   </Layout>
 );

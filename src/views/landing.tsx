@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { LegalLinks } from "./legal/links";
 
 /**
  * The public front page. Carries its own document and stylesheet rather than
@@ -264,6 +265,7 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
 
         <footer>
           <span>Coverr · Honduras</span>
+          <LegalLinks />
           <span>
             Un producto de <a href="https://macawly.dev">macawly.dev</a>
           </span>

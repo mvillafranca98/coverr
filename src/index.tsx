@@ -10,6 +10,7 @@ import { confirmationRoutes } from "./routes/public/confirmation";
 import { qrFileRoutes } from "./routes/public/qr-files";
 import { recoveryRoutes } from "./routes/public/recovery";
 import { signupRoutes } from "./routes/public/signup";
+import { legalRoutes } from "./routes/public/legal";
 import { refundRoutes } from "./routes/public/refunds";
 import { scannerShellRoutes } from "./routes/public/scanner-shell";
 import { landingRoutes } from "./routes/public/landing";
@@ -90,6 +91,7 @@ app.route("/", qrFileRoutes);
 app.route("/", recoveryRoutes);
 app.route("/api/scan", scanApi);
 app.route("/", signupRoutes);
+app.route("/", legalRoutes);
 app.route("/", refundRoutes);
 
 app.get("/admin/", (c) => c.redirect("/admin", 301));

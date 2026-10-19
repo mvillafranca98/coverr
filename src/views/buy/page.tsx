@@ -2,6 +2,7 @@ import type { FC } from "hono/jsx";
 import { Layout } from "../layout";
 import { bankLabel, formatLpsShort, formatEventDate, formatEventTime } from "../../lib/core";
 import { buyFormScript } from "./form-script";
+import { LegalLinks } from "../legal/links";
 import {
   QuantityStep,
   BankStep,
@@ -95,6 +96,7 @@ export const BuyPage: FC<BuyProps> = ({
 
       <footer>
         <div>{band.name} · Coverr</div>
+        <LegalLinks />
       </footer>
 
       <script

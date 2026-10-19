@@ -34,7 +34,8 @@ Commands: `npm run dev`, `npm run typecheck`, `npm run db:generate`, `npm run db
 ## Project rules
 - **Honduras only.** Money is lempiras, copy is Honduran Spanish, banks are the six in
   `lib/core.ts`. No EU or UK users, so GDPR items are out of scope until that changes.
-- **18+ only.** Decided, but not yet stated or enforced anywhere in the product — see LEG-11.
+- **18+ only.** Stated in the terms and in the checkout acceptance line; still not *enforced*
+  anywhere — there is no age gate. See LEG-11.
 - **No animation library, no webfonts, no icon set.** Deliberate, not an oversight: buyers open
   these pages on venue wifi moments before paying. See DESIGN.md.
 - **Light or dark is chosen by audience, not by preference.** Light for anything a buyer sees,

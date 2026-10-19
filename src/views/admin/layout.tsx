@@ -1,4 +1,5 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
+import { LegalLinks } from "../legal/links";
 
 /**
  * The admin app's whole design system, inlined into every page.
@@ -126,7 +127,10 @@ export const AdminLayout: FC<
           </nav>
         ) : null}
         {children}
-        <footer>Coverr</footer>
+        <footer>
+          <div>Coverr</div>
+          <LegalLinks />
+        </footer>
       </div>
     </body>
   </html>

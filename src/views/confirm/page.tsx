@@ -2,6 +2,7 @@ import type { FC } from "hono/jsx";
 import { Layout } from "../layout";
 import { qrDataUri } from "../../lib/qr";
 import { ticketScript } from "./ticket-script";
+import { LegalLinks } from "../legal/links";
 import { formatLpsShort, formatEventDate, formatEventTime } from "../../lib/core";
 
 export type ConfirmProps = {
@@ -133,6 +134,7 @@ export const ConfirmPage: FC<ConfirmProps> = ({ band, event, order, attendees })
 
     <footer>
       <div>{band.name} · Coverr</div>
+      <LegalLinks />
     </footer>
 
     <script

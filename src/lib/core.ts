@@ -82,10 +82,17 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
-/** Proofs carry third-party banking details — purge 30 days after the event. */
+/**
+ * Proofs carry third-party banking details, so they do not outlive the event by
+ * long. Exported because the privacy notice states this number to the people
+ * whose data it is — the two must never disagree.
+ */
+export const PROOF_RETENTION_DAYS = 30;
+
+/** The instant a proof uploaded for this event becomes due for deletion. */
 export function purgeAfter(eventStartsAt: string): string {
   const d = new Date(eventStartsAt);
-  d.setDate(d.getDate() + 30);
+  d.setDate(d.getDate() + PROOF_RETENTION_DAYS);
   return d.toISOString();
 }
 

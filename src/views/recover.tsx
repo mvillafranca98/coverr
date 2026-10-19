@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { Layout } from "./layout";
+import { LegalLinks } from "./legal/links";
 
 /**
  * Deliberately says the same thing whether or not the address is registered.
@@ -54,6 +55,7 @@ export const RecoverPage: FC<{ sent?: boolean; error?: string }> = ({ sent, erro
 
     <footer>
       <div>Coverr</div>
+      <LegalLinks />
     </footer>
   </Layout>
 );

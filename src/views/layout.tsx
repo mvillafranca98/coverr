@@ -157,6 +157,8 @@ textarea{resize:vertical;min-height:44px}
 /* ---- consent + submit ---- */
 .consent{display:flex;gap:11px;align-items:flex-start;margin-top:16px;font-size:13.5px;color:var(--muted)}
 .consent input{margin:2px 0 0;width:19px;height:19px;flex:none;accent-color:var(--accent-text)}
+.accept{margin:12px 0 0;font-size:12.5px;color:var(--dim);line-height:1.45}
+.accept a{color:var(--accent-text)}
 .submit{
   display:block;width:100%;margin-top:20px;padding:17px;border:1px solid var(--accent-text);border-radius:11px;
   background:var(--accent);color:var(--accent-ink);font-size:17px;font-weight:750;
@@ -218,19 +220,26 @@ export const Layout: FC<
     title: string;
     description?: string;
     ogUrl?: string;
+    /** Opt out of the default noindex. Only for a page that belongs to nobody. */
+    indexable?: boolean;
   }>
-> = ({ title, description, ogUrl, children }) => (
+> = ({ title, description, ogUrl, indexable, children }) => (
   <html lang="es">
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
       <meta name="theme-color" content="#FBF8F2" />
-      {/* Every page on this layout shows something that belongs to one person:
-          the band's bank account and holder name on the buy page, a buyer's name
-          and live QR codes on the ticket page. None of it should be reachable
-          from a search result. The landing page is the only public page meant to
-          rank, and it carries its own document. */}
-      <meta name="robots" content="noindex,nofollow" />
+      {/* Almost every page on this layout shows something that belongs to one
+          person: the band's bank account and holder name on the buy page, a
+          buyer's name and live QR codes on the ticket page. None of that should
+          turn up in a search result, so noindex is the default and a page has
+          to ask for the opposite.
+
+          The legal documents are the one exception: they belong to nobody, and
+          a privacy notice that search engines are told to ignore is not really
+          published. The landing page carries its own document. */}
+      {indexable ? null : <meta name="robots" content="noindex,nofollow" />}
+      {indexable && ogUrl ? <link rel="canonical" href={ogUrl} /> : null}
       <title>{title}</title>
       {description ? <meta name="description" content={description} /> : null}
       <meta property="og:title" content={title} />
