@@ -5,7 +5,7 @@ import * as s from "../../db/schema";
 import { OrderPage } from "../../views/admin/order";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug } from "../../db/queries/events";
-import { listOrdersForEvent } from "../../db/queries/orders";
+import { listOrdersForEvent, findOrderInEvent } from "../../db/queries/orders";
 import { runVerification } from "../../jobs/verify-proof";
 import { nowIso } from "../../lib/core";
 import type { AdminEnv } from "./context";
@@ -88,7 +88,12 @@ orderRoutes.post("/e/:slug/orden/:id/resolver", async (c) => {
   const event = await findEventBySlug(db, bandId, c.req.param("slug"));
   if (!event) return c.notFound();
 
-  const orderId = c.req.param("id");
+  // Prove the order is this event's before touching it — the slug only
+  // proves the event is ours.
+  const order = await findOrderInEvent(db, event.id, c.req.param("id"));
+  if (!order) return c.notFound();
+
+  const orderId = order.id;
   const flagId = String((await c.req.parseBody())["flag_id"] ?? "");
 
   await db
@@ -106,7 +111,7 @@ orderRoutes.post("/e/:slug/orden/:id/resolver", async (c) => {
     await db
       .update(s.orders)
       .set({ verificationStatus: "manual_ok" })
-      .where(eq(s.orders.id, orderId));
+      .where(and(eq(s.orders.id, orderId), eq(s.orders.eventId, event.id)));
   }
   return c.redirect(orderPath(event.slug, orderId), 303);
 });
@@ -117,8 +122,11 @@ orderRoutes.post("/e/:slug/orden/:id/revisar", async (c) => {
   const event = await findEventBySlug(db, c.get("bandId"), c.req.param("slug"));
   if (!event) return c.notFound();
 
-  await runVerification(c.env, c.req.param("id"));
-  return c.redirect(orderPath(event.slug, c.req.param("id")), 303);
+  const order = await findOrderInEvent(db, event.id, c.req.param("id"));
+  if (!order) return c.notFound();
+
+  await runVerification(c.env, order.id);
+  return c.redirect(orderPath(event.slug, order.id), 303);
 });
 
 /** Renaming an attendee is the whole of "transfer this ticket to someone else". */
@@ -127,7 +135,10 @@ orderRoutes.post("/e/:slug/orden/:id/asistente", async (c) => {
   const event = await findEventBySlug(db, c.get("bandId"), c.req.param("slug"));
   if (!event) return c.notFound();
 
-  const orderId = c.req.param("id");
+  const order = await findOrderInEvent(db, event.id, c.req.param("id"));
+  if (!order) return c.notFound();
+
+  const orderId = order.id;
   const body = await c.req.parseBody();
   const attendeeId = String(body["attendee_id"] ?? "");
   const name = String(body["name"] ?? "").trim();
@@ -168,7 +179,10 @@ orderRoutes.post("/e/:slug/orden/:id/reembolso", async (c) => {
   const event = await findEventBySlug(db, bandId, c.req.param("slug"));
   if (!event) return c.notFound();
 
-  const orderId = c.req.param("id");
+  const order = await findOrderInEvent(db, event.id, c.req.param("id"));
+  if (!order) return c.notFound();
+
+  const orderId = order.id;
   const decision = String((await c.req.parseBody())["decision"] ?? "");
   if (decision !== "approved" && decision !== "denied") {
     return c.redirect(orderPath(event.slug, orderId), 303);

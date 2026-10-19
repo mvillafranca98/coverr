@@ -11,7 +11,7 @@ Status values:
 - **N/A:** doesn't apply, or the thing it governs doesn't exist yet (say which)
 
 ## Profile
-Last audit: never (4 items recorded by hand on 2026-10-19)
+Last audit: 2026-10-19, scope `all` (8 checklists, one subagent each)
 Countries served: Honduras
 
 | Flag | On | Meaning | Note |
@@ -48,94 +48,95 @@ Every service that receives user data, including hosting, database and auth prov
 | Cloudflare R2 | Payment proof storage | Bank confirmation screenshots. These contain a **third party's** full account number, name and sometimes email — the payer is often not the attendee | no |
 | Anthropic | Extracting fields from payment proofs | The proof image itself, and therefore the banking details in it | no |
 | Resend | Transactional email | Buyer email addresses, ticket contents, band contact address | no |
+| WhatsApp (wa.me) | Admin click-to-chat link on the order page (`src/views/admin/order.tsx:115`) | A buyer's phone number, only when an admin clicks it. Nothing is sent server-side | no |
 
 ## Status
 
 | ID | Sev | Item | Status | Evidence / fix | Checked |
 |---|---|---|---|---|---|
-| SEC-01 | critical | No secrets in client code or the repo. | TODO | | |
-| SEC-02 | critical | Every table or collection has access rules. | TODO | | |
-| SEC-03 | critical | User files live in private storage. | TODO | | |
-| SEC-04 | critical | Authorization is checked on the server for every request that touches user data. | TODO | | |
-| SEC-05 | high | Auth endpoints are protected against abuse. | TODO | | |
-| SEC-06 | high | Anything that costs money per call is protected. | PARTIAL | PURCHASE_LIMIT 20/min on the endpoint that triggers the vision call. Cloudflare's limiter is best-effort — it damps bursts, not a slow drip. The hard ceiling is the event capacity cap, which bounds orders and therefore vision calls | 2026-10-19 |
-| SEC-08 | high | Input is validated on the server and queries are parameterized. | TODO | | |
-| SEC-09 | medium | No known high or critical vulnerabilities in dependencies. | TODO | | |
-| SEC-10 | medium | Security headers and cookies are set. | TODO | | |
-| SEC-11 | medium | Errors and logs don't leak. | TODO | | |
-| SEC-12 | medium | Sessions end properly. | TODO | | |
-| SEC-13 | low | CORS allows only your own origins. | TODO | | |
-| SEC-14 | high | Environments are separated. | TODO | | |
-| AI-01 | high | Users know when they're dealing with AI. | TODO | | |
-| AI-02 | high | AI providers are disclosed and set up for privacy. | TODO | | |
-| AI-07 | high | Every AI call has limits. | TODO | | |
-| AI-08 | high | User input can't override the AI's instructions or permissions. | TODO | | |
-| AI-09 | medium | AI failures degrade gracefully. | TODO | | |
-| AI-11 | medium | Prompt and response logs are minimal and protected. | TODO | | |
-| LEG-01 | critical | A privacy policy is published and linked wherever users need it. | TODO | | |
-| LEG-02 | critical | The privacy policy matches the code. | TODO | | |
-| LEG-03 | high | Terms of service are published and accepted. | TODO | | |
-| LEG-04 | critical | Users can delete their account, and deletion really deletes. | TODO | | |
-| LEG-07 | critical | No fake reviews, testimonials or social proof. | TODO | | |
-| LEG-11 | high | The minimum age is decided and enforced. | TODO | | |
-| LEG-13 | high | Marketing messages follow the rules. | TODO | | |
-| LEG-14 | medium | Everything you ship is licensed for commercial use. | TODO | | |
-| PERF-01 | high | Performance is measured, not assumed. | TODO | | |
-| PERF-02 | high | No N+1 queries. | TODO | | |
-| PERF-03 | high | Lists that can grow are paginated on the server. | TODO | | |
-| PERF-04 | medium | Columns you filter, join or sort on are indexed. | TODO | | |
-| PERF-05 | medium | Serverless apps use pooled database connections. | TODO | | |
-| PERF-06 | medium | Images are optimized. | TODO | | |
-| PERF-07 | medium | Inputs that trigger requests are debounced. | TODO | | |
-| PERF-08 | medium | Heavy or non-critical code loads later. | TODO | | |
-| PERF-09 | medium | Initial JavaScript stays small. | TODO | | |
-| PERF-10 | low | No unused dependencies and no duplicate libraries. | TODO | | |
-| PERF-11 | medium | Caching is deliberate. | TODO | | |
-| PERF-12 | medium | Loading doesn't shift the layout. | TODO | | |
-| PERF-13 | low | React re-renders are handled by tooling, not guesswork. | TODO | | |
-| CQ-01 | high | A formatter runs automatically and the code is formatted. | TODO | | |
-| CQ-02 | high | A strict linter passes with zero warnings. | TODO | | |
-| CQ-03 | high | Types are strict. | TODO | | |
-| CQ-04 | medium | There's no dead code. | TODO | | |
-| CQ-05 | medium | Files and functions stay small and focused. | TODO | | |
-| CQ-06 | medium | The folder structure is consistent and predictable. | TODO | | |
-| CQ-07 | medium | Names say what things are. | TODO | | |
-| CQ-08 | medium | Errors are handled one consistent way. | TODO | | |
-| CQ-09 | medium | Configuration is checked at startup. | TODO | | |
-| CQ-10 | high | Core logic has tests, and they run in CI. | TODO | | |
-| CQ-11 | high | Checks block bad merges and deploys. | TODO | | |
-| CQ-12 | low | Dependencies are current and there's one way to install them. | TODO | | |
-| CQ-13 | low | Comments explain why, not what. | TODO | | |
-| CQ-14 | medium | A new developer can get it running from the README. | TODO | | |
-| FE-01 | high | DESIGN.md exists and the UI follows it. | PASS | Both surfaces now match the doc: buyer light (#FBF8F2), band dark (#0F0E0B), one token vocabulary across both | 2026-10-19 |
-| FE-02 | high | One animation library per codebase, used politely. | TODO | | |
-| FE-03 | critical | Text is readable. | PASS | `--dim` was failing AA in all three stylesheets (4.19 / 3.83). Now #8E8679 — 5.47 and 5.36. Every pair in DESIGN.md computed | 2026-10-19 |
-| FE-04 | high | Every data screen has loading, empty and error states. | TODO | | |
-| FE-05 | high | Keyboard and screen-reader basics work. | PARTIAL | Landing page verified in a browser: skip link reveals on Tab, :focus-visible ring renders, heading order h1-h2-h3 unbroken, header/main/section/footer landmarks. The rest of the app is unchecked | 2026-10-19 |
-| FE-06 | high | It works on a phone. | PARTIAL | Landing page verified at 375x812; tap targets 49-51px against a 44 floor. The rest of the app is unchecked, though it was built phone-first | 2026-10-19 |
-| FE-07 | medium | No dead ends or leftovers. | TODO | | |
-| FE-08 | medium | Fonts load fast and stay few. | TODO | | |
-| FE-09 | medium | Brand basics are in place. | TODO | | |
-| FE-10 | low | Dark mode is either finished or not offered. | PASS | Not offered, deliberately. The surface is chosen by audience rather than preference, so there is no toggle and no half-built second theme — see DESIGN.md | 2026-10-19 |
-| MKT-01 | high | Each public page has a unique title and description. | PASS | The landing page is the only indexable one; title and description name the product, the audience and the country | 2026-10-19 |
-| MKT-02 | high | Links look good when shared. | TODO | | |
-| MKT-03 | high | Search engines crawl the right things. | PASS | Buyer pages were fully crawlable and the buy page renders a bank account and holder name. All pages on views/layout.tsx are now noindex,nofollow; the landing page stays indexable | 2026-10-19 |
-| MKT-04 | medium | Each page has one canonical address. | PASS | Landing page declares rel=canonical and og:url from APP_ORIGIN. Nothing else is indexable, so nothing else needs one | 2026-10-19 |
-| MKT-05 | medium | Structured data where it fits. | TODO | | |
-| MKT-06 | high | Analytics track what matters. | TODO | | |
-| MKT-07 | medium | The landing page answers the basics above the fold. | PASS | What it is, who for, the one differentiator, and both CTAs render above the fold at 375x812 — verified in a browser | 2026-10-19 |
-| MKT-08 | medium | Product marketing context exists. | TODO | | |
-| MKT-10 | low | Launch assets are ready. | TODO | | |
-| MKT-11 | low | Google Preferred Sources only if you publish regularly. | TODO | | |
-| LCH-02 | critical | Backups exist and a restore has been tested. | TODO | | |
-| LCH-03 | critical | Spending is capped or alarmed on every paid service. | TODO | | |
-| LCH-04 | high | A kill switch exists. | TODO | | |
-| LCH-05 | high | Crashes and errors reach you. | TODO | | |
-| LCH-06 | high | Uptime is monitored. | TODO | | |
-| LCH-07 | high | Email is authenticated and comes from your domain. | TODO | | |
-| LCH-08 | high | Signup works for a stranger. | TODO | | |
-| LCH-09 | high | Key flows pass an end-to-end run. | TODO | | |
-| LCH-10 | medium | Real people have tried it. | TODO | | |
-| LCH-11 | medium | You can roll back in minutes. | TODO | | |
-| LCH-12 | medium | Domain and HTTPS are solid. | TODO | | |
-| LCH-13 | medium | Legal and support links are live. | TODO | | |
+| SEC-01 | critical | No secrets in client code or the repo. | PASS | No key material tracked; only placeholders in .dev.vars.example:7; .gitignore:10-14; no NEXT_PUBLIC_/VITE_ vars | 2026-10-19 |
+| SEC-02 | critical | Every table or collection has access rules. | PASS | D1 reachable only from the Worker (wrangler.jsonc:14-20); no DB SDK in any client bundle | 2026-10-19 |
+| SEC-03 | critical | User files live in private storage. | PARTIAL | R2 private, admin-gated, no-store, 10MB cap. No server-side file-type check - purchase-form.ts:57-63 trusts the client Content-Type, so an uploaded text/html is stored XSS inside an admin session. Reject unless isReadableProof() passes; serve non-images nosniff + attachment | 2026-10-19 |
+| SEC-04 | critical | Authorization is checked on the server for every request that touches user data. | PASS | Fixed 2026-10-19. findOrderInEvent (db/queries/orders.ts) resolves the order scoped to the event; all four handlers 404 on miss. Proved by exploit: a second band using its own slug renamed another band's attendee to "PWNED POR OTRA BANDA" before the fix, 404 after, and the legitimate owner's rename/revisar/anular/view all still work | 2026-10-19 |
+| SEC-05 | high | Auth endpoints are protected against abuse. | PARTIAL | EMAIL_LIMIT on login/registro/recuperar; identical responses; 15-min HMAC with exp enforced (auth.ts:66). Magic links are replayable within the window - mark a jti used on first redemption | 2026-10-19 |
+| SEC-06 | high | Anything that costs money per call is protected. | PARTIAL | PURCHASE_LIMIT covers purchase.tsx:46, but order.tsx:120 (admin re-read) calls the same paid extraction with no limit, in the request path. /reembolso has no limit and no idempotency. The limiter fails open by design | 2026-10-19 |
+| SEC-08 | high | Input is validated on the server and queries are parameterized. | PARTIAL | All bodies validated server-side; Drizzle parameterises; hono/jsx escapes. But band-controlled strings go into inline script tags via JSON.stringify alone (form-script.ts:36, ticket-script.ts:31), which does not escape a closing script tag - a venue name can break out on a buyer page. Escape < as \u003c and cap field lengths | 2026-10-19 |
+| SEC-09 | medium | No known high or critical vulnerabilities in dependencies. | FAIL | npm audit: hono 4.13.5 GHSA-hxh3-vqpv-xpqv, hono/jsx renders plain strings unescaped in boundary components leading to XSS - the renderer for every page. Bump to ^4.13.7 | 2026-10-19 |
+| SEC-10 | medium | Security headers and cookies are set. | FAIL | Cookies correct (auth.ts:79-90). No security headers at all - no CSP, HSTS, nosniff, X-Frame-Options or Referrer-Policy, and no public/_headers. Mount hono secureHeaders() in index.tsx | 2026-10-19 |
+| SEC-11 | medium | Errors and logs don't leak. | PASS | Fixed Spanish 404/500 with the stack going only to console.error (index.tsx:40-59); no secret or magic-link URL logged | 2026-10-19 |
+| SEC-12 | medium | Sessions end properly. | PARTIAL | exp written and enforced on both tokens; /salir clears the cookie. Stateless, so logout is client-side only and a copied cookie stays valid 30 days. Add a session_epoch on bands to allow revoke | 2026-10-19 |
+| SEC-13 | low | CORS allows only your own origins. | PASS | No CORS middleware and no Access-Control-* header anywhere | 2026-10-19 |
+| SEC-14 | high | Environments are separated. | PASS | Dev is local and keyless; prod secrets are Cloudflare secrets. Note: no preview_database_id, so wrangler dev --remote would read and write production | 2026-10-19 |
+| AI-01 | high | Users know when they're dealing with AI. | PARTIAL | No model output on any buyer page. The admin proof panel (order.tsx:191-231) presents machine-read values as the document's own words with no indication a model read them. Add one label | 2026-10-19 |
+| AI-02 | high | AI providers are disclosed and set up for privacy. | FAIL | No privacy policy names Anthropic, and the upload step says nothing about third-party processing - the proof carries a third party's account number, not just the buyer's data. Prompt minimisation is good: no buyer PII in the prompt (extract.ts:117) | 2026-10-19 |
+| AI-07 | high | Every AI call has limits. | PARTIAL | max_tokens 2000, 10MB cap, content-type gate, SDK retries. No explicit timeout, so the SDK default of 10 minutes applies inside a waitUntil job, and the admin re-read endpoint has no limit | 2026-10-19 |
+| AI-08 | high | User input can't override the AI's instructions or permissions. | PASS | Verified in code rather than taken from the docs: no free-form user input reaches the model, no tools are defined, output is zod-schema-constrained and consumed only by deterministic comparisons, and no authenticity field exists in the schema | 2026-10-19 |
+| AI-09 | medium | AI failures degrade gracefully. | PASS | Typed result covering refusal, no output, APIError and unknown; failures raise an info flag with Spanish copy; purchase, QR and email never depend on the call; a missing key degrades explicitly | 2026-10-19 |
+| AI-11 | medium | Prompt and response logs are minimal and protected. | FAIL | Model responses are kept indefinitely - ocr_raw plus eleven x_* columns, with purge_after never read. verify-proof.ts:146 also logs the bank reference and amount into Workers logs. Add the purge job and drop those two fields from the log line | 2026-10-19 |
+| LEG-01 | critical | A privacy policy is published and linked wherever users need it. | FAIL | No privacy policy exists - no route, no page. Required given R2 holds third-party banking data and proofs are sent to Anthropic. Honduras habeas data (art.182) makes a stated access and correction route a real obligation | 2026-10-19 |
+| LEG-02 | critical | The privacy policy matches the code. | FAIL | Nothing to match against. The inventory is verified accurate: the only outbound hosts are api.resend.com (email.ts:45) and the Anthropic SDK (extract.ts:110), plus a wa.me click-link; no tracker of any kind | 2026-10-19 |
+| LEG-03 | high | Terms of service are published and accepted. | FAIL | No terms page. The checkout checkbox (purchase-form.ts:45) carries only the refund sentence and links nothing; band signup captures no acceptance at all | 2026-10-19 |
+| LEG-04 | critical | Users can delete their account, and deletion really deletes. | FAIL | No account or buyer-data deletion. Worse, the 30-day proof purge is unimplemented: purge_after is written (purchase.tsx:133) and never read - no cron, no scheduled handler. Third parties' bank account numbers are retained indefinitely, contradicting the CLAUDE.md invariant | 2026-10-19 |
+| LEG-07 | critical | No fake reviews, testimonials or social proof. | PASS | Landing is the only indexable page and carries no testimonials, counts or logos; its pricing table matches priceBracket in settlement.ts:111 exactly | 2026-10-19 |
+| LEG-11 | high | The minimum age is decided and enforced. | FAIL | No age gate and no age statement anywhere, though 18+ is recorded as decided in CLAUDE.md:37 and docs/SPEC.md. Best practice here rather than a legal requirement, but it is the venue's own door rule | 2026-10-19 |
+| LEG-13 | high | Marketing messages follow the rules. | PASS | All three email templates are transactional; no marketing list exists; a single to: per send (email.ts:51) | 2026-10-19 |
+| LEG-14 | medium | Everything you ship is licensed for commercial use. | PARTIAL | All runtime deps permissively licensed; no webfonts or icon set. public/vendor/jsQR.js is a redistributed Apache-2.0 copy with its notice stripped (zero licence mentions) and the repo has no LICENSE or NOTICE. Apache-2.0 section 4 requires the notice to travel | 2026-10-19 |
+| PERF-01 | high | Performance is measured, not assumed. | MANUAL | No Lighthouse run exists. The code is in shape for one (no external JS, inline CSS, no webfonts). Run npx lighthouse against / and /e/:slug on mobile form factor | 2026-10-19 |
+| PERF-02 | high | No N+1 queries. | PARTIAL | No per-row fetches in any request path; queries join on the event rather than enumerating ids. recovery.tsx:41 sends serially per order and is unscoped by event - batch the read and Promise.all the sends | 2026-10-19 |
+| PERF-03 | high | Lists that can grow are paginated on the server. | FAIL | No query carries a LIMIT. fanStats (stats.ts:183) loads one row per unique payer across all history, and verify-proof.ts:111 loads every prior proof reference on each verification just for a Set membership test. Make both SQL - the second is one existence check | 2026-10-19 |
+| PERF-04 | medium | Columns you filter, join or sort on are indexed. | PARTIAL | Every hot path is indexed. advances is filtered on band_id and event_id and sorted by date with only idx_advances_member declared; idx_proofs_ref serves no query at all because of PERF-03 | 2026-10-19 |
+| PERF-05 | medium | Serverless apps use pooled database connections. | N/A | D1 is a Worker binding, not a TCP connection - there is no pool to size | 2026-10-19 |
+| PERF-06 | medium | Images are optimized. | PASS | No raster asset ships anywhere; QRs are generated with intrinsic dimensions; the only uploaded image is the admin-only proof | 2026-10-19 |
+| PERF-07 | medium | Inputs that trigger requests are debounced. | PASS | No input triggers a request; the scanner filters its cached manifest in memory | 2026-10-19 |
+| PERF-08 | medium | Heavy or non-critical code loads later. | PASS | Zero third-party scripts. jsQR loads eagerly on the scanner alone, deliberately - the door has no signal and lazy-loading would defeat offline scanning | 2026-10-19 |
+| PERF-09 | medium | Initial JavaScript stays small. | PASS | Buyer pages ship no external JS: buy 2,561 B gzip, ticket 3,539 B, landing none. Even the scanner totals 61 KB gzip | 2026-10-19 |
+| PERF-10 | low | No unused dependencies and no duplicate libraries. | FAIL | jsqr is declared in package.json:21 but never imported - the scanner uses a hand-committed copy of the same dist at public/vendor/jsQR.js. The two will drift. Drop the dependency or generate the file | 2026-10-19 |
+| PERF-11 | medium | Caching is deliberate. | PASS | Deliberate throughout: proofs private/no-store, QR SVG private-immutable, email PNG public because Gmail proxies images, vision result persisted rather than re-called per view | 2026-10-19 |
+| PERF-12 | medium | Loading doesn't shift the layout. | PARTIAL | No client-side swap to shift anything and QRs carry intrinsic size. The admin proof image has no reserved height, so that page jumps when a multi-megabyte screenshot finishes loading | 2026-10-19 |
+| PERF-13 | low | React re-renders are handled by tooling, not guesswork. | N/A | No React - markup is server-rendered to strings through hono/jsx | 2026-10-19 |
+| CQ-01 | high | A formatter runs automatically and the code is formatted. | FAIL | No formatter: no biome, prettier or editorconfig, no format script, and no CI to enforce one | 2026-10-19 |
+| CQ-02 | high | A strict linter passes with zero warnings. | FAIL | No linter at all - no config, no preset, no lint script, nothing to run | 2026-10-19 |
+| CQ-03 | high | Types are strict. | PARTIAL | strict, noUncheckedIndexedAccess and verbatimModuleSyntax all on; typecheck exits 0; zero any or ts-ignore. But nothing runs it automatically because there is no CI | 2026-10-19 |
+| CQ-04 | medium | There's no dead code. | PARTIAL | Clean of unused locals, commented-out code and debug logging (all 18 console calls are prefixed observability). Four dead items remain: the jsqr dependency, perHead (settlement.ts:86), BankCode (core.ts:56), and the contacts table, which is never read or written since fanStats derives from orders directly | 2026-10-19 |
+| CQ-05 | medium | Files and functions stay small and focused. | PARTIAL | Largest src file is 348 lines and all 72 are under 400. runVerification is 127 lines - split it into load, extract-and-persist, and flag. The long template-literal scripts are string building with documented reasons | 2026-10-19 |
+| CQ-06 | medium | The folder structure is consistent and predictable. | PARTIAL | The load-bearing boundary holds: zero D1 or drizzle imports in src/lib, and views touch neither the DB nor Hono. Drift: 77 inline query-builder sites in src/routes, scan.ts outside the public/admin split, views mixing flat files and folders, and the Bindings type duplicated verbatim in both context.ts files | 2026-10-19 |
+| CQ-07 | medium | Names say what things are. | PASS | All 72 filenames are kebab-case; booleans read as questions; no data2/temp/utils2-style names anywhere | 2026-10-19 |
+| CQ-08 | medium | Errors are handled one consistent way. | PARTIAL | Server-side is one consistent discriminated-result pattern with exactly one throw in all of src/. Eight empty catches in the client scripts carry no reason - the swallowing is correct, the silence is not | 2026-10-19 |
+| CQ-09 | medium | Configuration is checked at startup. | PARTIAL | The one required secret fails fast (session.tsx:22). But there is no single validated config module - the same missing secret throws in one place and returns a 500 naming the variable to the buyer in another - and .dev.vars.example omits ANTHROPIC_API_KEY | 2026-10-19 |
+| CQ-10 | high | Core logic has tests, and they run in CI. | FAIL | Zero tests and no runner. The highest-stakes rules are untested and are all pure functions: verifyProof, computeSettlement, the centavo formatting in core.ts, and resolveSellableRule | 2026-10-19 |
+| CQ-11 | high | Checks block bad merges and deploys. | FAIL | No CI of any kind - no .github, no workflow, no hooks. npm run deploy is a bare wrangler deploy that no check gates | 2026-10-19 |
+| CQ-12 | low | Dependencies are current and there's one way to install them. | PARTIAL | One lockfile, npm only, Node pinned, nothing a major version behind. npm audit reports advisories including the hono/jsx XSS this stack is directly exposed to, and zod is declared ^3 while extract.ts imports zod/v4 | 2026-10-19 |
+| CQ-13 | low | Comments explain why, not what. | PASS | Comments explain why rather than what throughout; zero TODO, FIXME or HACK markers in src/ or public/ | 2026-10-19 |
+| CQ-14 | medium | A new developer can get it running from the README. | FAIL | README.md is 0 bytes. Nothing documents copying .dev.vars.example, running db:reset before first boot, the D1 and R2 bindings a fresh Cloudflare account needs, or how to generate SESSION_SECRET | 2026-10-19 |
+| FE-01 | high | DESIGN.md exists and the UI follows it. | PARTIAL | Zero hard-coded hex in all 20 page files and around 170 token references. But DESIGN.md promises one palette and there are four root blocks, three of them drifted - admin ships accent #E9963A against the doc's #F0A03C, and scanner.css is a separate near-miss dark palette. Hoist one shared dark root | 2026-10-19 |
+| FE-02 | high | One animation library per codebase, used politely. | PASS | No animation library; the only motion is one guarded transform on .cta:active; all four stylesheets carry a reduce-motion block | 2026-10-19 |
+| FE-03 | critical | Text is readable. | FAIL | Buyer light and admin dark text both verified clean (19 and 18 pairs). Two failures on surfaces never audited before: scanner.css:11 still ships the uncorrected --dim #7A7367 (4.19/3.95/3.60 against a 4.5 floor, carrying body-size text) and neither dark sheet has --line-control, so control borders measure 1.68 to 1.92 against a 3:1 floor. Set --dim #8E8679 and add --line-control #6E6454 to both dark sheets | 2026-10-19 |
+| FE-04 | high | Every data screen has loading, empty and error states. | FAIL | States are fine; the forms are not. The buy page discards the buyer's input on any server-side rejection - form-script.ts:181 clears localStorage on submit and purchase.tsx:42 answers every failure with a bare redirect, so a rate limit, validation, sold-out or capacity failure returns an empty form to someone who has already transferred the money. That is verbatim what form-script.ts:5-7 calls the worst failure this page has. Manual sale wipes typed names too, and eight admin forms have no double-submit guard | 2026-10-19 |
+| FE-05 | high | Keyboard and screen-reader basics work. | FAIL | lang, real buttons, alt text and QR aria are all good. The scanner has no h1 and two unlabelled inputs; the file picker is a 0x0 invisible control with no focus style; landmarks and the skip link exist only on the landing page; and the scanner tabs have no tab roles while the door verdict has no aria-live, so nothing is announced | 2026-10-19 |
+| FE-06 | high | It works on a phone. | FAIL | No vh units, no fixed widths, tables scroll, and buyer tap targets all clear 44px. The band surfaces fail: admin inputs are 15px so iOS zooms on every focus; admin buttons measure about 37px, small buttons 27px and nav links 21px; scanner tabs 36px and the door's Marcar button 31px; and scanner.ts:27 sets maximum-scale=1, blocking pinch zoom where staff most need it | 2026-10-19 |
+| FE-07 | medium | No dead ends or leftovers. | PARTIAL | No dead links - all 30 internal targets resolve. The 404 and 500 pages render on the scanner's dark palette with no lang or title despite carrying buyer-facing copy, and manifest start_url points at the marketing page, so an installed scanner icon opens the landing page with no route back | 2026-10-19 |
+| FE-08 | medium | Fonts load fast and stay few. | PASS | Exactly two families, both already on the device; zero @font-face, zero webfont requests, zero .woff files in the repo | 2026-10-19 |
+| FE-09 | medium | Brand basics are in place. | FAIL | No favicon anywhere - no icon link in any of the four document heads and no icon file in the repo. manifest.webmanifest has no icons array at all, so the scanner PWA has no app icon and Chrome will not offer to install it, which defeats the manifest's only purpose | 2026-10-19 |
+| FE-10 | low | Dark mode is either finished or not offered. | PARTIAL | No toggle and no prefers-color-scheme, deliberately. But dark ships on three documents and is unfinished: every FE-03 failure is on dark, admin never styles textarea while manual-sale uses one (a white box on a near-black page), and no sheet declares color-scheme dark so UA-painted controls render light | 2026-10-19 |
+| MKT-01 | high | Each public page has a unique title and description. | PASS | Landing title is 51 characters and the description 155; every public view passes a distinct title and renders exactly one h1 | 2026-10-19 |
+| MKT-02 | high | Links look good when shared. | FAIL | No og:image and no image asset of any kind in the repo; the landing declares twitter:card summary while the shared layout declares summary_large_image with nothing to fill it. A shared link renders as bare text | 2026-10-19 |
+| MKT-03 | high | Search engines crawl the right things. | FAIL | Corrects an earlier PASS of mine. /sitemap.xml 404s and none exists; robots.txt is Cloudflare's managed default with no Disallow rules and is not repo-controlled. Add public/robots.txt and a one-URL sitemap | 2026-10-19 |
+| MKT-04 | medium | Each page has one canonical address. | PARTIAL | Corrects an earlier PASS of mine. The canonical is correct and stable under query strings, but http:// serves every page 200 with no redirect and no HSTS - including the buy page, which collects name, email, phone and an upload and displays a bank account number | 2026-10-19 |
+| MKT-05 | medium | Structured data where it fits. | FAIL | No structured data at all. Add SoftwareApplication JSON-LD generated from the existing PRICE_TIERS constant so the markup cannot drift from the rendered table | 2026-10-19 |
+| MKT-06 | high | Analytics track what matters. | FAIL | No analytics of any kind. Count signup, activation and settlement purchase server-side in D1 rather than adding a client script, which keeps the no-third-party-script rule on the buyer surface intact | 2026-10-19 |
+| MKT-07 | medium | The landing page answers the basics above the fold. | PASS | The h1, a lede naming the audience, and the primary CTA all render above the fold at 375x812; pricing is a first-class section built from the real brackets; no invented proof anywhere | 2026-10-19 |
+| MKT-08 | medium | Product marketing context exists. | FAIL | docs/MARKETING.md does not exist. Write it from facts already in the repo - audience, problem, positioning, voice and the Jungla baseline - using placeholders rather than invented proof | 2026-10-19 |
+| MKT-10 | low | Launch assets are ready. | MANUAL | Nothing to point at - the repo contains no image or video file at all, so there is no logo, screenshot, press kit or demo. Producing those assets is work outside the codebase | 2026-10-19 |
+| MKT-11 | low | Google Preferred Sources only if you publish regularly. | N/A | No blog or news section and none planned; discovery and anything social are out of scope per docs/SPEC.md | 2026-10-19 |
+| LCH-02 | critical | Backups exist and a restore has been tested. | FAIL | No backup or restore procedure in the repo. D1 Time Travel is on by provider default but has never been exercised and is documented nowhere. Run time-travel info, restore a bookmark into a scratch database, and record the date | 2026-10-19 |
+| LCH-03 | critical | Spending is capped or alarmed on every paid service. | FAIL | Three paid providers and no spend cap, budget alert or low-balance alert anywhere. The only brakes are a best-effort limiter, max_tokens, and a capacity cap that is nullable - purchase.tsx:68 only enforces it when set, and one live event has none | 2026-10-19 |
+| LCH-04 | high | A kill switch exists. | FAIL | No kill switch. BILLING_ENABLED is a source constant, so flipping it is a rebuild and deploy despite the comment claiming otherwise. The only no-deploy off switch is deleting the Anthropic secret | 2026-10-19 |
+| LCH-05 | high | Crashes and errors reach you. | FAIL | No error tracking. Errors reach console.error and Workers Logs, which nobody is alerted by, and wrangler.jsonc sets neither upload_source_maps nor tail_consumers | 2026-10-19 |
+| LCH-06 | high | Uptime is monitored. | FAIL | No health endpoint and no monitor. / returns 200 without touching D1 or R2, so it would stay green through a complete database outage | 2026-10-19 |
+| LCH-07 | high | Email is authenticated and comes from your domain. | FAIL | Sender config is right but DNS does not authenticate it: the domain reads Failed in Resend, the DKIM record is a stale SES-era key while send.macawly.dev is current-generation, and DMARC is p=reject with no rua. Zero ticket emails have ever been delivered | 2026-10-19 |
+| LCH-08 | high | Signup works for a stranger. | FAIL | Blocked by LCH-07 and worse than untested: signup inserts the band row then relies entirely on the emailed link, and admin has no password path, so a stranger creates a band they can never reach and nobody can log into production admin | 2026-10-19 |
+| LCH-09 | high | Key flows pass an end-to-end run. | FAIL | No e2e tests and no runner. The one real production run passed transfer, upload, extraction and QR render, then failed at email - so the key flow is verified broken, not merely unverified | 2026-10-19 |
+| LCH-10 | medium | Real people have tried it. | FAIL | One real buyer. Production is the seeded baseline plus the single DAY-8FAT purchase, with no invite list or feedback log. The known-issues half is met in docs/SPEC.md | 2026-10-19 |
+| LCH-11 | medium | You can roll back in minutes. | PARTIAL | Migrations are additive and rollback-safe, and five deploy versions exist as rollback targets. Nothing documents the procedure, every deployment has an empty message so picking a target is guesswork, and no rollback has ever been performed | 2026-10-19 |
+| LCH-12 | medium | Domain and HTTPS are solid. | FAIL | No custom domain - production is the workers.dev subdomain. HTTPS itself is solid. APP_ORIGIN builds QR and magic links, so already-issued URLs break at any cutover and need a redirect | 2026-10-19 |
+| LCH-13 | medium | Legal and support links are live. | FAIL | No legal or support links anywhere; every footer is branding only and /privacidad and /terminos both 404. Buyers only ever see the band's own address, never a platform contact | 2026-10-19 |

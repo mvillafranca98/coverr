@@ -91,6 +91,31 @@ export type EventOrderRow = {
  * of every order blows D1's bound-parameter limit the moment an event sells
  * properly.
  */
+/**
+ * One order, but only if it belongs to this event.
+ *
+ * The admin routes take an order id from the URL and an event slug from the
+ * URL. Validating the slug proves the *event* is yours; it proves nothing
+ * about the order. Every handler that mutates an order resolves it through
+ * here first, so a band cannot pass its own slug with another band's order id
+ * and act on a stranger's ticket.
+ *
+ * Returns null rather than throwing: the caller answers 404, which is also
+ * what a genuinely missing order should look like.
+ */
+export async function findOrderInEvent(
+  db: DrizzleD1Database<typeof s>,
+  eventId: string,
+  orderId: string,
+) {
+  const rows = await db
+    .select()
+    .from(s.orders)
+    .where(and(eq(s.orders.id, orderId), eq(s.orders.eventId, eventId)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 export async function listOrdersForEvent(
   db: DrizzleD1Database<typeof s>,
   eventId: string,
