@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { scanApi } from "./routes/scan";
 import { admin } from "./routes/admin";
+import { purgeExpiredProofs } from "./jobs/purge-proofs";
+import type { Bindings } from "./routes/public/context";
 import { buyRoutes } from "./routes/public/buy";
 import { purchaseRoutes } from "./routes/public/purchase";
 import { confirmationRoutes } from "./routes/public/confirmation";
@@ -58,4 +60,14 @@ app.onError((err, c) => {
   );
 });
 
-export default app;
+/**
+ * The worker has two entry points now: `fetch` for requests, and `scheduled`
+ * for the nightly proof purge. Keeping `app` as the fetch handler means every
+ * route and the 404/500 pages above are unchanged.
+ */
+export default {
+  fetch: app.fetch,
+  async scheduled(_event: ScheduledController, env: Bindings, ctx: ExecutionContext) {
+    ctx.waitUntil(purgeExpiredProofs(env));
+  },
+};

@@ -27,6 +27,9 @@
   ],
   // Cloudflare's own rate limiter. Periods are limited to 10 or 60 seconds,
   // hence the per-minute windows.
+  // Daily, for the proof purge. The window is 30 days past the event, so the
+  // exact hour is irrelevant — what matters is that it runs at all.
+  "triggers": { "crons": ["0 3 * * *"] },
   "ratelimits": [
     {
       "name": "PURCHASE_LIMIT",

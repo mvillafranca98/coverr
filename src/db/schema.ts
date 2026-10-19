@@ -217,6 +217,12 @@ export const paymentProofs = sqliteTable(
     uploadedAt: text("uploaded_at").notNull(),
     /** Proofs auto-delete 30 days after the event — this is third-party PII. */
     purgeAfter: text("purge_after").notNull(),
+    /**
+     * When the purge actually ran. The spec requires the deletion to be
+     * logged, and this doubles as the marker that stops the job reprocessing
+     * a row it has already cleared.
+     */
+    purgedAt: text("purged_at"),
   },
   (t) => [
     index("idx_proofs_order").on(t.orderId),

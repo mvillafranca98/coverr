@@ -1,0 +1,1 @@
+ALTER TABLE `payment_proofs` ADD `purged_at` text;

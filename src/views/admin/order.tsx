@@ -25,6 +25,8 @@ export const OrderPage: FC<{
     xDetail: string | null;
     xBank: string | null;
     ocrConfidence: number | null;
+    /** Set once the retention window has run; the file is gone from R2. */
+    purgedAt: string | null;
   } | null;
   flags: { id: string; code: string; severity: string; detail: string; resolvedAt: string | null }[];
   refund: { id: string; requestedAt: string; reason: string | null; status: string } | null;
@@ -243,7 +245,14 @@ export const OrderPage: FC<{
             Volver a leer el comprobante
           </button>
         </form>
-        {isRenderableImage(proof.contentType) ? (
+        {proof.purgedAt ? (
+          <div class="note">
+            El comprobante se borró el{" "}
+            {new Date(proof.purgedAt).toLocaleDateString("es-HN")}, 30 días después del evento.
+            Los datos de la cuenta de quien pagó se borraron con él — eran de un tercero. Lo que
+            queda arriba es lo que no identifica a nadie.
+          </div>
+        ) : isRenderableImage(proof.contentType) ? (
           <img
             class="proof"
             src={`/admin/e/${event.slug}/orden/${order.id}/comprobante`}
