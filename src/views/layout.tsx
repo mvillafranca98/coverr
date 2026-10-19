@@ -181,11 +181,17 @@ footer a{color:var(--dim)}
   font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--dim);
   margin-top:12px;text-transform:uppercase;
 }
+.tk-actions{display:flex;gap:8px;margin:14px 18px 18px}
 .tk-save{
-  display:block;margin:14px 18px 18px;padding:12px;border-radius:9px;text-align:center;
+  flex:1;display:flex;align-items:center;justify-content:center;
+  min-height:48px;padding:12px;border-radius:9px;text-align:center;
   border:1px solid var(--line-2);background:var(--surface-2);color:var(--text);
-  font-size:14px;font-weight:600;text-decoration:none;
+  font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;
+  font-family:inherit;
 }
+/* The primary action once the browser proves it can share a file. */
+.tk-save.share{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tk-save[hidden]{display:none}
 .summary{margin-top:22px;padding:16px;border:1px solid var(--line);border-radius:11px;background:var(--surface)}
 .summary h3{margin:0 0 10px;font-size:13px;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:600}
 .srow{display:flex;justify-content:space-between;gap:14px;font-size:14px;padding:4px 0}

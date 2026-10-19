@@ -1,7 +1,8 @@
 import type { FC } from "hono/jsx";
-import { Layout } from "./layout";
-import { qrDataUri } from "../lib/qr";
-import { formatLpsShort, formatEventDate, formatEventTime } from "../lib/core";
+import { Layout } from "../layout";
+import { qrDataUri } from "../../lib/qr";
+import { ticketScript } from "./ticket-script";
+import { formatLpsShort, formatEventDate, formatEventTime } from "../../lib/core";
 
 export type ConfirmProps = {
   band: { name: string };
@@ -39,7 +40,17 @@ export const ConfirmPage: FC<ConfirmProps> = ({ band, event, order, attendees })
     </div>
 
     {attendees.map((a, i) => (
-      <div class="tk" key={a.qrToken}>
+      // The data-* attributes are the script's whole input: it reads the card
+      // rather than being handed a second copy of the order in JavaScript.
+      <div
+        class="tk"
+        key={a.qrToken}
+        data-token={a.qrToken}
+        data-name={a.name}
+        data-note={a.note ?? ""}
+        data-index={String(i + 1)}
+        data-total={String(attendees.length)}
+      >
         <div class="tk-top">
           <div class="tk-name">{a.name}</div>
           <div class="tk-meta">
@@ -52,9 +63,24 @@ export const ConfirmPage: FC<ConfirmProps> = ({ band, event, order, attendees })
           <img src={qrDataUri(a.qrToken, 520)} alt={`Código QR de ${a.name}`} />
           <div class="tk-code">{order.shortCode}</div>
         </div>
-        <a class="tk-save" href={`/t/${a.qrToken}.svg`} download={`boleto-${i + 1}.svg`}>
-          Descargar este código
-        </a>
+        <div class="tk-actions">
+          {/* Revealed by the script only once the browser confirms it can
+              share a file. On iOS this one sheet carries both Save Image and
+              WhatsApp, which is the whole point. */}
+          <button type="button" class="tk-save share" data-share hidden>
+            Compartir
+          </button>
+          {/* Works with no JavaScript at all, pointing at the bare QR PNG.
+              The script upgrades it in place to the composed ticket. */}
+          <a
+            class="tk-save"
+            data-download
+            href={`/t/${a.qrToken}.png`}
+            download={`boleto-${i + 1}.png`}
+          >
+            Descargar
+          </a>
+        </div>
       </div>
     ))}
 
@@ -106,5 +132,18 @@ export const ConfirmPage: FC<ConfirmProps> = ({ band, event, order, attendees })
     <footer>
       <div>{band.name} · Coverr</div>
     </footer>
+
+    <script
+      dangerouslySetInnerHTML={{
+        __html: ticketScript({
+          bandName: band.name,
+          eventName: event.name,
+          whenLine: `${formatEventDate(event.startsAt)} · ${formatEventTime(event.startsAt)}`,
+          venue: event.venue,
+          shortCode: order.shortCode,
+          total: attendees.length,
+        }),
+      }}
+    />
   </Layout>
 );

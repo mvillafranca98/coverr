@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import * as s from "../../db/schema";
-import { ConfirmPage } from "../../views/confirm";
+import { ConfirmPage } from "../../views/confirm/page";
 import { findOrderWithEventAndBand } from "../../db/queries/orders";
 import type { PublicEnv } from "./context";
 
