@@ -4,6 +4,13 @@
 screenshots/
 *.xlsx
 
+# Database exports. Every buyer's name, email and phone is in one of these.
+# See docs/RUNBOOK.md — keep them outside the repo entirely; this is a net,
+# not the rule.
+*.sql.backup
+backup*.sql
+coverr-*.sql
+
 # Local
 .DS_Store
 node_modules/

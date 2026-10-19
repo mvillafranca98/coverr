@@ -30,6 +30,8 @@ Commands: `npm run dev`, `npm run typecheck`, `npm run db:generate`, `npm run db
 - `DESIGN.md`: tokens, the two surfaces and the contrast rules. Follow it for all UI work.
 - `docs/STANDARDS.md`: which dev-standards items apply and their status. Update it when a change
   affects an item — a new service, a new paid API, auth, uploads, AI.
+- `docs/RUNBOOK.md`: backup, restore and the procedures that have actually been run against
+  production. A D1 export cannot be re-imported unmodified — read it before trusting a backup.
 
 ## Project rules
 - **Honduras only.** Money is lempiras, copy is Honduran Spanish, banks are the six in
