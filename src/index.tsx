@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { secureHeaders } from "hono/secure-headers";
 import { scanApi } from "./routes/scan";
 import { admin } from "./routes/admin";
 import { purgeExpiredProofs } from "./jobs/purge-proofs";
@@ -23,6 +24,64 @@ import type { PublicEnv } from "./routes/public/context";
  * redirect sitting above the `/admin` mount.
  */
 const app = new Hono<PublicEnv>();
+
+/**
+ * Security headers on every response, mounted before any route.
+ *
+ * The CSP allows inline style and script because every page inlines both
+ * deliberately — buyers open these on venue wifi moments before paying, and a
+ * blocking stylesheet request is a worse failure than the class of attack
+ * 'unsafe-inline' leaves open. That tradeoff is written down in DESIGN.md.
+ * Nonces would be the stricter answer and are worth doing if the inline
+ * blocks ever stop being hand-written constants.
+ *
+ * Everything else is as tight as the product allows: no framing at all, no
+ * object or base tag, images from this origin and data: only (the on-screen
+ * QR is a data URI), and form posts only back here.
+ */
+/**
+ * Plain HTTP serves the whole site otherwise, including the buy page — which
+ * collects a name, email, phone and an uploaded bank screenshot, and prints
+ * the band's account number for the buyer to copy. Over http any of that can
+ * be read or rewritten in transit, and a rewritten account number is money
+ * sent to the wrong person.
+ *
+ * Runs before the headers so an http request is answered with the redirect
+ * and nothing else.
+ */
+app.use("*", async (c, next) => {
+  const url = new URL(c.req.url);
+  if (url.protocol === "http:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
+    url.protocol = "https:";
+    return c.redirect(url.toString(), 301);
+  }
+  return next();
+});
+
+app.use(
+  "*",
+  secureHeaders({
+    contentSecurityPolicy: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+    },
+    // Already HTTPS-only in production; this stops a downgrade being offered.
+    strictTransportSecurity: "max-age=15552000; includeSubDomains",
+    xContentTypeOptions: "nosniff",
+    xFrameOptions: "DENY",
+    referrerPolicy: "strict-origin-when-cross-origin",
+    crossOriginResourcePolicy: "same-origin",
+  }),
+);
+
 
 app.route("/", buyRoutes);
 app.route("/", purchaseRoutes);
