@@ -107,7 +107,7 @@ Every service that receives user data, including hosting, database and auth prov
 | CQ-12 | low | Dependencies are current and there's one way to install them. | TODO | | |
 | CQ-13 | low | Comments explain why, not what. | TODO | | |
 | CQ-14 | medium | A new developer can get it running from the README. | TODO | | |
-| FE-01 | high | DESIGN.md exists and the UI follows it. | PARTIAL | DESIGN.md exists and the landing page is built to it. The buyer surface is still dark and has not been migrated to the light palette the doc specifies | 2026-10-19 |
+| FE-01 | high | DESIGN.md exists and the UI follows it. | PASS | Both surfaces now match the doc: buyer light (#FBF8F2), band dark (#0F0E0B), one token vocabulary across both | 2026-10-19 |
 | FE-02 | high | One animation library per codebase, used politely. | TODO | | |
 | FE-03 | critical | Text is readable. | PASS | `--dim` was failing AA in all three stylesheets (4.19 / 3.83). Now #8E8679 — 5.47 and 5.36. Every pair in DESIGN.md computed | 2026-10-19 |
 | FE-04 | high | Every data screen has loading, empty and error states. | TODO | | |
@@ -116,7 +116,7 @@ Every service that receives user data, including hosting, database and auth prov
 | FE-07 | medium | No dead ends or leftovers. | TODO | | |
 | FE-08 | medium | Fonts load fast and stay few. | TODO | | |
 | FE-09 | medium | Brand basics are in place. | TODO | | |
-| FE-10 | low | Dark mode is either finished or not offered. | TODO | | |
+| FE-10 | low | Dark mode is either finished or not offered. | PASS | Not offered, deliberately. The surface is chosen by audience rather than preference, so there is no toggle and no half-built second theme — see DESIGN.md | 2026-10-19 |
 | MKT-01 | high | Each public page has a unique title and description. | PASS | The landing page is the only indexable one; title and description name the product, the audience and the country | 2026-10-19 |
 | MKT-02 | high | Links look good when shared. | TODO | | |
 | MKT-03 | high | Search engines crawl the right things. | PASS | Buyer pages were fully crawlable and the buy page renders a bank account and holder name. All pages on views/layout.tsx are now noindex,nofollow; the landing page stays indexable | 2026-10-19 |

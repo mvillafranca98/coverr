@@ -35,7 +35,7 @@ const Head: FC<Common> = ({ band, event, order }) => (
 const Contact: FC<{ email: string }> = ({ email }) => (
   <p class="hint">
     Si creés que hay un error, escribile a la banda a{" "}
-    <a href={`mailto:${email}`} style="color:var(--accent)">
+    <a href={`mailto:${email}`} style="color:var(--accent-text)">
       {email}
     </a>
     .

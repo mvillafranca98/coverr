@@ -114,7 +114,7 @@ export const BankStep: FC<BankStepProps> = ({ defaultAccount, banksWithAccounts,
             más rápido.
           </small>
         </div>
-        <span class="chip-action" style="font-size:13px;font-weight:600;color:var(--accent)">
+        <span class="chip-action" style="font-size:13px;font-weight:600;color:var(--accent-text)">
           Copiar
         </span>
       </button>
