@@ -6,9 +6,12 @@
   --surface-2: #211C16;
   --line: #332B22;
   --line-2: #4A3F31;
+  /* A border that is the only thing identifying a control needs 3:1
+     (WCAG 1.4.11). --line-2 reaches 1.80 here. */
+  --line-control: #6E6454;
   --text: #F6F2EB;
   --muted: #A79E90;
-  --dim: #7A7367;
+  --dim: #8E8679;
   --accent: #F0A03C;
   --accent-ink: #100C06;
   --green: #2BA35F;
@@ -56,7 +59,7 @@ header { padding: 16px 0 12px; border-bottom: 1px solid var(--line) }
 /* ---- tabs ---- */
 .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px }
 .tab {
-  padding: 11px 6px; border: 1px solid var(--line-2); border-radius: 9px;
+  padding: 11px 6px; border: 1px solid var(--line-control); border-radius: 9px;
   background: var(--surface); color: var(--muted); font: 600 14px/1 var(--sans);
   cursor: pointer; text-align: center;
 }
@@ -86,7 +89,7 @@ header { padding: 16px 0 12px; border-bottom: 1px solid var(--line) }
 
 /* ---- search ---- */
 input[type=text], input[type=number] {
-  width: 100%; padding: 13px; border: 1px solid var(--line-2); border-radius: 9px;
+  width: 100%; padding: 13px; border: 1px solid var(--line-control); border-radius: 9px;
   background: var(--surface); color: var(--text); font-size: 16px; font-family: var(--sans);
 }
 input:focus { outline: 2px solid var(--accent); outline-offset: -1px }
@@ -107,7 +110,7 @@ input:focus { outline: 2px solid var(--accent); outline-offset: -1px }
 /* ---- cash ---- */
 .qty { display: flex; align-items: center; gap: 12px; margin: 14px 0 }
 .qty button {
-  width: 52px; height: 52px; flex: none; border-radius: 10px; border: 1px solid var(--line-2);
+  width: 52px; height: 52px; flex: none; border-radius: 10px; border: 1px solid var(--line-control);
   background: var(--surface-2); color: var(--text); font-size: 24px; cursor: pointer; font-family: var(--sans);
 }
 .qty input { text-align: center; font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums }
@@ -116,7 +119,7 @@ input:focus { outline: 2px solid var(--accent); outline-offset: -1px }
 .hint.warn { color: #E8B54A }
 .ghost {
   display: block; width: 100%; margin-top: 9px; padding: 14px; border-radius: 10px;
-  border: 1px solid var(--line-2); background: var(--surface); color: var(--text);
+  border: 1px solid var(--line-control); background: var(--surface); color: var(--text);
   font: 600 15px/1 var(--sans); cursor: pointer;
 }
 h2 { font-size: 1rem; font-weight: 650; margin: 0 0 4px }

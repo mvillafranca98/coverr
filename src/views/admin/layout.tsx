@@ -10,7 +10,7 @@ import type { FC, PropsWithChildren } from "hono/jsx";
  */
 const ADMIN_CSS = `
 :root{
-  --bg:#0F0E0B;--surface:#181510;--surface-2:#221E17;--line:#2F2921;--line-2:#443C31;
+  --bg:#0F0E0B;--surface:#181510;--surface-2:#221E17;--line:#2F2921;--line-2:#443C31;--line-control:#6E6454;
   --text:#F4F0E8;--muted:#A69D8F;--dim:#8E8679;
   --accent:#E9963A;--accent-ink:#120D06;
   --ok:#5FBB88;--ok-bg:#12251A;--warn:#E0AC42;--warn-bg:#2A2110;--crit:#E2705F;--crit-bg:#2A1512;
@@ -59,10 +59,10 @@ tr.tot td{border-top:1px solid var(--line-2);font-weight:650;color:var(--text)}
 
 form.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
 label.fl{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
-input[type=text],input[type=email],input[type=number],select{padding:10px 11px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);color:var(--text);font-size:15px;font-family:var(--sans);width:100%}
+input[type=text],input[type=email],input[type=number],select{padding:10px 11px;border:1px solid var(--line-control);border-radius:8px;background:var(--surface);color:var(--text);font-size:15px;font-family:var(--sans);width:100%}
 input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
 .btn{padding:10px 16px;border:none;border-radius:8px;background:var(--accent);color:var(--accent-ink);font:650 14px/1.2 var(--sans);cursor:pointer;white-space:nowrap}
-.btn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--line-2)}
+.btn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--line-control)}
 .btn.danger{background:var(--crit-bg);color:var(--crit);border:1px solid #4A211B}
 .btn:active{filter:brightness(.9)}
 .btn.sm{padding:6px 11px;font-size:12.5px}
