@@ -6,7 +6,7 @@ import type { FC } from "hono/jsx";
  * shares no navigation, no session and no layout with the rest of the app.
  */
 /** Deliberately plain — the visual pass comes later. */
-export const LandingPage: FC = () => (
+export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
   <html lang="es">
     <head>
       <meta charset="utf-8" />
@@ -17,6 +17,10 @@ export const LandingPage: FC = () => (
         name="description"
         content="Preventa por transferencia, códigos QR, entrada y cuentas claras para bandas independientes en Honduras."
       />
+      {/* The only page in the product meant to be found in a search result.
+          Everything else is noindex — see views/layout.tsx. */}
+      <link rel="canonical" href={origin} />
+      <meta property="og:url" content={origin} />
       <meta property="og:title" content="Coverr" />
       <meta
         property="og:description"
@@ -25,7 +29,7 @@ export const LandingPage: FC = () => (
       <style
         dangerouslySetInnerHTML={{
           __html: `
-:root{--bg:#0F0E0B;--surface:#181510;--line:#2F2921;--text:#F4F0E8;--muted:#A69D8F;--dim:#756E63;--accent:#E9963A;--accent-ink:#120D06;
+:root{--bg:#0F0E0B;--surface:#181510;--line:#2F2921;--text:#F4F0E8;--muted:#A69D8F;--dim:#8E8679;--accent:#E9963A;--accent-ink:#120D06;
 --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}

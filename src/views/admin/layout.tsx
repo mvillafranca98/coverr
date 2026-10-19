@@ -11,7 +11,7 @@ import type { FC, PropsWithChildren } from "hono/jsx";
 const ADMIN_CSS = `
 :root{
   --bg:#0F0E0B;--surface:#181510;--surface-2:#221E17;--line:#2F2921;--line-2:#443C31;
-  --text:#F4F0E8;--muted:#A69D8F;--dim:#756E63;
+  --text:#F4F0E8;--muted:#A69D8F;--dim:#8E8679;
   --accent:#E9963A;--accent-ink:#120D06;
   --ok:#5FBB88;--ok-bg:#12251A;--warn:#E0AC42;--warn-bg:#2A2110;--crit:#E2705F;--crit-bg:#2A1512;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;

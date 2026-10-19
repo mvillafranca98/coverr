@@ -9,7 +9,7 @@ export const CSS = `
   --line-2:#4A3F31;
   --text:#F6F2EB;
   --muted:#A79E90;
-  --dim:#7A7367;
+  --dim:#8E8679;
   --accent:#F0A03C;
   --accent-dim:#7A5220;
   --accent-ink:#100C06;
@@ -208,6 +208,12 @@ export const Layout: FC<
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
       <meta name="theme-color" content="#0C0B09" />
+      {/* Every page on this layout shows something that belongs to one person:
+          the band's bank account and holder name on the buy page, a buyer's name
+          and live QR codes on the ticket page. None of it should be reachable
+          from a search result. The landing page is the only public page meant to
+          rank, and it carries its own document. */}
+      <meta name="robots" content="noindex,nofollow" />
       <title>{title}</title>
       {description ? <meta name="description" content={description} /> : null}
       <meta property="og:title" content={title} />

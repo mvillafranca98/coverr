@@ -5,4 +5,4 @@ import type { PublicEnv } from "./context";
 export const landingRoutes = new Hono<PublicEnv>();
 
 /** The front page. Reads nothing and belongs to no band. */
-landingRoutes.get("/", (c) => c.html(<LandingPage />));
+landingRoutes.get("/", (c) => c.html(<LandingPage origin={c.env.APP_ORIGIN} />));

@@ -11,7 +11,7 @@ Status values:
 - **N/A:** doesn't apply, or the thing it governs doesn't exist yet (say which)
 
 ## Profile
-Last audit: never
+Last audit: never (4 items recorded by hand on 2026-10-19)
 Countries served: Honduras
 
 | Flag | On | Meaning | Note |
@@ -58,7 +58,7 @@ Every service that receives user data, including hosting, database and auth prov
 | SEC-03 | critical | User files live in private storage. | TODO | | |
 | SEC-04 | critical | Authorization is checked on the server for every request that touches user data. | TODO | | |
 | SEC-05 | high | Auth endpoints are protected against abuse. | TODO | | |
-| SEC-06 | high | Anything that costs money per call is protected. | TODO | | |
+| SEC-06 | high | Anything that costs money per call is protected. | PARTIAL | PURCHASE_LIMIT 20/min on the endpoint that triggers the vision call. Cloudflare's limiter is best-effort — it damps bursts, not a slow drip. The hard ceiling is the event capacity cap, which bounds orders and therefore vision calls | 2026-10-19 |
 | SEC-08 | high | Input is validated on the server and queries are parameterized. | TODO | | |
 | SEC-09 | medium | No known high or critical vulnerabilities in dependencies. | TODO | | |
 | SEC-10 | medium | Security headers and cookies are set. | TODO | | |
@@ -109,7 +109,7 @@ Every service that receives user data, including hosting, database and auth prov
 | CQ-14 | medium | A new developer can get it running from the README. | TODO | | |
 | FE-01 | high | DESIGN.md exists and the UI follows it. | TODO | | |
 | FE-02 | high | One animation library per codebase, used politely. | TODO | | |
-| FE-03 | critical | Text is readable. | TODO | | |
+| FE-03 | critical | Text is readable. | PASS | `--dim` was failing AA in all three stylesheets (4.19 / 3.83). Now #8E8679 — 5.47 and 5.36. Every pair in DESIGN.md computed | 2026-10-19 |
 | FE-04 | high | Every data screen has loading, empty and error states. | TODO | | |
 | FE-05 | high | Keyboard and screen-reader basics work. | TODO | | |
 | FE-06 | high | It works on a phone. | TODO | | |
@@ -119,8 +119,8 @@ Every service that receives user data, including hosting, database and auth prov
 | FE-10 | low | Dark mode is either finished or not offered. | TODO | | |
 | MKT-01 | high | Each public page has a unique title and description. | TODO | | |
 | MKT-02 | high | Links look good when shared. | TODO | | |
-| MKT-03 | high | Search engines crawl the right things. | TODO | | |
-| MKT-04 | medium | Each page has one canonical address. | TODO | | |
+| MKT-03 | high | Search engines crawl the right things. | PASS | Buyer pages were fully crawlable and the buy page renders a bank account and holder name. All pages on views/layout.tsx are now noindex,nofollow; the landing page stays indexable | 2026-10-19 |
+| MKT-04 | medium | Each page has one canonical address. | PASS | Landing page declares rel=canonical and og:url from APP_ORIGIN. Nothing else is indexable, so nothing else needs one | 2026-10-19 |
 | MKT-05 | medium | Structured data where it fits. | TODO | | |
 | MKT-06 | high | Analytics track what matters. | TODO | | |
 | MKT-07 | medium | The landing page answers the basics above the fold. | TODO | | |
