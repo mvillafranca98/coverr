@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { and, desc, eq } from "drizzle-orm";
 import * as s from "../../db/schema";
 import { BandSettingsPage } from "../../views/setup/band-settings";
-import { findBand } from "../../db/queries/bands";
+import { findBand, findBandMember, findBandEventById } from "../../db/queries/bands";
 import { newId, nowIso, normalizeEmail, lpsToCentavos } from "../../lib/core";
 import type { AdminContext, AdminEnv } from "./context";
 
@@ -39,7 +39,12 @@ async function renderBandSettings(
   const advanceRows = await db
     .select({ advance: s.advances, member: s.bandMembers })
     .from(s.advances)
-    .innerJoin(s.bandMembers, eq(s.advances.memberId, s.bandMembers.id))
+    .innerJoin(
+      s.bandMembers,
+      // Band-constrained on the join as well as the filter: a row written
+      // before this was enforced must not render a stranger's name either.
+      and(eq(s.advances.memberId, s.bandMembers.id), eq(s.bandMembers.bandId, bandId)),
+    )
     .where(eq(s.advances.bandId, bandId))
     .orderBy(desc(s.advances.date));
   const eventNameById = new Map(events.map((e) => [e.id, e.name]));
@@ -205,6 +210,16 @@ bandSettingsRoutes.post("/banda/adelanto", async (c) => {
   const amount = lpsToCentavos(String(body["amount"] ?? ""));
 
   if (!memberId || amount == null || amount === 0) {
+    return renderBandSettings(c, { error: "Revisá el integrante y el monto." });
+  }
+
+  // Both ids arrive in the form body, so neither can be trusted. The same
+  // message answers a missing member and a stranger's member, so the form
+  // cannot be used to discover which ids exist.
+  if (!(await findBandMember(db, bandId, memberId))) {
+    return renderBandSettings(c, { error: "Revisá el integrante y el monto." });
+  }
+  if (eventId && !(await findBandEventById(db, bandId, eventId))) {
     return renderBandSettings(c, { error: "Revisá el integrante y el monto." });
   }
 
