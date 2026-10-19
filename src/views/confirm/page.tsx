@@ -9,6 +9,8 @@ export type ConfirmProps = {
   event: {
     name: string; venue: string; startsAt: string;
     thankYouNote: string | null;
+    /** Only used to clear the buy form's saved draft, which is keyed by slug. */
+    slug: string;
   };
   order: {
     id: string; shortCode: string; quantity: number;
@@ -136,6 +138,7 @@ export const ConfirmPage: FC<ConfirmProps> = ({ band, event, order, attendees })
     <script
       dangerouslySetInnerHTML={{
         __html: ticketScript({
+          eventSlug: event.slug,
           bandName: band.name,
           eventName: event.name,
           whenLine: `${formatEventDate(event.startsAt)} · ${formatEventTime(event.startsAt)}`,

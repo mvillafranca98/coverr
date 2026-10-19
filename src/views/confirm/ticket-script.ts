@@ -17,6 +17,7 @@
  * lose it, so by the time anyone taps, the File already exists.
  */
 export function ticketScript(i: {
+  eventSlug: string;
   bandName: string;
   eventName: string;
   whenLine: string;
@@ -26,6 +27,11 @@ export function ticketScript(i: {
 }): string {
   return `
 (function(){
+  // The buy form keeps the buyer's draft in localStorage until their order
+  // actually exists, so a refused submit never loses it. It exists now, so
+  // this is the point where it stops being needed.
+  try { localStorage.removeItem('coverr:' + ${JSON.stringify(i.eventSlug)}); } catch (e) {}
+
   if (!window.HTMLCanvasElement || !document.createElement('canvas').getContext) return;
 
   var BAND  = ${JSON.stringify(i.bandName)};

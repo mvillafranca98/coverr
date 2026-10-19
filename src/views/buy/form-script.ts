@@ -178,7 +178,12 @@ export function buyFormScript(i: {
   form.addEventListener('input', save);
   form.addEventListener('change', save);
   form.addEventListener('submit', function(){
-    try { localStorage.removeItem(KEY); } catch(e){}
+    // Deliberately does NOT clear the saved copy. A submit can still be
+    // refused - rate limit, validation, sold out, no capacity - and the server
+    // answers with a redirect back to this page. Clearing here would hand an
+    // empty form to someone who has already transferred the money, which is
+    // the exact failure this script exists to prevent. The ticket page clears
+    // it once the order actually exists.
     var btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.textContent = 'Enviando…';
@@ -187,5 +192,20 @@ export function buyFormScript(i: {
   restore();
   renderQty();
   renderBank();
+
+  // Back here with an error after a refused submit: the fields are restored,
+  // but no browser lets us re-populate a file input, so the proof is the one
+  // thing that must be picked again. Say so, and re-enable the button.
+  if (/[?&]error=/.test(location.search)) {
+    var dropName = document.getElementById('dropName');
+    if (dropName && !dropName.textContent) {
+      dropName.textContent = 'Volvé a elegir tu comprobante.';
+    }
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Confirmar compra';
+    }
+  }
 })();`;
 }

@@ -18,7 +18,13 @@ export const ManualSalePage: FC<{
   priceLabel: string;
   created?: { shortCode: string; quantity: number; amount: number; orderId: string } | null;
   error?: string;
-}> = ({ bandName, event, defaultPrice, priceLabel, created, error }) => (
+  /**
+   * What the operator typed, echoed back when the server refuses. A door
+   * operator mid-queue should never have to retype a list of names because
+   * one field was wrong.
+   */
+  values?: { names?: string; unitPrice?: string; note?: string; payerName?: string; payerEmail?: string };
+}> = ({ bandName, event, defaultPrice, priceLabel, created, error, values }) => (
   <AdminLayout
     title={`Venta manual — ${event.name}`}
     bandName={bandName}
@@ -50,7 +56,7 @@ export const ManualSalePage: FC<{
       </div>
     ) : null}
 
-    <form method="post" style="max-width:560px">
+    <form method="post" style="max-width:560px" id="manualForm">
       <h2>¿Quiénes entran?</h2>
       <p class="sub" style="margin-top:0">
         Un nombre por línea. Cada uno recibe su propio código QR.
@@ -61,7 +67,7 @@ export const ManualSalePage: FC<{
         rows={4}
         required
         placeholder={"Marvin Mora\nKeyla Discua"}
-      ></textarea>
+      >{values?.names ?? ""}</textarea>
 
       <h2>¿Cuánto cobraste?</h2>
       <label class="fl" for="unit_price">
@@ -74,7 +80,7 @@ export const ManualSalePage: FC<{
         step="0.01"
         min="0"
         required
-        value={String(defaultPrice / 100)}
+        value={values?.unitPrice ?? String(defaultPrice / 100)}
       />
       <p class="sub" style="margin:6px 0 0">
         Viene con el precio de {priceLabel.toLowerCase()}. Cambialo si hiciste un trato, o poné{" "}
@@ -89,6 +95,7 @@ export const ManualSalePage: FC<{
         name="note"
         id="note"
         required
+        value={values?.note ?? ""}
         placeholder="Efectivo en el ensayo · A cuenta del sonido · Canje con el fotógrafo"
       />
       <p class="sub" style="margin:6px 0 0">
@@ -99,18 +106,24 @@ export const ManualSalePage: FC<{
       <label class="fl" for="payer_name">
         Nombre de quien te pagó <span style="font-weight:400;color:var(--dim)">(opcional)</span>
       </label>
-      <input type="text" name="payer_name" id="payer_name" placeholder="Si es distinto al de arriba" />
+      <input
+        type="text"
+        name="payer_name"
+        id="payer_name"
+        placeholder="Si es distinto al de arriba"
+        value={values?.payerName ?? ""}
+      />
 
       <label class="fl" for="payer_email">
         Correo <span style="font-weight:400;color:var(--dim)">(opcional)</span>
       </label>
-      <input type="email" name="payer_email" id="payer_email" />
+      <input type="email" name="payer_email" id="payer_email" value={values?.payerEmail ?? ""} />
       <p class="sub" style="margin:6px 0 0">
         Si lo ponés, le mandamos los códigos QR. Si no, se los pasás vos desde la pantalla
         siguiente.
       </p>
 
-      <button class="btn" type="submit" style="margin-top:22px">
+      <button class="btn" type="submit" id="manualSubmit" style="margin-top:22px">
         Registrar venta
       </button>
     </form>
@@ -119,5 +132,20 @@ export const ManualSalePage: FC<{
       Esto <b>no</b> marca a nadie como que ya entró — el código se escanea en la puerta como
       cualquier otro. Para cobrar en la fila usá el botón de efectivo del enlace de puerta.
     </div>
+    {/* This POST creates orders, so a double tap double-sells. The buyer form
+        has guarded this since it was written; the door's own form had not. */}
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `(function(){
+  var f = document.getElementById('manualForm');
+  var b = document.getElementById('manualSubmit');
+  if (!f || !b) return;
+  f.addEventListener('submit', function(){
+    b.disabled = true;
+    b.textContent = 'Registrando…';
+  });
+})();`,
+      }}
+    />
   </AdminLayout>
 );

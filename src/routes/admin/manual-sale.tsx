@@ -12,6 +12,14 @@ import type { AdminContext, AdminEnv } from "./context";
 export const manualSaleRoutes = new Hono<AdminEnv>();
 
 /** What the form shows after a successful sale, so the admin can open the QRs. */
+type TypedValues = {
+  names?: string;
+  unitPrice?: string;
+  note?: string;
+  payerName?: string;
+  payerEmail?: string;
+};
+
 type ManualSaleReceipt = {
   shortCode: string;
   quantity: number;
@@ -25,7 +33,7 @@ const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 async function renderManualSale(
   c: AdminContext,
-  opts: { error?: string; created?: ManualSaleReceipt } = {},
+  opts: { error?: string; created?: ManualSaleReceipt; values?: TypedValues } = {},
 ) {
   const db = drizzle(c.env.DB, { schema: s });
   const bandId = c.get("bandId");
@@ -44,6 +52,7 @@ async function renderManualSale(
       priceLabel={rule?.label ?? "Taquilla"}
       created={opts.created ?? null}
       error={opts.error}
+      values={opts.values}
     />,
   );
 }
@@ -61,26 +70,38 @@ manualSaleRoutes.post("/e/:slug/venta", async (c) => {
   const text = (key: string) =>
     typeof body[key] === "string" ? (body[key] as string).trim() : "";
 
+  // Captured before any validation so every refusal can hand them back. The
+  // operator is standing at a door with a queue; retyping a list of names
+  // because the price field was wrong is not an acceptable cost.
+  const typed: TypedValues = {
+    names: text("names"),
+    unitPrice: text("unit_price"),
+    note: text("note"),
+    payerName: text("payer_name"),
+    payerEmail: text("payer_email"),
+  };
+
   const names = text("names")
     .split("\n")
     .map((name) => name.trim())
     .filter(Boolean)
     .slice(0, MAX_NAMES_PER_SALE);
-  if (names.length === 0) return renderManualSale(c, { error: "Poné al menos un nombre." });
+  if (names.length === 0) return renderManualSale(c, { error: "Poné al menos un nombre.", values: typed });
 
   const unitPrice = lpsToCentavos(text("unit_price"));
-  if (unitPrice == null) return renderManualSale(c, { error: "Revisá el monto." });
+  if (unitPrice == null) return renderManualSale(c, { error: "Revisá el monto.", values: typed });
 
   const note = text("note");
   if (!note) {
     return renderManualSale(c, {
       error: "Escribí por qué — sin eso la orden no se explica después.",
+      values: typed,
     });
   }
 
   const payerEmail = text("payer_email");
   if (payerEmail && !EMAIL_PATTERN.test(payerEmail)) {
-    return renderManualSale(c, { error: "Revisá el correo." });
+    return renderManualSale(c, { error: "Revisá el correo.", values: typed });
   }
 
   const orderId = newId("ord");
