@@ -50,6 +50,32 @@ const STEPS: { title: string; body: string }[] = [
   },
 ];
 
+/**
+ * Screen captures of the real product, taken against the fabricated band in
+ * `seed/demo.sql` so no band's takings and no buyer's name is published. The
+ * page says so under the heading — these are real screens, invented numbers.
+ */
+const SHOTS: { src: string; cap: string; alt: string; body: string }[] = [
+  {
+    src: "/img/shot-dashboard.webp",
+    cap: "El resumen en vivo",
+    alt: "Resumen del evento: 151 personas adentro, 157 vendidos, 49 brazaletes y L33,950 de bruto, con los ingresos desglosados por canal.",
+    body: "Adentro, vendidos, brazaletes y bruto. Los ingresos por canal se actualizan mientras entra la gente.",
+  },
+  {
+    src: "/img/shot-scanner.webp",
+    cap: "La puerta",
+    alt: "El escáner de entrada en verde, mostrando «Adelante» con el nombre del asistente y su código.",
+    body: "Verde y el nombre de quien entra. Funciona sin señal: la lista queda guardada en el teléfono.",
+  },
+  {
+    src: "/img/shot-ticket.webp",
+    cap: "El boleto",
+    alt: "La pantalla de boletos del comprador, con el código QR y el código corto debajo.",
+    body: "El código QR aparece al instante, antes de que verifiquemos nada. Se descarga como imagen.",
+  },
+];
+
 /** Rendered twice in the track so the -50% translate loops seamlessly. */
 const MARQUEE = ["Preventa", "Códigos QR", "Entrada sin señal", "Efectivo y cortesías", "Reparto"];
 
@@ -174,6 +200,38 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
                 </li>
               ))}
             </ol>
+          </section>
+
+          <section aria-labelledby="producto">
+            <p class="eyebrow" data-reveal>
+              El producto
+            </p>
+            <h2 id="producto" data-reveal>
+              Así se ve <em>tu toque</em>
+            </h2>
+            <p data-reveal>
+              Capturas del producto tal como está hoy.{" "}
+              <b>Los datos son de una banda de ejemplo</b> — Coverr no publica las cuentas ni los
+              compradores de nadie.
+            </p>
+            <ul class="shots">
+              {SHOTS.map((shot) => (
+                <li class="shot" key={shot.src} data-reveal>
+                  {/* Intrinsic size on every image: the row must not jump while
+                      they load, and these sit well below the fold. */}
+                  <img
+                    src={shot.src}
+                    alt={shot.alt}
+                    width="469"
+                    height="600"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <p class="cap">{shot.cap}</p>
+                  <p>{shot.body}</p>
+                </li>
+              ))}
+            </ul>
           </section>
 
           <section aria-labelledby="precio">

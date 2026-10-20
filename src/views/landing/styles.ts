@@ -187,6 +187,26 @@ b{color:var(--ink);font-weight:600}
 }
 .cell p{font-size:var(--step--1);color:var(--ink-50);margin:0;max-width:34ch}
 
+/* ---------- product shots ----------
+   Same hairline bed as .grid. The phones keep their own 469x600 frame, so the
+   row reads as one set and nothing shifts while they load. */
+.shots{
+  display:grid;gap:1px;background:var(--line-soft);
+  border:1px solid var(--line-soft);margin-top:30px;
+  list-style:none;padding:0;
+}
+@media (min-width:720px){.shots{grid-template-columns:repeat(3,1fr)}}
+.shot{background:var(--bg);padding:clamp(20px,3vw,26px)}
+.shot img{
+  display:block;width:100%;height:auto;
+  border:1px solid var(--line);border-radius:10px;
+}
+.shot .cap{
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--accent);margin:18px 0 0;
+}
+.shot p{font-size:var(--step--1);color:var(--ink-50);margin:8px 0 0;max-width:36ch}
+
 /* ---------- pricing ---------- */
 .tiers{width:100%;border-collapse:collapse;margin-top:30px;font-size:var(--step-0)}
 .tiers caption{
