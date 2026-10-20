@@ -86,7 +86,7 @@ components:
 - **Style:** Flat, typographic, no ornament. Content sits on plain surfaces separated by hairlines rather than shadows. One amber accent carries every action; nothing else competes for attention.
 - **Feel:** warm, plain, unfussy
 - **Themes:** light and dark — but not as a user preference. **The surface is chosen by audience, not by toggle.**
-- **Motion:** none. There is no animation library in this project and there should not be one. The only motion rule that applies is `prefers-reduced-motion`, already honoured in both stylesheets.
+- **Motion:** none, with exactly one exception — the landing page. See *Motion and the landing page* below. `prefers-reduced-motion` is honoured in every stylesheet.
 - **Accessibility:** WCAG AA in both themes — 4.5:1 for body text, 3:1 for large text and controls. Every pair in this file was computed, not estimated; the table under **Colors** carries the numbers.
 - **Reference:** none. Tokens derived from the product's own existing stylesheets.
 
@@ -150,10 +150,43 @@ Buttons, inputs and cards are defined in the front matter. Three states carry ev
 
 Loading, empty and error states: most screens are server-rendered and arrive complete, so there is no loading state to design. Empty states are written out ("Nada que mostrar con ese filtro"), and errors render in the page as a `note crit` block rather than as an alert or a bare status code.
 
+## Motion and the landing page
+
+The landing page (`/`) is the single surface allowed decoration and motion. Everything
+else — the buy page, the ticket page, recovery, refunds, the admin and the scanner —
+stays still and ships no animation library.
+
+The split is not taste, it is who is reading. The no-animation rule exists because a
+buyer opens `/e/:slug` on venue wifi with a transfer half-made, and a blocked render
+there costs a sale. A band deciding whether to trust Coverr with their gig is on a sofa.
+
+What that permits on `/`, and nowhere else:
+
+- **GSAP + ScrollTrigger**, vendored in `public/vendor/` rather than loaded from a CDN —
+  the same way `jsQR.js` already is. 45 KB gzipped, `defer`, and it keeps the CSP at
+  `'self'` with no third-party origin. Adding a CDN host to `script-src` to save a
+  download would weaken a header that protects the pages where money moves.
+- **Gradient atmosphere** — the amber aurora behind the masthead, the grain overlay, the
+  gradient-filled headline word, glass cards.
+
+Three rules hold, and each exists because getting it wrong broke something real:
+
+1. **Decoration never hides content.** Every reveal is a `gsap.from`, so the page renders
+   complete without JavaScript and stays complete if a script fails. Nothing in the
+   stylesheet sets `opacity:0`.
+2. **The aurora is `position:absolute`, never `fixed`.** Fixed keeps the glow in the
+   viewport, so every paragraph eventually scrolls under its brightest point — `--muted`
+   over peak amber measures **3.96** against a 4.5 floor. Anchored to the document, the
+   glow belongs to the masthead and scrolls away, leaving the pricing table and footer
+   (the dimmest ink on the page) on flat `--bg`.
+3. **Peak alpha is capped by the dimmest ink that sits on it.** `--muted` fails above
+   roughly `.24`. The fields are at `.20` and `.17`. Make a glow bigger, not denser.
+4. **`prefers-reduced-motion` disables all of it**, not a gentler version.
+
 ## Do's and Don'ts
 - **Do** pick the surface by audience: light for anything a buyer sees, dark for anything the band sees.
 - **Do** use `--accent-text` for accented text on light. `--accent` is a fill.
 - **Do** keep money tabular and monospaced.
 - **Do** compute contrast when adding a colour. Every number in this file is measured.
-- **Don't** add a webfont, an icon set or an animation library.
+- **Don't** add a webfont, an icon set, or an animation library to anything but `/`.
 - **Don't** add a second animation library, use more than two font families, ship lorem ipsum, or invent testimonials, logos or stats.

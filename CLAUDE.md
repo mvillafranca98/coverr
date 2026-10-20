@@ -38,8 +38,10 @@ Commands: `npm run dev`, `npm run typecheck`, `npm run db:generate`, `npm run db
   `lib/core.ts`. No EU or UK users, so GDPR items are out of scope until that changes.
 - **18+ only.** Stated in the terms and in the checkout acceptance line; still not *enforced*
   anywhere — there is no age gate. See LEG-11.
-- **No animation library, no webfonts, no icon set.** Deliberate, not an oversight: buyers open
-  these pages on venue wifi moments before paying. See DESIGN.md.
+- **No animation library, no webfonts, no icon set — except on the landing page.** Deliberate,
+  not an oversight: buyers open these pages on venue wifi moments before paying. `/` is marketing
+  to bands and carries GSAP (vendored, not a CDN); every other surface stays still. See DESIGN.md,
+  *Motion and the landing page*.
 - **Light or dark is chosen by audience, not by preference.** Light for anything a buyer sees,
   dark for anything the band sees. There is no theme toggle and should not be one.
 

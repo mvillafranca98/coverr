@@ -1,5 +1,7 @@
 import type { FC } from "hono/jsx";
-import { LegalLinks } from "./legal/links";
+import { LegalLinks } from "../legal/links";
+import { LANDING_CSS } from "./styles";
+import { landingMotionScript } from "./motion";
 
 /**
  * The public front page. Carries its own document and stylesheet rather than
@@ -7,7 +9,8 @@ import { LegalLinks } from "./legal/links";
  * shares no navigation, no session and no layout with the rest of the app.
  *
  * Dark, because it is marketing to bands and DESIGN.md gives the band every
- * dark surface. Buyers never land here — they arrive at /e/:slug from a flyer.
+ * dark surface. Buyers never land here — they arrive at /e/:slug from a flyer,
+ * on a light page with no decoration and no JavaScript beyond the form.
  *
  * Everything on this page is a fact taken from the product or the spec. There
  * are no testimonials, no band logos and no counts, because Coverr has had one
@@ -46,103 +49,6 @@ const STEPS: { title: string; body: string }[] = [
   },
 ];
 
-const CSS = `
-:root{
-  --bg:#0F0E0B; --surface:#181510; --line:#2F2921; --line-control:#6E6454;
-  --text:#F4F0E8; --muted:#A69D8F; --dim:#8E8679;
-  --accent:#F0A03C; --accent-ink:#100C06;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-}
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{
-  margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
-  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
-}
-
-/* Keyboard users land here first and can jump the masthead. */
-.skip{
-  position:absolute;left:-9999px;top:0;
-  background:var(--accent);color:var(--accent-ink);
-  padding:12px 18px;border-radius:0 0 8px 0;font-weight:700;text-decoration:none;
-}
-.skip:focus{left:0;z-index:10}
-
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
-
-.wrap{max-width:660px;margin:0 auto;padding:0 20px 72px}
-
-/* ---------- masthead ---------- */
-header{padding:clamp(40px,10vw,72px) 0 clamp(28px,6vw,40px)}
-.brand{
-  font-family:var(--mono);font-size:11px;letter-spacing:.22em;
-  text-transform:uppercase;color:var(--accent);
-}
-h1{
-  font-size:clamp(1.9rem,6.5vw,2.7rem);line-height:1.08;letter-spacing:-.028em;
-  margin:14px 0 14px;font-weight:750;text-wrap:balance;
-}
-.lede{font-size:clamp(1rem,3.4vw,1.14rem);color:var(--muted);margin:0;max-width:34ch;text-wrap:pretty}
-
-/* ---------- calls to action ---------- */
-.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
-.cta{
-  display:inline-flex;align-items:center;justify-content:center;
-  min-height:48px;padding:13px 22px;border-radius:10px;
-  background:var(--accent);color:var(--accent-ink);
-  font-weight:700;font-size:15px;text-decoration:none;border:1px solid var(--accent);
-}
-.cta.ghost{background:transparent;color:var(--text);border-color:var(--line-control)}
-.cta:active{transform:translateY(1px)}
-@media (prefers-reduced-motion:reduce){.cta:active{transform:none}}
-
-/* ---------- sections ---------- */
-main{border-top:1px solid var(--line)}
-section{padding:clamp(30px,7vw,46px) 0;border-bottom:1px solid var(--line)}
-section:last-of-type{border-bottom:0}
-h2{font-size:clamp(1.15rem,4vw,1.4rem);font-weight:700;letter-spacing:-.015em;margin:0 0 14px;text-wrap:balance}
-p{color:var(--muted);margin:0 0 14px;max-width:62ch;text-wrap:pretty}
-p:last-child{margin-bottom:0}
-b{color:var(--text);font-weight:650}
-
-/* ---------- how it works ---------- */
-.steps{display:grid;gap:14px;margin:0;padding:0;list-style:none;counter-reset:step}
-@media (min-width:560px){.steps{grid-template-columns:1fr 1fr;gap:16px}}
-.step{
-  background:var(--surface);border:1px solid var(--line);border-radius:12px;
-  padding:18px 18px 20px;counter-increment:step;
-}
-.step::before{
-  content:"0" counter(step);
-  display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
-  color:var(--accent);margin-bottom:8px;
-}
-.step h3{font-size:1rem;font-weight:650;margin:0 0 6px;color:var(--text)}
-.step p{font-size:.92rem;margin:0}
-
-/* ---------- pricing ---------- */
-.tiers{width:100%;border-collapse:collapse;font-size:.95rem;margin-top:4px}
-.tiers th{
-  text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--dim);font-weight:600;
-  padding:0 0 8px;border-bottom:1px solid var(--line);
-}
-.tiers th:last-child,.tiers td:last-child{text-align:right}
-.tiers td{padding:11px 0;border-bottom:1px solid var(--line);color:var(--muted)}
-.tiers tr:last-child td{border-bottom:0}
-.tiers td:last-child{color:var(--text);font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
-.tiers tr.free td{color:var(--accent)}
-
-footer{
-  margin-top:40px;padding-top:18px;border-top:1px solid var(--line);
-  font-family:var(--mono);font-size:11px;color:var(--dim);
-  display:flex;flex-wrap:wrap;gap:4px 14px;
-}
-a{color:var(--accent)}
-footer a{color:var(--dim)}
-`;
-
 export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
   <html lang="es">
     <head>
@@ -165,17 +71,32 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
         content="El dinero llega directo a la cuenta de tu banda. Preventa, códigos QR, entrada sin señal y el reparto al final."
       />
       <meta name="twitter:card" content="summary" />
-      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: LANDING_CSS }} />
+      {/* Vendored, not from a CDN — see motion.ts. `defer` so neither blocks
+          the first paint, and both have run by DOMContentLoaded, which is what
+          the init below waits for. */}
+      <script src="/vendor/gsap.min.js" defer />
+      <script src="/vendor/ScrollTrigger.min.js" defer />
+      <script dangerouslySetInnerHTML={{ __html: landingMotionScript() }} />
     </head>
     <body>
       <a class="skip" href="#main">
         Saltar al contenido
       </a>
 
+      {/* Decoration only: no text, no structure, hidden from assistive tech. */}
+      <div class="aurora" aria-hidden="true">
+        <span class="a1" />
+        <span class="a2" />
+      </div>
+      <div class="grain" aria-hidden="true" />
+
       <div class="wrap">
-        <header>
+        <header data-hero>
           <div class="brand">Coverr</div>
-          <h1>Vendé tus boletos sin que el dinero pase por nadie más.</h1>
+          <h1>
+            Vendé tus boletos sin que el dinero <span class="grad">pase por nadie más</span>.
+          </h1>
           <p class="lede">
             Tus compradores transfieren directo a la cuenta de tu banda. Nosotros nunca tocamos
             el dinero.
@@ -194,22 +115,30 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
 
         <main id="main">
           <section aria-labelledby="problema">
-            <h2 id="problema">Lo que estás haciendo hoy</h2>
-            <p>
+            <p class="eyebrow" data-reveal>
+              El problema
+            </p>
+            <h2 id="problema" data-reveal>
+              Lo que estás haciendo hoy
+            </h2>
+            <p data-reveal>
               Un hilo de WhatsApp lleno de capturas. Una hoja de cálculo escrita a mano, nombre
               por nombre. Un conteo en la puerta que nunca cuadra con los brazaletes, y al final
               alguien promedia para que cierre.
             </p>
-            <p>
-              Coverr hace esa parte. Vos tocás.
-            </p>
+            <p data-reveal>Coverr hace esa parte. Vos tocás.</p>
           </section>
 
           <section aria-labelledby="como">
-            <h2 id="como">Cómo funciona</h2>
+            <p class="eyebrow" data-reveal>
+              Cómo funciona
+            </p>
+            <h2 id="como" data-reveal>
+              Cuatro pasos, de principio a fin
+            </h2>
             <ol class="steps">
               {STEPS.map((step) => (
-                <li class="step" key={step.title}>
+                <li class="step" key={step.title} data-reveal>
                   <h3>{step.title}</h3>
                   <p>{step.body}</p>
                 </li>
@@ -218,44 +147,56 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
           </section>
 
           <section aria-labelledby="precio">
-            <h2 id="precio">Precio</h2>
-            <p>
+            <p class="eyebrow" data-reveal>
+              Precio
+            </p>
+            <h2 id="precio" data-reveal>
+              Sólo pagás cuando ya cobraste
+            </h2>
+            <p data-reveal>
               La preventa, los códigos QR, la entrada, las ventas en efectivo y el resumen en
               vivo son <b>gratis, siempre</b>. Sólo se paga el reporte de reparto al final de
               cada evento — cuando el toque ya pasó y la plata ya está en la cuenta.
             </p>
-            <table class="tiers">
-              <caption class="brand" style="text-align:left;padding-bottom:10px">
-                Por evento
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Boletos vendidos</th>
-                  <th scope="col">Reporte de reparto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {PRICE_TIERS.map((tier, i) => (
-                  <tr class={i === 0 ? "free" : ""} key={tier.tickets}>
-                    <td>{tier.tickets}</td>
-                    <td>{tier.price}</td>
+            <div data-reveal>
+              <table class="tiers">
+                <caption class="eyebrow" style="text-align:left;padding-bottom:10px">
+                  Por evento
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Boletos vendidos</th>
+                    <th scope="col">Reporte de reparto</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <p style="margin-top:14px;font-size:.9rem">
+                </thead>
+                <tbody>
+                  {PRICE_TIERS.map((tier, i) => (
+                    <tr class={i === 0 ? "free" : ""} key={tier.tickets}>
+                      <td>{tier.tickets}</td>
+                      <td>{tier.price}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p style="margin-top:16px;font-size:.9rem" data-reveal>
               Las cortesías no cuentan para el tramo. No hay suscripción ni plan mensual: una
               banda que toca dos veces al año paga dos veces al año y conserva su historial.
             </p>
           </section>
 
           <section aria-labelledby="empezar">
-            <h2 id="empezar">Empezá con tu próximo toque</h2>
-            <p>
+            <p class="eyebrow" data-reveal>
+              Empezar
+            </p>
+            <h2 id="empezar" data-reveal>
+              Empezá con tu próximo toque
+            </h2>
+            <p data-reveal>
               Crear la banda toma dos campos. Podés correr un evento completo antes de decidir si
               pagás el reporte.
             </p>
-            <div class="actions">
+            <div class="actions" data-reveal>
               <a class="cta" href="/registro">
                 Crear mi banda
               </a>
