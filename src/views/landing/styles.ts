@@ -62,6 +62,13 @@ export const LANDING_CSS = `
   --ease-out:cubic-bezier(.16,1,.3,1);
 }
 
+/* Reveal start state. Scoped to .js-reveal, which only exists once the guard
+   script in <head> has armed it and started its deadman timer — so a page with
+   no JavaScript, or one whose vendor scripts fail, renders complete. Never put
+   these rules outside this class. */
+.js-reveal [data-reveal],
+.js-reveal [data-hero] > *{opacity:0;transform:translateY(18px)}
+
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{

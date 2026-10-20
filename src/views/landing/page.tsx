@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
 import { LegalLinks } from "../legal/links";
 import { LANDING_CSS } from "./styles";
-import { landingMotionScript } from "./motion";
+import { landingMotionScript, revealGuardScript } from "./motion";
 
 /**
  * The public front page. Carries its own document and stylesheet rather than
@@ -85,6 +85,10 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
         crossorigin="anonymous"
       />
       <style dangerouslySetInnerHTML={{ __html: LANDING_CSS }} />
+      {/* Synchronous and before the body: it hides what is about to be
+          revealed, and arms the timer that un-hides it if the motion script
+          never reports in. See motion.ts. */}
+      <script dangerouslySetInnerHTML={{ __html: revealGuardScript() }} />
       {/* Vendored, not from a CDN — see motion.ts. `defer` so neither blocks
           the first paint, and both have run by DOMContentLoaded, which is what
           the init below waits for. */}
