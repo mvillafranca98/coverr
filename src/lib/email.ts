@@ -24,6 +24,14 @@ export class ConsoleTransport implements EmailTransport {
   async send(msg: EmailMessage): Promise<SendResult> {
     const id = `dev_${Date.now().toString(36)}`;
     console.log(`[email:dev] to=${msg.to} subject="${msg.subject}" id=${id}`);
+
+    // Magic links are the only way into the admin, so without this the whole
+    // band flow is untestable until a sending domain verifies. Safe to print:
+    // this transport is constructed only when RESEND_API_KEY is absent, which
+    // never happens in production.
+    for (const link of msg.text.match(/https?:\/\/\S+/g) ?? []) {
+      console.log(`[email:dev]   ${link}`);
+    }
     if (this.sink) {
       await this.sink.put(`outbox/${id}.html`, msg.html, {
         httpMetadata: { contentType: "text/html; charset=utf-8" },
