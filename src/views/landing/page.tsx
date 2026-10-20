@@ -12,9 +12,10 @@ import { landingMotionScript } from "./motion";
  * dark surface. Buyers never land here — they arrive at /e/:slug from a flyer,
  * on a light page with no decoration and no JavaScript beyond the form.
  *
- * Everything on this page is a fact taken from the product or the spec. There
- * are no testimonials, no band logos and no counts, because Coverr has had one
- * real order and inventing social proof would be a lie that outlives the page.
+ * Everything here is a fact taken from the product or the spec. No
+ * testimonials, no band logos, no counts and no "trusted by" row: Coverr has
+ * had one real order, and the house style's stats band is the one device from
+ * it that cannot be borrowed honestly.
  */
 
 /**
@@ -45,16 +46,19 @@ const STEPS: { title: string; body: string }[] = [
   },
   {
     title: "Al final ves las cuentas",
-    body: "Preventa, taquilla, efectivo, cortesías, costos y el reparto de cada integrante. Todo sale de los registros, no de una celda escrita a mano.",
+    body: "Preventa, taquilla, efectivo, cortesías, costos y el reparto de cada integrante. Todo sale de los registros.",
   },
 ];
+
+/** Rendered twice in the track so the -50% translate loops seamlessly. */
+const MARQUEE = ["Preventa", "Códigos QR", "Entrada sin señal", "Efectivo y cortesías", "Reparto"];
 
 export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
   <html lang="es">
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width,initial-scale=1" />
-      <meta name="theme-color" content="#0F0E0B" />
+      <meta name="theme-color" content="#0C0B08" />
       <title>Coverr — Preventa y entrada para bandas en Honduras</title>
       <meta
         name="description"
@@ -71,6 +75,15 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
         content="El dinero llega directo a la cuenta de tu banda. Preventa, códigos QR, entrada sin señal y el reparto al final."
       />
       <meta name="twitter:card" content="summary" />
+      {/* The headline paints first and is set in the display face, so that one
+          file is worth requesting before the parser reaches the stylesheet. */}
+      <link
+        rel="preload"
+        as="font"
+        type="font/woff2"
+        href="/vendor/fonts/space-grotesk-latin-wght-normal.woff2"
+        crossorigin="anonymous"
+      />
       <style dangerouslySetInnerHTML={{ __html: LANDING_CSS }} />
       {/* Vendored, not from a CDN — see motion.ts. `defer` so neither blocks
           the first paint, and both have run by DOMContentLoaded, which is what
@@ -84,18 +97,20 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
         Saltar al contenido
       </a>
 
-      {/* Decoration only: no text, no structure, hidden from assistive tech. */}
-      <div class="aurora" aria-hidden="true">
-        <span class="a1" />
-        <span class="a2" />
+      <div class="strip">
+        <div class="wrap">
+          <span>
+            Coverr <b>·</b> Honduras
+          </span>
+          <span class="r">Preventa · Puerta · Reparto</span>
+        </div>
       </div>
-      <div class="grain" aria-hidden="true" />
 
       <div class="wrap">
         <header data-hero>
-          <div class="brand">Coverr</div>
+          <p class="eyebrow">Para bandas independientes</p>
           <h1>
-            Vendé tus boletos sin que el dinero <span class="grad">pase por nadie más</span>.
+            Vendé tus boletos sin que el dinero pase por <em>nadie más</em>.
           </h1>
           <p class="lede">
             Tus compradores transfieren directo a la cuenta de tu banda. Nosotros nunca tocamos
@@ -112,14 +127,24 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
             </a>
           </div>
         </header>
+      </div>
 
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee__track">
+          {[0, 1].map((copy) =>
+            MARQUEE.map((item) => <span key={`${copy}-${item}`}>{item}</span>),
+          )}
+        </div>
+      </div>
+
+      <div class="wrap">
         <main id="main">
           <section aria-labelledby="problema">
             <p class="eyebrow" data-reveal>
               El problema
             </p>
             <h2 id="problema" data-reveal>
-              Lo que estás haciendo hoy
+              Lo que estás haciendo <em>hoy</em>
             </h2>
             <p data-reveal>
               Un hilo de WhatsApp lleno de capturas. Una hoja de cálculo escrita a mano, nombre
@@ -134,11 +159,12 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
               Cómo funciona
             </p>
             <h2 id="como" data-reveal>
-              Cuatro pasos, de principio a fin
+              Cuatro pasos, de <em>principio a fin</em>
             </h2>
-            <ol class="steps">
-              {STEPS.map((step) => (
-                <li class="step" key={step.title} data-reveal>
+            <ol class="grid">
+              {STEPS.map((step, i) => (
+                <li class="cell" key={step.title} data-reveal>
+                  <div class="cell__ix">/ {String(i + 1).padStart(2, "0")}</div>
                   <h3>{step.title}</h3>
                   <p>{step.body}</p>
                 </li>
@@ -151,7 +177,7 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
               Precio
             </p>
             <h2 id="precio" data-reveal>
-              Sólo pagás cuando ya cobraste
+              Sólo pagás cuando <em>ya cobraste</em>
             </h2>
             <p data-reveal>
               La preventa, los códigos QR, la entrada, las ventas en efectivo y el resumen en
@@ -160,9 +186,7 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
             </p>
             <div data-reveal>
               <table class="tiers">
-                <caption class="eyebrow" style="text-align:left;padding-bottom:10px">
-                  Por evento
-                </caption>
+                <caption>Por evento</caption>
                 <thead>
                   <tr>
                     <th scope="col">Boletos vendidos</th>
@@ -179,7 +203,7 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
                 </tbody>
               </table>
             </div>
-            <p style="margin-top:16px;font-size:.9rem" data-reveal>
+            <p class="note" data-reveal>
               Las cortesías no cuentan para el tramo. No hay suscripción ni plan mensual: una
               banda que toca dos veces al año paga dos veces al año y conserva su historial.
             </p>
@@ -190,7 +214,7 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
               Empezar
             </p>
             <h2 id="empezar" data-reveal>
-              Empezá con tu próximo toque
+              Empezá con tu <em>próximo toque</em>
             </h2>
             <p data-reveal>
               Crear la banda toma dos campos. Podés correr un evento completo antes de decidir si
@@ -205,11 +229,17 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
         </main>
 
         <footer>
-          <span>Coverr · Honduras</span>
-          <LegalLinks />
-          <span>
-            Un producto de <a href="https://macawly.dev">macawly.dev</a>
-          </span>
+          <div class="footer__meta">
+            <span>Coverr · Honduras</span>
+            <LegalLinks />
+            <span>
+              Un producto de <a href="https://macawly.dev">macawly.dev</a>
+            </span>
+          </div>
+          {/* Decorative repeat of the wordmark already in the strip above. */}
+          <p class="footer__giant" aria-hidden="true">
+            COVERR
+          </p>
         </footer>
       </div>
     </body>

@@ -150,43 +150,77 @@ Buttons, inputs and cards are defined in the front matter. Three states carry ev
 
 Loading, empty and error states: most screens are server-rendered and arrive complete, so there is no loading state to design. Empty states are written out ("Nada que mostrar con ese filtro"), and errors render in the page as a `note crit` block rather than as an alert or a bare status code.
 
-## Motion and the landing page
+## The landing page
 
-The landing page (`/`) is the single surface allowed decoration and motion. Everything
-else — the buy page, the ticket page, recovery, refunds, the admin and the scanner —
-stays still and ships no animation library.
+The landing page (`/`) is the single surface allowed decoration, motion and webfonts.
+Everything else — the buy page, the ticket page, recovery, refunds, the admin and the
+scanner — stays still, ships no animation library and loads no font file.
 
-The split is not taste, it is who is reading. The no-animation rule exists because a
-buyer opens `/e/:slug` on venue wifi with a transfer half-made, and a blocked render
-there costs a sale. A band deciding whether to trust Coverr with their gig is on a sofa.
+The split is not taste, it is who is reading. The restrictions exist because a buyer
+opens `/e/:slug` on venue wifi with a transfer half-made, and a blocked render there
+costs a sale. A band deciding whether to trust Coverr with their gig is on a sofa.
 
-What that permits on `/`, and nowhere else:
+### Type
 
-- **GSAP + ScrollTrigger**, vendored in `public/vendor/` rather than loaded from a CDN —
-  the same way `jsQR.js` already is. 45 KB gzipped, `defer`, and it keeps the CSP at
-  `'self'` with no third-party origin. Adding a CDN host to `script-src` to save a
-  download would weaken a header that protects the pages where money moves.
-- **Gradient atmosphere** — the amber aurora behind the masthead, the grain overlay, the
-  gradient-filled headline word, glass cards.
+Taken from the Comport/Comseid house style, because the first version of this page had
+no typographic voice and read like every other gradient-and-glass landing page. The
+system, not the assets: no logo, image or line of copy came from those sites.
 
-Three rules hold, and each exists because getting it wrong broke something real:
+| Role | Face | Use |
+|---|---|---|
+| Display | **Space Grotesk**, weight 500–700, tracking −.02 to −.035em | `h1`, `h2`, `h3`, prices, button labels |
+| Accent | **Instrument Serif**, *italic*, 400, 1.1em | One phrase inside a heading — `<em>` |
+| Body | system sans | Paragraphs |
+| Micro | system mono, uppercase, .14–.2em tracking | Eyebrows, `/ 01` indices, table heads, the utility strip |
 
-1. **Decoration never hides content.** Every reveal is a `gsap.from`, so the page renders
-   complete without JavaScript and stays complete if a script fails. Nothing in the
-   stylesheet sets `opacity:0`.
-2. **The aurora is `position:absolute`, never `fixed`.** Fixed keeps the glow in the
-   viewport, so every paragraph eventually scrolls under its brightest point — `--muted`
-   over peak amber measures **3.96** against a 4.5 floor. Anchored to the document, the
-   glow belongs to the masthead and scrolls away, leaving the pricing table and footer
-   (the dimmest ink on the page) on flat `--bg`.
-3. **Peak alpha is capped by the dimmest ink that sits on it.** `--muted` fails above
-   roughly `.24`. The fields are at `.20` and `.17`. Make a glow bigger, not denser.
-4. **`prefers-reduced-motion` disables all of it**, not a gentler version.
+The italic serif inside the sans heading is the device the page hangs on. It is set a
+touch larger because the face runs small, and given back its own tracking because the
+sans is tightened hard and the serif should not be. One phrase per heading — two is a
+mannerism.
+
+Both faces are OFL, self-hosted in `public/vendor/fonts/` as Latin woff2 subsets
+(~43 KB together) with `font-display:swap`. Self-hosted, not from a CDN, so the CSP
+stays `'self'` and no third party learns who reads this page.
+
+### Structure
+
+The house style's devices, kept: the hairline utility strip, the bordered marquee, the
+hairline-gap grid (cells on a line-coloured bed with 1px gaps, so no border doubles at
+a join), `/ 01` mono indices, the outlined wordmark in the footer.
+
+Two deliberately not taken:
+
+- **The stats band.** Comport can say "85+ obras" because it is true. Coverr has had
+  one real order, and a fabricated count is barred by the repo's own rules.
+- **A pulsing "live" dot.** Nothing on this page is live. A status light that reports
+  nothing is decoration dressed as information.
+
+### Motion
+
+- **GSAP + ScrollTrigger**, vendored in `public/vendor/` like `jsQR.js` already is.
+  45 KB gzipped, `defer`. Staggered rise on load, batched reveal on scroll.
+- The marquee is **CSS**, not GSAP, so it runs with no JavaScript at all.
+
+Three rules hold, each because getting it wrong broke something real:
+
+1. **Decoration never hides content.** Every reveal is a `gsap.from`, so the page
+   renders complete without JavaScript and stays complete if a script fails. Nothing in
+   the stylesheet sets `opacity:0`. The Comseid mockup shows the alternative: `.js
+   .reveal{opacity:0}` with 18 of 20 elements never revealed, and a blank page.
+2. **Background decoration must not sit under body text.** An earlier version put a
+   fixed amber aurora behind the page; fixed keeps the glow in the viewport, so every
+   paragraph eventually scrolls under its brightest point and `--muted` measured
+   **3.96** against a 4.5 floor. The aurora is gone. If one ever returns, anchor it to
+   the document so it scrolls away, and cap its alpha at what the dimmest ink on it
+   survives.
+3. **`prefers-reduced-motion` disables all of it**, not a gentler version.
 
 ## Do's and Don'ts
 - **Do** pick the surface by audience: light for anything a buyer sees, dark for anything the band sees.
 - **Do** use `--accent-text` for accented text on light. `--accent` is a fill.
 - **Do** keep money tabular and monospaced.
 - **Do** compute contrast when adding a colour. Every number in this file is measured.
-- **Don't** add a webfont, an icon set, or an animation library to anything but `/`.
-- **Don't** add a second animation library, use more than two font families, ship lorem ipsum, or invent testimonials, logos or stats.
+- **Don't** add a webfont, an icon set or an animation library to anything but `/`.
+- **Don't** add a second animation library, ship lorem ipsum, or invent testimonials, logos or stats.
+- **Don't** load a third webfont. `/` has four type roles but only two loaded faces; the other
+  two are the system sans and system mono, which cost nothing. Everywhere else is system-only.

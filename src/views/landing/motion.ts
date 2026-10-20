@@ -37,16 +37,10 @@ document.addEventListener('DOMContentLoaded', function(){
     once: true,
     onEnter: function(batch){
       gsap.from(batch, {
-        y: 24, opacity: 0, duration: .65, stagger: .07, ease: 'power2.out', clearProps: 'all'
+        y: 18, opacity: 0, duration: .7, stagger: .06, ease: 'power2.out', clearProps: 'all'
       });
     }
   });
 
-  // The amber fields drift slower than the page. Subtle on purpose: it should
-  // read as depth, not as a parallax effect someone was pleased with.
-  gsap.to('.aurora', {
-    yPercent: 9, ease: 'none',
-    scrollTrigger: { start: 'top top', end: 'bottom bottom', scrub: .8 }
-  });
 });`;
 }
