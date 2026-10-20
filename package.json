@@ -12,7 +12,8 @@
     "db:seed:local": "wrangler d1 execute coverr-db --local --file=./seed/seed.sql",
     "db:reset": "rm -rf .wrangler/state && npm run db:migrate:local && npm run db:seed:local",
     "typecheck": "tsc --noEmit",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "shots": "node scripts/shoot.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260903.1",
     "drizzle-kit": "^0.31.10",
+    "playwright-core": "^1.64.1",
     "typescript": "^5.7.2",
     "wrangler": "^4.128.0"
   }

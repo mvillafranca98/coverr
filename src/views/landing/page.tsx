@@ -55,20 +55,35 @@ const STEPS: { title: string; body: string }[] = [
  * `seed/demo.sql` so no band's takings and no buyer's name is published. The
  * page says so under the heading — these are real screens, invented numbers.
  */
-const SHOTS: { src: string; cap: string; alt: string; body: string }[] = [
+const SHOTS: {
+  src: string;
+  cap: string;
+  alt: string;
+  body: string;
+  w: number;
+  h: number;
+  lead?: boolean;
+}[] = [
   {
+    lead: true,
+    w: 2720,
+    h: 1300,
     src: "/img/shot-dashboard.webp",
     cap: "El resumen en vivo",
     alt: "Resumen del evento: 151 personas adentro, 157 vendidos, 49 brazaletes y L33,950 de bruto, con los ingresos desglosados por canal.",
     body: "Adentro, vendidos, brazaletes y bruto. Los ingresos por canal se actualizan mientras entra la gente.",
   },
   {
+    w: 780,
+    h: 1200,
     src: "/img/shot-scanner.webp",
     cap: "La puerta",
     alt: "El escáner de entrada en verde, mostrando «Adelante» con el nombre del asistente y su código.",
     body: "Verde y el nombre de quien entra. Funciona sin señal: la lista queda guardada en el teléfono.",
   },
   {
+    w: 780,
+    h: 1200,
     src: "/img/shot-ticket.webp",
     cap: "El boleto",
     alt: "La pantalla de boletos del comprador, con el código QR y el código corto debajo.",
@@ -216,14 +231,18 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
             </p>
             <ul class="shots">
               {SHOTS.map((shot) => (
-                <li class="shot" key={shot.src} data-reveal>
+                <li
+                  class={`shot ${shot.lead ? "shot--lead" : "shot--phone"}`}
+                  key={shot.src}
+                  data-reveal
+                >
                   {/* Intrinsic size on every image: the row must not jump while
                       they load, and these sit well below the fold. */}
                   <img
                     src={shot.src}
                     alt={shot.alt}
-                    width="469"
-                    height="600"
+                    width={shot.w}
+                    height={shot.h}
                     loading="lazy"
                     decoding="async"
                   />

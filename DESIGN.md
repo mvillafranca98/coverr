@@ -195,6 +195,31 @@ Two deliberately not taken:
 - **A pulsing "live" dot.** Nothing on this page is live. A status light that reports
   nothing is decoration dressed as information.
 
+### Product shots
+
+Three screens on `/`, captured by `npm run shots` (`scripts/shoot.mjs`). Never by hand:
+hand-captures cannot be repeated, and the browser pane caps resolution at its own width.
+
+The rig drives the Chrome already on the machine through `playwright-core`, so nothing
+downloads a second browser. It re-applies `seed/demo.sql` first, so every run starts from
+the same 151 checked in rather than one more each time, and captures at
+`deviceScaleFactor: 2` — a 1x capture of a 1360px viewport is soft the moment it is
+displayed at any size. WebP encoding happens in that same browser via canvas, rather than
+in another dependency.
+
+Each surface is shot at the device it is used on, which is why the shapes differ: the
+dashboard is a laptop (a band doing the accounts after the gig) and leads full width, the
+scanner and the ticket are phones and sit beneath it. Shooting the scanner at 1360px wide
+would be a picture of something nobody sees.
+
+Two rules:
+
+- **The data is fabricated and the page says so.** `seed/make-demo.mjs` invents the band,
+  the venue, 89 orders and every figure. Publishing a real band's takings, with real
+  buyers' names in the orders list, is not a thing to do for a marketing image.
+- **Crop heights are measured, not guessed.** Cutting through a table header reads as a
+  broken screenshot rather than a cropped one.
+
 ### Motion
 
 - **GSAP + ScrollTrigger**, vendored in `public/vendor/` like `jsQR.js` already is.

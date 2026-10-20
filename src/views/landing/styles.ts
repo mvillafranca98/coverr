@@ -188,15 +188,23 @@ b{color:var(--ink);font-weight:600}
 .cell p{font-size:var(--step--1);color:var(--ink-50);margin:0;max-width:34ch}
 
 /* ---------- product shots ----------
-   Same hairline bed as .grid. The phones keep their own 469x600 frame, so the
-   row reads as one set and nothing shifts while they load. */
+   Same hairline bed as .grid. Each surface is shot at the device it is used
+   on, so the shapes differ on purpose: the dashboard is a laptop screen and
+   leads full width, the scanner and the ticket are phones and sit beneath it.
+   Every image carries its intrinsic size, so nothing shifts while they load. */
 .shots{
   display:grid;gap:1px;background:var(--line-soft);
   border:1px solid var(--line-soft);margin-top:30px;
   list-style:none;padding:0;
 }
-@media (min-width:720px){.shots{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:720px){
+  .shots{grid-template-columns:1fr 1fr}
+  .shot--lead{grid-column:1 / -1}
+}
 .shot{background:var(--bg);padding:clamp(20px,3vw,26px)}
+/* The phones are shot at 390px wide; left to fill a half-column they tower
+   over the laptop shot above them. */
+.shot--phone img{max-width:300px;margin-inline:auto}
 .shot img{
   display:block;width:100%;height:auto;
   border:1px solid var(--line);border-radius:10px;
