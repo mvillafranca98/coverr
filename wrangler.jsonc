@@ -49,7 +49,23 @@
     }
   ],
   "vars": {
-    "APP_ORIGIN": "https://coverr.a-mencias99.workers.dev",
-    "EMAIL_FROM": "Coverr <coverr@macawly.dev>"
+    "APP_ORIGIN": "https://coverr.a-mencias99.workers.dev"
+
+    // EMAIL_FROM is deliberately absent, and this is TEMPORARY.
+    //
+    // macawly.dev cannot be verified in Resend: another Resend team claimed
+    // the domain on 2026-10-01, and a claimed-away entry never verifies no
+    // matter how correct the DNS is. Sending with it returns
+    // 403 "The macawly.dev domain is not verified".
+    //
+    // With EMAIL_FROM unset, lib/email.ts falls back to Resend's own test
+    // sender (onboarding@resend.dev), which needs no verified domain. The
+    // catch is that it delivers ONLY to the address the Resend account is
+    // registered under, so real buyers receive nothing.
+    //
+    // This buys a working admin login and a testable end-to-end run. Restore
+    //   "EMAIL_FROM": "Coverr <coverr@macawly.dev>"
+    // the moment the domain claim is resolved — before anyone sells a ticket
+    // to somebody who is not you.
   }
 }
