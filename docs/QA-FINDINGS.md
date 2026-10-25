@@ -307,3 +307,30 @@ misheard, or the buyer does not know which name the ticket is under.
 **Proposed.** Show the cached list under **Buscar** when the search box is empty: a scrolling
 list of names with their check-in state, filtering as you type. No new data and no network — it
 is already on the device.
+
+
+---
+
+## F11 · A band cannot initiate a refund
+
+**Severity: high · found while setting up check 7.7**
+
+**Verified.** The only `insert` into `refund_requests` is in `src/routes/public/refunds.tsx:69`,
+the buyer-facing page. The admin route (`src/routes/admin/order.tsx:191`) only *decides* on a
+request that already exists — it updates rows where `status = 'open'`.
+
+So a refund requires the buyer to ask first, and the buyer's ability to ask is gated by
+`refundGate` at 24 hours from purchase (see **F2**). Together those close every path:
+
+- A buyer who asks late cannot be refunded, even if the band wants to
+- **A band that cancels the event cannot refund anyone**, which is the case where refunding is
+  least optional
+
+Related to F2 but distinct: F2 is about *when* the window should open and close, this is about
+*who* can start the process at all. Fixing F2 alone would not give a band a way to refund a
+cancelled gig.
+
+**Proposed.** An admin-initiated refund on the order page, which creates the request and
+approves it in one step, recording the band as the originator. The money still moves by bank
+transfer outside the product — this only records the decision, voids the QR and writes the
+negative line, exactly as an approved buyer request does today.
