@@ -168,11 +168,26 @@ Independent of the checks above. **All of these must be done.**
       `macawly.dev` entry on the team holding your API key, re-add it, complete the claim with the
       ownership TXT, then add the fresh DKIM + SPF records — and delete the `send` CNAME so the MX
       and TXT can exist beside it. Then put `EMAIL_FROM` back in `wrangler.jsonc`.
-- [ ] **B2 — Restore real prices.** Presale is **L1** for testing. Put the real figure back, or the
-      first band to use this sells its tickets for a lempira.
-- [ ] **B3 — Restore the band's own bank account.** Money currently goes to BAC `751367661`
-      (CRISTINA MARIA VILLAFRANCA ALTAMIRANO), which is a test arrangement, not Daydrinking's account.
-- [ ] **B4 — Delete the QA orders** so the band's history and settlement start clean.
+- [ ] **B2 — Restore real prices.** Presale is **L1**, door **L2**. Held deliberately on
+      2026-10-25 — every event in production is a test for now. Note the originals cannot be
+      recovered: the rules were edited in place and nothing snapshots what they were (**F14**),
+      so the real figures have to come from you.
+- [ ] **B3 — Restore the band's own bank account.** Money goes to BAC `751367661`
+      (CRISTINA MARIA VILLAFRANCA ALTAMIRANO), a test arrangement. Held deliberately on
+      2026-10-25 while real transfers are still being tested. The Ficohsa and Atlántida entries
+      hold placeholder `000000000` and are inactive; they need real numbers or removing.
+- [x] **B4 — Seed data removed from production.** ✅ 2026-10-25. This was bigger than the item
+      described: production was not "a real band plus test orders", it was the Jungla demo seed
+      wearing the Daydrinking name — 131 fabricated orders across two invented events, plus 12
+      seed expenses and 3 advances, all in a real band's history and cost trends. `jungla-next`
+      was **live and publicly buyable**. Backed up first (447 rows), then deleted both events,
+      which cascaded to their orders, attendees, proofs and expenses; advances only null their
+      event, so those were removed explicitly. Verified: events 4→2, orders 141→10, attendees
+      247→14, expenses 18→6, advances 3→0, and all four removed slugs now 404. The six remaining
+      expenses are all from QA, none from the seed.
+- [ ] **B4b — The 10 QA orders on the Masayoshi event remain**, deliberately. Everything in
+      production is still a test while B2 and B3 stand; clear them when real prices and the real
+      account go in.
 - [ ] **B5 — Spend caps** (audit LCH-03, still failing): a cap and low-balance alert on Anthropic, a
       budget alert on Cloudflare, and know your Resend plan limit. Every purchase is a vision call.
 - [ ] **B6 — Age gate.** 18+ is stated in the terms and at checkout but enforced nowhere (LEG-11).
