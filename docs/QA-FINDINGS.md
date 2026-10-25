@@ -419,3 +419,46 @@ now reads L2. The number is right; the label describing it is not.
   reads what it was actually sold under.
 - Warn when editing a rule that already has sales against it: *"23 órdenes se vendieron con esta
   regla; sus montos no cambian."* Makes the freeze visible instead of surprising.
+
+
+---
+
+## F15 · A presale allocation can be oversold by one order
+
+**Severity: medium**
+
+The two limits behave differently, and only one of them accounts for how many tickets are being
+bought.
+
+**Event capacity — correct.** `src/routes/public/purchase.tsx:70` checks
+`sold + quantity > event.capacityCap` and refuses the whole order. All-or-nothing: three left
+and a buyer asking for five gets none.
+
+**Per-rule allocation — not enforced against quantity.** `resolveSellableRule`
+(`src/db/queries/price-rules.ts:43`) treats a rule as sold out only when:
+
+```js
+r.maxQty != null && (soldByRule.get(r.id) ?? 0) >= r.maxQty
+```
+
+The requested quantity never enters it. With 99 of a 100-ticket presale sold, a buyer taking ten
+is served the presale rule and gets all ten at the presale price — 109 sold against an
+allocation of 100. Bounded at **+9** by `MAX_TICKETS = 10`, and it happens silently.
+
+At a realistic L200 presale against a L250 door that is ~L450 of margin per event, which is
+small. The reason to fix it is not the money: a band that set a limit of 100 and finds 109 sold
+has been told something untrue by its own tool.
+
+**Proposed.** Apply the same shape as the capacity check — a rule is unavailable when
+`sold + quantity > maxQty`. Then decide what happens to the overflow, because refusing outright
+is harsh when the next tier would happily sell them:
+
+1. Refuse, mirroring capacity: *"Sólo quedan 3 boletos en preventa."*
+2. Fall through to the next rule and sell all ten at the door price
+3. Split the order across rules — most correct, most complex, probably not worth it
+
+Option 1 is consistent with how capacity already behaves and tells the buyer something true.
+
+**Related.** The capacity message *"Ya no hay cupo suficiente"* never says how many **are** left,
+so a buyer wanting five with three available has to guess. Same class of problem as **F3**, and
+worth fixing in the same pass.
