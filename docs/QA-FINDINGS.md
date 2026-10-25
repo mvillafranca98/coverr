@@ -18,7 +18,7 @@ mid-run invalidates the checks already ticked.
 | 4 — Verification | ✅ 4.1–4.3, 4.5–4.9 passed · **4.4 retest needed**, see F6 | 2026-10-25 |
 | 5 — Email | ✅ 5.1 confirmed; 5.2–5.6 outstanding | 2026-10-24 |
 | 6 — Door | ✅ passed · 4 door orders, 8/14 checked in · see F7–F10 | 2026-10-25 |
-| 7 — Dashboard | not started | |
+| 7 — Dashboard | ✅ passed · totals reconcile at L310.00 / 12 after refund · see F12–F14 | 2026-10-25 |
 
 Backend evidence for the Part 3 purchase:
 
@@ -161,6 +161,12 @@ which order, which check failed, and a direct link to it. Warnings and info stay
 Belongs in `src/jobs/` beside the existing verification job, since it reads the database and
 runs after the response. Worth a per-event cap so a band running 300 orders cannot be mailed 300
 times by one bad batch.
+
+**The same gap covers refund requests, and there it is worse.** During the Part 7 run a refund
+request on `DAY-77NY` sat `open` and nothing told the band — it was found only by querying the
+database. The buyer had been shown *"Le avisamos a Daydrinking. Te van a contactar al correo con
+el que compraste."* Nobody was avisado. A promise was made on the band's behalf and silently not
+kept, which is worse than an unnoticed flag.
 
 ---
 
@@ -334,3 +340,82 @@ cancelled gig.
 approves it in one step, recording the band as the originator. The money still moves by bank
 transfer outside the product — this only records the decision, voids the QR and writes the
 negative line, exactly as an approved buyer request does today.
+
+
+---
+
+## F12 · A voided ticket tells the door it is for another event
+
+**Severity: high · wrong information at the one moment staff must speak to a buyer**
+
+**Observed.** Scanning a ticket from a refunded order correctly refuses entry, but reports
+*"No encontrado · Este código no es de este evento"*.
+
+**Why.** `public/scanner.js:197` shows that message whenever a token is absent from the cached
+manifest, and the manifest excludes refunded and voided orders. A voided ticket is therefore
+indistinguishable from a stranger's ticket for a different gig.
+
+The server knows the difference — `src/routes/scan.ts:154` returns `status: "voided"` explicitly,
+with a comment noting it refuses rather than trusting a stale client cache. But that verdict
+arrives at sync, long after the person has been turned away with the wrong explanation.
+
+**Why it matters.** Staff repeat what the screen says. "This isn't for this event" sends someone
+away believing they are at the wrong venue, when the truth is their order was refunded —
+information they can act on and probably already know. It also hides a real failure mode: a band
+refunding the wrong order would hear "wrong event" complaints rather than "you refunded me".
+
+**Proposed.** Keep voided tokens in the manifest with a `voided` marker rather than dropping
+them, so the client can say *"Este boleto fue reembolsado"* offline. Costs a few bytes per
+refunded ticket and keeps the offline invariant intact.
+
+---
+
+## F13 · Refunds are all or nothing
+
+**Severity: medium**
+
+**Verified.** The `attendees` table has no status or void column; voiding is driven entirely by
+`orders.status`. Refunding an order voids every ticket on it.
+
+The common case this misses: somebody buys four, two friends drop out, and they ask to return
+two. Today the band must refund all four and have them buy two again — at whatever the price is
+*now*, which after a price change may not be what they paid.
+
+**Proposed.** Either a per-attendee void flag with a partial amount on the refund record, or an
+explicit decision that refunds are whole-order only and the UI says so before the band approves.
+The second is cheap and honest; the first is the real fix.
+
+---
+
+## F14 · Editing a price rule silently rewrites what past orders appear to have cost
+
+**Severity: medium · the data is right, the presentation is not**
+
+**Observed.** The door price was changed from L300 to L2 between two cash sales. `DAY-VABM`
+charged L300 and `DAY-WJMM` charged L2, both pointing at the same `Taquilla` rule, which now
+reads L2.
+
+**The data is correct and should not change.** `expected_amount` is resolved server-side at
+purchase and frozen onto the order, so editing a rule never rewrites history. Three reasons that
+is the right behaviour, not a bug to fix:
+
+1. **The bank statement is the referee.** L300 actually arrived. If the system retroactively
+   said L2, check 7.3 — per-account subtotals matching what reached the bank — would fail *by
+   design*.
+2. **Verification would invert.** `AMOUNT_SHORT` / `AMOUNT_OVER` compare the proof against
+   `expected_amount`. Repricing retroactively would re-flag every past order as wildly overpaid.
+3. **It is the spreadsheet failure this product exists to replace.** A band's historical
+   settlement changing after the fact, because somebody edited a field months later, is exactly
+   the "a cell silently rewrote the totals" problem. The instinct that a price is "a cell other
+   cells reference" is the right observation and the argument *against* linking them.
+
+**What is actually wrong is the display.** The order shows the current rule's label beside a
+frozen amount, so a historical order appears to say "Taquilla — L300" while the Taquilla rule
+now reads L2. The number is right; the label describing it is not.
+
+**Proposed.**
+
+- Snapshot the rule's label and amount onto the order at purchase, and show that, so an order
+  reads what it was actually sold under.
+- Warn when editing a rule that already has sales against it: *"23 órdenes se vendieron con esta
+  regla; sus montos no cambian."* Makes the freeze visible instead of surprising.
