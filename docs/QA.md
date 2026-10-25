@@ -101,7 +101,10 @@ decide. No model judges authenticity.
 - [ ] **4.1** Within a minute the order shows extracted fields — bank, reference, amount, date
 - [ ] **4.2** A correct transfer produces **no amber flag**
 - [ ] **4.3** Re-upload the **same image** on a second order → `HASH_DUPLICATE`
-- [ ] **4.4** Transfer less than the total → `AMOUNT_SHORT`, with both figures shown
+- [ ] **4.4** Transfer less than the total → `AMOUNT_SHORT`, with both figures shown.
+      **At the current L1 price you must buy at least 5 tickets** for this to fire: the amount
+      tolerance is a flat L2, so on a 1–2 ticket order it exceeds the whole total and the check
+      silently cannot trigger. See F6.
 - [ ] **4.5** Upload a photo of something that isn't a receipt → `NOT_A_RECEIPT`
 - [ ] **4.6** Every amber state **names its reason on screen**, in words staff could repeat
 - [ ] **4.7** A BAC app screenshot (`15 octubre`, no year) does **not** raise `DATE_STALE` — this is the regression that bit before

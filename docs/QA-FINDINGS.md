@@ -15,7 +15,7 @@ mid-run invalidates the checks already ticked.
 | 1 — Onboarding (local) | ✅ all checks passed | 2026-10-24 |
 | 2 — Event creation | ✅ passed · `DAY-8FAT` flag cleared, draft slug confirmed 404 | 2026-10-24 |
 | 3 — Ticket buying | ✅ passed · order `DAY-TA3Z`, L2, QR immediate, share + email confirmed | 2026-10-24 |
-| 4 — Verification | ✅ 4.1, 4.2, 4.7 confirmed from logs; 4.3–4.6, 4.8, 4.9 outstanding | 2026-10-24 |
+| 4 — Verification | ✅ 4.1–4.3, 4.5–4.9 passed · **4.4 retest needed**, see F6 | 2026-10-25 |
 | 5 — Email | ✅ 5.1 confirmed; 5.2–5.6 outstanding | 2026-10-24 |
 | 6 — Door | not started | |
 | 7 — Dashboard | not started | |
@@ -141,3 +141,55 @@ nothing is saved for them to come back to.
 3. Leave as is and accept the edge case.
 
 Option 1 regardless; option 2 is the question worth deciding.
+
+
+---
+
+## F5 · A critical flag notifies nobody
+
+**Severity: medium · raised from the `HASH_DUPLICATE` test**
+
+**Observed.** `DAY-B5Z1` came back flagged `HASH_DUPLICATE` **and** `REF_DUPLICATE`, both
+critical, and the order correctly reads *Revisar*. But that state sits in the admin until
+somebody happens to look. A recycled proof is the closest thing the product has to a
+deliberate attempt to get in without paying, and it arrives silently.
+
+**Proposed fix.** Email the band's contact address when verification raises a **critical** flag:
+which order, which check failed, and a direct link to it. Warnings and info stay silent —
+`NAME_MISMATCH` fires on ordinary group purchases and would train the band to ignore the alert.
+
+Belongs in `src/jobs/` beside the existing verification job, since it reads the database and
+runs after the response. Worth a per-event cap so a band running 300 orders cannot be mailed 300
+times by one bad batch.
+
+---
+
+## F6 · The amount tolerance is fixed, and larger than a test ticket
+
+**Severity: low as a bug · but it invalidated a QA check**
+
+**Observed.** `DAY-YAAG` expected **L2.00**, the proof read **L1.00**, and the order came back
+`matched` with no flag — reported as "4.4 failed".
+
+**What the code does.** `src/lib/verify.ts:133` —
+
+```js
+const TOLERANCE = 200;        // centavos = L2.00
+if (diff < -TOLERANCE)  → AMOUNT_SHORT
+```
+
+The shortfall was L1.00 against a L2.00 tolerance, so nothing fired. **The rule is correct.** At
+real prices a L2 tolerance is right: it absorbs rounding rather than real shortfalls.
+
+**The actual problem is that it is absolute.** While presale is set to L1 for testing, the
+tolerance exceeds the entire order value, so the amount check cannot fire at all — paying
+nothing on a L2 order would also pass. Any QA of the amount rules at test prices is measuring
+nothing.
+
+**Retest.** Buy **5 tickets (L5)** and upload the same L1 receipt. The L4 shortfall clears the
+tolerance. No new transfer needed.
+
+**Worth considering.** A proportional floor — `max(200, 1% of expected)` — would behave the same
+at real prices and stop the check silently disabling itself at small totals. Also note L2 does
+not cover the ~L40 ACH fee, so if any bank ever deducts the fee from the transferred amount
+rather than charging the sender on top, every cross-bank payment would flag short.
