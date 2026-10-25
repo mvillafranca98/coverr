@@ -175,35 +175,30 @@
   }
 
   /**
-   * An amber result that waits for a decision. The buttons own what happens
-   * next, so nothing is committed until somebody taps. `state.pending` blocks
+   * An amber panel that waits for a decision. The buttons own what happens
+   * next, so nothing is written until somebody taps. `state.pending` blocks
    * further scans while it is up — without that, the next person in the queue
    * wipes the decision off the screen before anyone has made it.
+   *
+   * Used for the two cases where the device is about to commit something on a
+   * person's behalf: admitting a flagged ticket, and taking money.
    */
-  function showConfirm(a, sub) {
+  function askConfirm(o) {
     state.pending = true;
     el.result.className = "result amber";
     el.result.innerHTML =
       '<div class="r-title"></div><div class="r-sub"></div><div class="r-detail"></div>' +
       '<div class="r-actions"><button type="button" class="r-go"></button>' +
       '<button type="button" class="r-no"></button></div>';
-    el.result.querySelector(".r-title").textContent = "Revisar antes de dejar pasar";
-    el.result.querySelector(".r-sub").textContent = sub;
-    el.result.querySelector(".r-detail").textContent = a.f;
+    el.result.querySelector(".r-title").textContent = o.title;
+    el.result.querySelector(".r-sub").textContent = o.sub || "";
+    el.result.querySelector(".r-detail").textContent = o.detail || "";
     var go = el.result.querySelector(".r-go");
     var no = el.result.querySelector(".r-no");
-    go.textContent = "Verificar y dejar pasar";
-    no.textContent = "No dejar pasar";
-    go.onclick = function () {
-      state.pending = false;
-      commitCheckIn(a);
-      show("green", "Adelante", sub, a.no || a.sc);
-      flush();
-    };
-    no.onclick = function () {
-      state.pending = false;
-      show("red", "No ingresó", sub, "Nadie fue registrado — avisale a la banda");
-    };
+    go.textContent = o.go;
+    no.textContent = o.no;
+    go.onclick = function () { state.pending = false; o.onGo(); };
+    no.onclick = function () { state.pending = false; o.onNo(); };
     el.result.hidden = false;
     if (navigator.vibrate) navigator.vibrate([60, 50, 60]);
   }
@@ -258,7 +253,21 @@
     // might reasonably be held at the door. A clean scan stays a single tap:
     // the queue does not wait on the 95% that are fine.
     if (a.f) {
-      showConfirm(a, sub);
+      askConfirm({
+        title: "Revisar antes de dejar pasar",
+        sub: sub,
+        detail: a.f,
+        go: "Verificar y dejar pasar",
+        no: "No dejar pasar",
+        onGo: function () {
+          commitCheckIn(a);
+          show("green", "Adelante", sub, a.no || a.sc);
+          flush();
+        },
+        onNo: function () {
+          show("red", "No ingresó", sub, "Nadie fue registrado — avisale a la banda");
+        },
+      });
       return;
     }
 
@@ -369,13 +378,44 @@
 
   // ------------------------------------------------------------------ cash
 
-  async function sell(isComp) {
+  /**
+   * Cash sales and comps always confirm. Unlike a scan there is no fast path
+   * worth protecting — these are typed on a phone, in the dark, by somebody
+   * holding a queue, and both write records that move attendance and
+   * settlement. A comp in particular is a free ticket that counts toward the
+   * headcount and never toward revenue.
+   *
+   * The amount is restated before the tap, because the one irreversible part
+   * happens off-screen: the staff member takes the cash.
+   */
+  function sell(isComp) {
     var qty = Math.max(1, parseInt(el.cashQty.value, 10) || 1);
     if (!online()) {
       el.cashNote.textContent = "Necesitás conexión para registrar ventas. Anotalo y registralo después.";
       el.cashNote.className = "hint warn";
       return;
     }
+    var price = (state.manifest && state.manifest.doorPrice) || 0;
+    var people = qty + (qty === 1 ? " persona" : " personas");
+    askConfirm({
+      title: isComp ? "Confirmar cortesía" : "Confirmar venta en efectivo",
+      sub: people,
+      detail: isComp
+        ? "No se cobra nada. Cuenta para la asistencia y no suma a los ingresos."
+        : "Cobrá L" + Math.round((qty * price) / 100) + " antes de confirmar.",
+      go: isComp ? "Registrar cortesía" : "Ya cobré — registrar",
+      no: "Cancelar",
+      onGo: function () { commitSale(isComp, qty); },
+      onNo: function () {
+        el.result.hidden = true;
+        el.cashNote.textContent = "Cancelado. No se registró nada.";
+        el.cashNote.className = "hint";
+      },
+    });
+  }
+
+  async function commitSale(isComp, qty) {
+    el.result.hidden = true;
     var btn = isComp ? el.compBtn : el.cashBtn;
     btn.disabled = true;
     try {

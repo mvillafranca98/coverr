@@ -339,7 +339,7 @@ attributed to a device.
 
 ## F8 · Cash sales and comps commit with no confirmation
 
-**Severity: medium**
+**Severity: medium** — ✅ **FIXED 2026-10-25**
 
 Selling a cash ticket or issuing a comp writes the order immediately. Both create records that
 affect attendance and settlement, and a misplaced tap on a phone at a dark door is easy. A comp
@@ -347,6 +347,25 @@ in particular is a free ticket that counts toward attendance and never toward re
 
 Same confirmation treatment as F7, but here it should be unconditional — there is no fast path
 worth protecting, since these are typed rather than scanned.
+
+### Fixed
+
+Both now confirm, always. The F7 panel was generalised into `askConfirm({...})` rather than
+copied, so the two cases where the device commits something on a person's behalf — admitting a
+flagged ticket, and taking money — share one implementation.
+
+The copy differs because the stakes do:
+
+- **Cash** restates the amount before the tap — *"Cobrá L750 antes de confirmar"* — because the
+  irreversible part happens off-screen, when the staff member takes the money. The button reads
+  *Ya cobré — registrar*, which is the order the real action happens in.
+- **Comp** says what a comp is: *"No se cobra nada. Cuenta para la asistencia y no suma a los
+  ingresos."* A free ticket that moves the headcount and never the revenue is exactly the thing a
+  volunteer would otherwise get wrong.
+
+Cancelling writes nothing and says so. Verified: the first tap writes nothing and the counters
+hold; confirming writes the order and moves them; F7 still behaves identically after the
+refactor.
 
 ---
 
