@@ -347,29 +347,42 @@ is already on the device.
 
 ---
 
-## F11 · A band cannot initiate a refund
+## F11 · A band cannot record a refund it gives
 
-**Severity: high · found while setting up check 7.7**
+**Severity: medium** — ✅ **FIXED 2026-10-25**
 
-**Verified.** The only `insert` into `refund_requests` is in `src/routes/public/refunds.tsx:69`,
-the buyer-facing page. The admin route (`src/routes/admin/order.tsx:191`) only *decides* on a
-request that already exists — it updates rows where `status = 'open'`.
+> **The original finding was overstated and is corrected below.** It claimed a band could not
+> stop an order at all. It can: `/anular` already existed and marks an order `void`. I had
+> grepped for `insert(s.refundRequests)`, which only finds the buyer's page, and concluded too
+> much from one search.
 
-So a refund requires the buyer to ask first, and the buyer's ability to ask is gated by
-`refundGate` at 24 hours from purchase (see **F2**). Together those close every path:
+### What was actually true
 
-- A buyer who asks late cannot be refunded, even if the band wants to
-- **A band that cancels the event cannot refund anyone**, which is the case where refunding is
-  least optional
+Two distinct end states exist, and the band could only reach one of them:
 
-Related to F2 but distinct: F2 is about *when* the window should open and close, this is about
-*who* can start the process at all. Fixing F2 alone would not give a band a way to refund a
-cancelled gig.
+| | Set by | Means | Reason recorded |
+|---|---|---|---|
+| `void` | `/anular`, already in the admin | This order should not exist | none |
+| `refunded` | only an approved buyer request | Money is going back | the buyer's |
 
-**Proposed.** An admin-initiated refund on the order page, which creates the request and
-approves it in one step, recording the band as the originator. The money still moves by bank
-transfer outside the product — this only records the decision, voids the QR and writes the
-negative line, exactly as an approved buyer request does today.
+Both stop the QR codes and drop the order from every total, since the aggregates and the scanner
+manifest all filter on `status = 'confirmed'`. So a band cancelling its gig was never stuck — it
+could void every order and the tickets would stop working.
+
+What it could not do was record a **refund**: no reason, no audit trail, no distinction between
+"this was a mistake" and "I gave the money back". And since the buyer's own page is gated at 24
+hours by `refundGate` (**F2**), a late request could not be honoured as a refund at all.
+
+### Fixed
+
+`/reembolsar` sits beside `/anular` on the order page, deliberately separate — the two actions
+mean different things and the copy says so. It writes an approved `refund_requests` row carrying
+the band's reason and the timestamp, then marks the order `refunded`.
+
+Written as a request approved in the same breath rather than a second path mutating the order
+directly, so every refund has one shape and one audit trail whoever began it. Idempotent —
+verified that three further submits leave exactly one row. Hidden for comps, which have no money
+to return. States that it voids all tickets on the order, since partial refunds are **F13**.
 
 
 ---

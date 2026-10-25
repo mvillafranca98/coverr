@@ -276,16 +276,53 @@ export const OrderPage: FC<{
 
     {order.status === "confirmed" ? (
       <>
-        <h2>Anular</h2>
+        <h2>Anular o reembolsar</h2>
+        {/* Two different things, kept apart on purpose. Anular is for an order
+            that should not exist — a test, a duplicate, a mistake. Reembolsar
+            is for money going back, and records why. Both stop the QR codes
+            and drop the order from the totals; only one implies a transfer. */}
         <div class="note">
-          Anular invalida los códigos QR y descuenta la orden de los totales. El historial se
-          conserva.
+          <b>Anular</b> invalida los códigos QR y descuenta la orden de los totales, sin registrar
+          ninguna devolución. Para una orden que no debió existir.
           <form method="post" action={`/admin/e/${event.slug}/orden/${order.id}/anular`} style="margin-top:10px">
             <button class="btn danger sm" type="submit">
               Anular esta orden
             </button>
           </form>
         </div>
+
+        {order.channel === "comp" ? null : (
+          <div class="note" style="margin-top:12px">
+            <b>Reembolsar</b> hace lo mismo y además deja constancia de la devolución, con el
+            motivo y la fecha. Usalo si le vas a devolver la plata{" "}
+            {attendees.length > 1 ? (
+              <>
+                — anula los <b>{attendees.length} boletos</b> de esta orden, no se puede devolver
+                sólo una parte
+              </>
+            ) : null}
+            . El dinero lo transferís vos desde tu banco; Coverr nunca lo tuvo.
+            <form
+              method="post"
+              action={`/admin/e/${event.slug}/orden/${order.id}/reembolsar`}
+              style="margin-top:10px"
+            >
+              <label class="fl" for="motivo">
+                Motivo <span>(queda en el historial)</span>
+              </label>
+              <input
+                type="text"
+                name="motivo"
+                id="motivo"
+                maxlength={300}
+                placeholder="Ej: se canceló el evento"
+              />
+              <button class="btn danger sm" type="submit" style="margin-top:10px">
+                Reembolsar y anular los boletos
+              </button>
+            </form>
+          </div>
+        )}
       </>
     ) : null}
   </AdminLayout>

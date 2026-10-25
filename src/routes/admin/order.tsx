@@ -7,7 +7,7 @@ import { findBand } from "../../db/queries/bands";
 import { findEventBySlug } from "../../db/queries/events";
 import { listOrdersForEvent, findOrderInEvent } from "../../db/queries/orders";
 import { runVerification } from "../../jobs/verify-proof";
-import { nowIso } from "../../lib/core";
+import { newId, nowIso } from "../../lib/core";
 import type { AdminEnv } from "./context";
 
 export const orderRoutes = new Hono<AdminEnv>();
@@ -165,6 +165,62 @@ orderRoutes.post("/e/:slug/orden/:id/anular", async (c) => {
     .where(and(eq(s.orders.id, c.req.param("id")), eq(s.orders.eventId, event.id)));
 
   return c.redirect(`/admin/e/${event.slug}/ordenes`, 303);
+});
+
+/**
+ * A refund the band starts itself.
+ *
+ * `/anular` beside this marks an order `void` — the ticket stops working and
+ * the totals drop, which covers an order that should never have existed. It
+ * says nothing about money and records no reason.
+ *
+ * This is the other case: the band is giving the money back. Until now that
+ * could only begin on the buyer's own page, which `refundGate` closes 24 hours
+ * after purchase — so a buyer who asked late could not be refunded, and a band
+ * cancelling its gig had no way to record refunding anyone.
+ *
+ * Written as a request approved in the same breath rather than a second path
+ * that mutates the order directly, so every refund in the system has one shape
+ * and one audit trail, whoever started it.
+ *
+ * The money moves by bank transfer, outside Coverr, exactly as for an approved
+ * buyer request. This records the decision, voids the QR codes and drops the
+ * order from the totals.
+ */
+orderRoutes.post("/e/:slug/orden/:id/reembolsar", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const bandId = c.get("bandId");
+  const event = await findEventBySlug(db, bandId, c.req.param("slug"));
+  if (!event) return c.notFound();
+
+  const order = await findOrderInEvent(db, event.id, c.req.param("id"));
+  if (!order) return c.notFound();
+
+  // Idempotent: a double submit, or a buyer's request approved in another tab
+  // a moment earlier, must not write a second refund row.
+  if (order.status !== "confirmed") return c.redirect(orderPath(event.slug, order.id), 303);
+
+  const reason = String((await c.req.parseBody())["motivo"] ?? "")
+    .trim()
+    .slice(0, 300);
+  const ts = nowIso();
+
+  await db.insert(s.refundRequests).values({
+    id: newId("ref"),
+    orderId: order.id,
+    requestedAt: ts,
+    reason: reason ? `Reembolso iniciado por la banda: ${reason}` : "Reembolso iniciado por la banda.",
+    status: "approved",
+    handledBy: bandId,
+    handledAt: ts,
+  });
+
+  await db
+    .update(s.orders)
+    .set({ status: "refunded" })
+    .where(and(eq(s.orders.id, order.id), eq(s.orders.eventId, event.id)));
+
+  return c.redirect(orderPath(event.slug, order.id), 303);
 });
 
 /**
