@@ -23,6 +23,7 @@ export const EventSettingsPage: FC<{
     bandName={bandName}
     active="settings"
     eventSlug={event.slug}
+    eventName={event.name}
   >
     <h1>Ajustes</h1>
     <p class="sub">

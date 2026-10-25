@@ -16,6 +16,7 @@ export const OrdersPage: FC<{
     bandName={bandName}
     active="orders"
     eventSlug={event.slug}
+    eventName={event.name}
   >
     <h1>Órdenes</h1>
     <p class="sub">

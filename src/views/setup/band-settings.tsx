@@ -20,7 +20,7 @@ export const BandSettingsPage: FC<{
 }> = ({ band, accounts, members, advances, events, saved, error }) => {
   const pctTotal = members.reduce((n, m) => n + m.splitPct, 0);
   return (
-    <AdminLayout title={`Ajustes — ${band.name}`} bandName={band.name}>
+    <AdminLayout title={`Ajustes — ${band.name}`} bandName={band.name} active="band">
       <h1>Ajustes de la banda</h1>
       <p class="sub">Cuentas, integrantes y adelantos.</p>
       {saved ? <div class="note ok">Guardado.</div> : null}

@@ -35,6 +35,7 @@ export const DashboardPage: FC<DashProps> = (p) => {
       bandName={p.bandName}
       active="dash"
       eventSlug={p.event.slug}
+      eventName={p.event.name}
     >
       <h1>{p.event.name}</h1>
       <p class="sub">

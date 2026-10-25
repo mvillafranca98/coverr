@@ -50,7 +50,7 @@ export const BandHomePage: FC<{
     a == null || b == null || b === 0 ? null : (a - b) / b;
 
   return (
-    <AdminLayout title={`${bandName} — Coverr`} bandName={bandName}>
+    <AdminLayout title={`${bandName} — Coverr`} bandName={bandName} active="events">
       <h1>{bandName}</h1>
       <p class="sub">
         {played.length} {played.length === 1 ? "evento" : "eventos"} · {totals.attendance} personas

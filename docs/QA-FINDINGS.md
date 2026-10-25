@@ -35,7 +35,7 @@ which is the exact case that used to false-flag `DATE_STALE`.
 
 ## F1 · Navigation conflates two different scopes
 
-**Severity: medium · pre-launch**
+**Severity: medium** — ✅ **FIXED 2026-10-25**
 
 **Observed.** The admin bar mixes tabs belonging to the *selected event* (`Resumen`, `Órdenes`,
 `Venta`, `Dinero`, `Ajustes`) with tabs belonging to the *band* (`Eventos`, `+ Evento`,
@@ -45,9 +45,27 @@ options act on the event you are inside and which leave it.
 **Also.** At phone width the same bar wraps to three lines, which is where it reads worst — and
 a band checking numbers mid-gig is on a phone.
 
-**Proposed fix.** Two levels. Band-scoped items stay in the top bar; event-scoped items become a
-sub-bar that appears only inside an event, under the event's name so the scope is visually
-owned. Collapses to a scrollable row on narrow screens rather than wrapping.
+### Fixed
+
+Two bars, because they are two scopes. The band bar — *Eventos · + Evento · Banda · Salir* — is
+everything that leaves the event you are in. The event bar is everything that acts on it, and it
+only exists inside an event.
+
+The event bar is headed by the event's name, and that turned out to be load-bearing rather than
+decorative: only the dashboard's `h1` is the event name. Órdenes, Dinero, Venta and Ajustes all
+have generic headings, so on five of six event pages the bar is the **only** thing identifying
+which event you are looking at. It duplicates the heading on the dashboard alone, which is a
+fair price.
+
+**The tabs scroll rather than wrap.** Five of them do not fit 375px, which is where this read
+worst — and a band checking numbers mid-gig is on exactly that screen. On narrow widths the band
+links drop to their own scrollable row instead of squeezing the band name.
+
+Active state is now marked on both levels: an underline on the current event tab, and the
+matching band link highlighted on the band pages, which previously highlighted nothing.
+
+**Verified.** Phone goes from three wrapped lines to two clean rows with no horizontal overflow;
+the event bar is absent on band pages and present with the right tab marked on event pages.
 
 ---
 

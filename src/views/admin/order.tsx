@@ -36,6 +36,7 @@ export const OrderPage: FC<{
     bandName={bandName}
     active="orders"
     eventSlug={event.slug}
+    eventName={event.name}
   >
     <h1>{order.shortCode}</h1>
     <p class="sub">

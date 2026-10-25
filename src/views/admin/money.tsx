@@ -18,6 +18,7 @@ export const MoneyPage: FC<{
     bandName={bandName}
     active="money"
     eventSlug={event.slug}
+    eventName={event.name}
   >
     <h1>Dinero</h1>
     <p class="sub">{event.name}</p>

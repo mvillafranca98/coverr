@@ -30,6 +30,7 @@ export const ManualSalePage: FC<{
     bandName={bandName}
     active="manual"
     eventSlug={event.slug}
+    eventName={event.name}
   >
     <h1>Venta manual</h1>
     <p class="sub">

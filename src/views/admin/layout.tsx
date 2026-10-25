@@ -24,11 +24,43 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);fon
 a{color:var(--accent)}
 .wrap{max-width:980px;margin:0 auto;padding:0 18px 80px}
 
-nav.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 0;border-bottom:1px solid var(--line);margin-bottom:22px}
-nav.top .brand{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
-nav.top a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:550}
-nav.top a.on{color:var(--text)}
-nav.top .sp{margin-left:auto}
+/* ---- chrome: two bars, two scopes ----
+   The band bar leaves the event; the event bar acts on it. They used to be one
+   flat row, which read as a single menu and wrapped to three lines on a phone. */
+.chrome{border-bottom:1px solid var(--line);margin-bottom:22px}
+
+nav.band{display:flex;align-items:center;gap:14px;padding:16px 0 0}
+nav.band .brand{
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--accent);white-space:nowrap;
+}
+.band-links{margin-left:auto;display:flex;align-items:center;gap:16px}
+.band-links a{color:var(--dim);text-decoration:none;font-size:13.5px;font-weight:550;white-space:nowrap}
+.band-links a:hover,.band-links a.on{color:var(--text)}
+
+nav.event{padding:14px 0 0}
+.ev-name{
+  display:block;font-size:15px;font-weight:650;color:var(--text);
+  letter-spacing:-.01em;margin-bottom:6px;
+}
+/* Scrolls rather than wraps. Five tabs do not fit a 375px screen, and a band
+   checking numbers mid-gig is on exactly that screen. */
+.ev-tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.ev-tabs::-webkit-scrollbar{display:none}
+.ev-tabs a{
+  flex:none;padding:7px 12px 9px;color:var(--muted);text-decoration:none;
+  font-size:14px;font-weight:550;white-space:nowrap;border-bottom:2px solid transparent;
+}
+.ev-tabs a:hover{color:var(--text)}
+.ev-tabs a.on{color:var(--text);border-bottom-color:var(--accent)}
+
+@media (max-width:560px){
+  /* The band links drop to their own scrollable row instead of squeezing the
+     band name or wrapping mid-list. */
+  nav.band{flex-wrap:wrap;gap:8px}
+  .band-links{margin-left:0;width:100%;overflow-x:auto;scrollbar-width:none}
+  .band-links::-webkit-scrollbar{display:none}
+}
 
 h1{font-size:1.75rem;font-weight:750;letter-spacing:-.022em;margin:0 0 4px;text-wrap:balance}
 .sub{color:var(--muted);font-size:14px;margin:0 0 22px}
@@ -133,8 +165,15 @@ document.addEventListener('click', function (e) {
 });`;
 
 export const AdminLayout: FC<
-  PropsWithChildren<{ title: string; bandName?: string; active?: string; eventSlug?: string }>
-> = ({ title, bandName, active, eventSlug, children }) => (
+  PropsWithChildren<{
+    title: string;
+    bandName?: string;
+    active?: string;
+    eventSlug?: string;
+    /** Named in the event bar so the scope of those tabs is never in doubt. */
+    eventName?: string;
+  }>
+> = ({ title, bandName, active, eventSlug, eventName, children }) => (
   <html lang="es">
     <head>
       <meta charset="utf-8" />
@@ -146,34 +185,51 @@ export const AdminLayout: FC<
     </head>
     <body>
       <div class="wrap">
+        {/* Two levels, because they are two scopes. Everything in the band bar
+            leaves whatever event you are in; everything in the event bar acts
+            on it. Flat, they read as one menu and it is not obvious which is
+            which — which is exactly what happened during QA. */}
         {bandName ? (
-          <nav class="top">
-            <span class="brand">{bandName}</span>
+          <header class="chrome">
+            <nav class="band" aria-label="Banda">
+              <span class="brand">{bandName}</span>
+              <span class="band-links">
+                <a href="/admin" class={active === "events" ? "on" : ""}>
+                  Eventos
+                </a>
+                <a href="/admin/nuevo">+ Evento</a>
+                <a href="/admin/banda" class={active === "band" ? "on" : ""}>
+                  Banda
+                </a>
+                <a href="/admin/salir">Salir</a>
+              </span>
+            </nav>
+
             {eventSlug ? (
-              <>
-                <a href={`/admin/e/${eventSlug}`} class={active === "dash" ? "on" : ""}>
-                  Resumen
-                </a>
-                <a href={`/admin/e/${eventSlug}/ordenes`} class={active === "orders" ? "on" : ""}>
-                  Órdenes
-                </a>
-                <a href={`/admin/e/${eventSlug}/venta`} class={active === "manual" ? "on" : ""}>
-                  Venta
-                </a>
-                <a href={`/admin/e/${eventSlug}/dinero`} class={active === "money" ? "on" : ""}>
-                  Dinero
-                </a>
-                <a href={`/admin/e/${eventSlug}/ajustes`} class={active === "settings" ? "on" : ""}>
-                  Ajustes
-                </a>
-              </>
+              <nav class="event" aria-label={eventName ? `Evento: ${eventName}` : "Evento"}>
+                {eventName ? <span class="ev-name">{eventName}</span> : null}
+                {/* Scrolls rather than wraps: five tabs on a phone used to
+                    stack into three lines, which is where this read worst. */}
+                <span class="ev-tabs">
+                  <a href={`/admin/e/${eventSlug}`} class={active === "dash" ? "on" : ""}>
+                    Resumen
+                  </a>
+                  <a href={`/admin/e/${eventSlug}/ordenes`} class={active === "orders" ? "on" : ""}>
+                    Órdenes
+                  </a>
+                  <a href={`/admin/e/${eventSlug}/venta`} class={active === "manual" ? "on" : ""}>
+                    Venta
+                  </a>
+                  <a href={`/admin/e/${eventSlug}/dinero`} class={active === "money" ? "on" : ""}>
+                    Dinero
+                  </a>
+                  <a href={`/admin/e/${eventSlug}/ajustes`} class={active === "settings" ? "on" : ""}>
+                    Ajustes
+                  </a>
+                </span>
+              </nav>
             ) : null}
-            <span class="sp" />
-            <a href="/admin">Eventos</a>
-            <a href="/admin/nuevo">+ Evento</a>
-            <a href="/admin/banda">Banda</a>
-            <a href="/admin/salir">Salir</a>
-          </nav>
+          </header>
         ) : null}
         {children}
         <footer>
