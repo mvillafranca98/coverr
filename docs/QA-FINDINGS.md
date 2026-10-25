@@ -17,7 +17,7 @@ mid-run invalidates the checks already ticked.
 | 3 — Ticket buying | ✅ passed · order `DAY-TA3Z`, L2, QR immediate, share + email confirmed | 2026-10-24 |
 | 4 — Verification | ✅ 4.1–4.3, 4.5–4.9 passed · **4.4 retest needed**, see F6 | 2026-10-25 |
 | 5 — Email | ✅ 5.1 confirmed; 5.2–5.6 outstanding | 2026-10-24 |
-| 6 — Door | not started | |
+| 6 — Door | ✅ passed · 4 door orders, 8/14 checked in · see F7–F10 | 2026-10-25 |
 | 7 — Dashboard | not started | |
 
 Backend evidence for the Part 3 purchase:
@@ -231,3 +231,79 @@ acceptable, and avoidable by not pricing in centavos.
 **To implement:** delete `TOLERANCE` in `src/lib/verify.ts` and compare `diff` against 0. Update
 the test expectations and the comment, which currently explains a tolerance that no longer
 exists.
+
+
+---
+
+## F7 · An amber scan admits the attendee before staff decide
+
+**Severity: high · the most substantive finding of the run**
+
+**Observed.** Scanning `DAY-B5Z1` — the order carrying two critical flags — correctly showed
+amber **and named the reason**. But the attendee was marked *adentro* in the same action. Staff
+are told about the problem immediately after the person has already been admitted.
+
+That is backwards for the case the flag exists to serve. `HASH_DUPLICATE` means the proof was
+recycled from another order: the one scan where someone might reasonably be held at the door is
+the one where the product has already let them in.
+
+**Proposed.** A confirmation step before the check-in commits:
+
+- **Green:** *"Comprobante verificado — confirmar asistencia"* · Aceptar / Cancelar
+- **Amber or red:** *"Verificar y confirmar asistencia"* / *"Anular compra"*
+
+**The tension worth deciding deliberately.** The scanner is built for a queue. The baseline
+event put 229 people through a door, and a confirmation on *every* scan doubles the taps for the
+~95% of scans that are clean. Three options:
+
+1. Confirm on every scan — most control, slowest, as proposed
+2. **Confirm only on amber and red** — green stays one tap, the exceptional case gets the stop.
+   Keeps the fast path fast and puts friction exactly where judgement is needed
+3. Keep auto-admit, add an **undo** on the result screen — fastest, but relies on staff noticing
+
+Option 2 looks like the right shape, but this is a call about how a door actually runs, not a
+technical one.
+
+---
+
+## F8 · Cash sales and comps commit with no confirmation
+
+**Severity: medium**
+
+Selling a cash ticket or issuing a comp writes the order immediately. Both create records that
+affect attendance and settlement, and a misplaced tap on a phone at a dark door is easy. A comp
+in particular is a free ticket that counts toward attendance and never toward revenue.
+
+Same confirmation treatment as F7, but here it should be unconditional — there is no fast path
+worth protecting, since these are typed rather than scanned.
+
+---
+
+## F9 · Both shareable links need copy-to-clipboard, and they are easy to confuse
+
+**Severity: medium**
+
+The public sale link and the staff scanner link are both shown as plain text to be selected by
+hand. Neither copies.
+
+Worse, they are confusable, and the consequence is asymmetric: the scanner link is a bearer
+token. **Anyone holding it can check people in.** Posting it where the sale link should have
+gone hands door control to the public.
+
+**Proposed.** Copy buttons on both. For the staff link specifically, a button that first warns —
+*"este enlace es sólo para el personal de la puerta; quien lo tenga puede registrar entradas"* —
+and copies only on acknowledgement. The warning is the point; the copy is the convenience.
+
+---
+
+## F10 · The door list is cached but cannot be browsed
+
+**Severity: low · nice to have**
+
+The scanner downloads the full attendee list on load and says so. **Buscar** uses it only for
+lookup by typed name, so staff cannot simply read the list — useful when a name is misspelled,
+misheard, or the buyer does not know which name the ticket is under.
+
+**Proposed.** Show the cached list under **Buscar** when the search box is empty: a scrolling
+list of names with their check-in state, filtering as you type. No new data and no network — it
+is already on the device.
