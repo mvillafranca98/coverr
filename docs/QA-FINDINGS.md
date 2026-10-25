@@ -214,3 +214,20 @@ and the current value is tuned for the wrong one.
 
 If it stays absolute, note it should at minimum be smaller than the cheapest sellable ticket, or
 it disables itself again the next time anyone tests at a low price.
+
+### Decision — 2026-10-25: remove the tolerance
+
+Agreed to drop it entirely rather than shrink it. The reasoning adds a case not considered
+above: **a transfer funded in another currency** can convert to slightly more or less than the
+quoted price, and that is precisely an order a band should look at — not one the system should
+silently accept. `docs/SPEC.md` already lists a USD-converted transfer as an unsampled
+extraction case, so this is a real path, not a hypothetical.
+
+With the tolerance gone, any difference between quoted and received raises `AMOUNT_SHORT` or
+`AMOUNT_OVER`. Both are warnings: the QR still issues, the buyer is never stopped, and the band
+gets a line it can act on. The one-centavo case from a price carrying centavos would flag too —
+acceptable, and avoidable by not pricing in centavos.
+
+**To implement:** delete `TOLERANCE` in `src/lib/verify.ts` and compare `diff` against 0. Update
+the test expectations and the comment, which currently explains a tolerance that no longer
+exists.
