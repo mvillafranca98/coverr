@@ -35,6 +35,31 @@ export async function confirmedTicketCount(
 }
 
 /**
+ * Tickets already sold under one price rule.
+ *
+ * Separate from `confirmedTicketCount` because a rule's allocation and the
+ * event's capacity are different limits: a presale tier can sell out while the
+ * event still has room, and only this count can tell you so.
+ */
+export async function ticketsSoldUnderRule(
+  db: DrizzleD1Database<typeof s>,
+  eventId: string,
+  ruleId: string,
+): Promise<number> {
+  const [sold] = await db
+    .select({ n: sql<number>`coalesce(sum(${s.orders.quantity}), 0)` })
+    .from(s.orders)
+    .where(
+      and(
+        eq(s.orders.eventId, eventId),
+        eq(s.orders.priceRuleId, ruleId),
+        eq(s.orders.status, "confirmed"),
+      ),
+    );
+  return Number(sold?.n ?? 0);
+}
+
+/**
  * A short code no other order is using, starting from the one the buyer may
  * have already pasted into the transfer's "Detalle".
  *

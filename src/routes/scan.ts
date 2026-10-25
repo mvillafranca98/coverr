@@ -48,10 +48,16 @@ scanApi.get("/:token/manifest", async (c) => {
       quantity: s.orders.quantity,
       verificationStatus: s.orders.verificationStatus,
       orderId: s.orders.id,
+      orderStatus: s.orders.status,
     })
     .from(s.attendees)
     .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
-    .where(and(eq(s.orders.eventId, event.id), eq(s.orders.status, "confirmed")));
+    // Refunded and voided orders are carried too, flagged rather than dropped.
+    // Omitting them made a voided ticket indistinguishable from a stranger's,
+    // so the door told the buyer "este código no es de este evento" — wrong,
+    // and the one moment staff have to explain something to a person. They are
+    // excluded from every count on the device instead.
+    .where(eq(s.orders.eventId, event.id));
 
   // Open flags become the amber reason shown at the door. Staff resolving a
   // flag in five seconds is the point; staff phoning the admin is the failure.
@@ -102,6 +108,7 @@ scanApi.get("/:token/manifest", async (c) => {
       ch: r.channel,
       q: r.quantity,
       f: reasonByOrder.get(r.orderId) ?? null,
+      v: r.orderStatus === "confirmed" ? undefined : 1,
     })),
     syncedAt: nowIso(),
   });

@@ -376,7 +376,7 @@ negative line, exactly as an approved buyer request does today.
 
 ## F12 · A voided ticket tells the door it is for another event
 
-**Severity: high · wrong information at the one moment staff must speak to a buyer**
+**Severity: high** — ✅ **FIXED 2026-10-25**
 
 **Observed.** Scanning a ticket from a refunded order correctly refuses entry, but reports
 *"No encontrado · Este código no es de este evento"*.
@@ -394,9 +394,20 @@ away believing they are at the wrong venue, when the truth is their order was re
 information they can act on and probably already know. It also hides a real failure mode: a band
 refunding the wrong order would hear "wrong event" complaints rather than "you refunded me".
 
-**Proposed.** Keep voided tokens in the manifest with a `voided` marker rather than dropping
-them, so the client can say *"Este boleto fue reembolsado"* offline. Costs a few bytes per
-refunded ticket and keeps the offline invariant intact.
+### Fixed
+
+The manifest now carries refunded and voided orders, flagged `v: 1` rather than dropped. The
+scanner names the real reason — *"Boleto anulado · Esta compra fue reembolsada"* — and does it
+offline, since the marker travels with the cached list.
+
+Two consequences had to be handled, and the second was found only by testing:
+
+- **Voided tickets must not inflate the counts.** `renderStats` filters them out of sold, inside
+  and wristbands. Verified: 157 rows in the manifest, 155 counted.
+- **Search had to keep finding them.** The first attempt excluded voided tickets from the door's
+  name search, which reproduced the same failure in a different place — typing a refunded code
+  answered *"Nadie con ese nombre."* They now appear struck through, labelled *reembolsado*, with
+  the action button disabled and reading *Anulado*.
 
 ---
 
@@ -455,7 +466,7 @@ now reads L2. The number is right; the label describing it is not.
 
 ## F15 · A presale allocation can be oversold by one order
 
-**Severity: medium**
+**Severity: medium** — ✅ **FIXED 2026-10-25**
 
 The two limits behave differently, and only one of them accounts for how many tickets are being
 bought.
@@ -487,8 +498,13 @@ is harsh when the next tier would happily sell them:
 2. Fall through to the next rule and sell all ten at the door price
 3. Split the order across rules — most correct, most complex, probably not worth it
 
-Option 1 is consistent with how capacity already behaves and tells the buyer something true.
+Option 1 is consistent with how capacity already behaves and tells the buyer something true,
+and is what was implemented: `ticketsSoldUnderRule` plus a guard in `purchase.tsx` that mirrors
+the capacity check and refuses with the real remainder — *"Sólo quedan 3 boletos en Preventa."*
 
-**Related.** The capacity message *"Ya no hay cupo suficiente"* never says how many **are** left,
-so a buyer wanting five with three available has to guess. Same class of problem as **F3**, and
-worth fixing in the same pass.
+A fully sold-out tier still falls through to the next rule as before; the guard only fires when
+a tier has room but not enough for this order. Verified both ways: 2 sold of 5, asking 4 is
+refused with the count, asking 3 fits exactly and sells.
+
+**Related.** The capacity message *"Ya no hay cupo suficiente"* never said how many **are** left.
+Fixed in the same pass as **F3** — it now reads *"Sólo quedan 3 boletos."*

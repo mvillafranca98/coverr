@@ -156,11 +156,14 @@
   function renderStats(data) {
     var m = state.manifest;
     if (!m) return;
-    var total = data && data.total != null ? data.total : m.attendees.length;
+    // Voided tickets ride along so a scan can name the reason; they are not
+    // sold, not inside, and not a wristband.
+    var live = m.attendees.filter(function (a) { return !a.v; });
+    var total = data && data.total != null ? data.total : live.length;
     var inside =
       data && data.inside != null
         ? data.inside
-        : m.attendees.filter(function (a) { return !!a.c; }).length;
+        : live.filter(function (a) { return !!a.c; }).length;
 
     el.statInside.textContent = inside;
     el.statTotal.textContent = total;
@@ -195,6 +198,13 @@
     var a = state.byToken[token];
     if (!a) {
       show("red", "No encontrado", "Este código no es de este evento");
+      return;
+    }
+    // Voided tickets are carried in the manifest precisely so this can be
+    // said. Dropping them made a refunded ticket look like a stranger's, and
+    // the door told the buyer they were at the wrong event.
+    if (a.v) {
+      show("red", "Boleto anulado", a.n, "Esta compra fue reembolsada");
       return;
     }
     if (a.c) {
@@ -277,6 +287,8 @@
     var q = el.searchInput.value.trim().toLowerCase();
     if (!q || !state.manifest) { el.searchResults.innerHTML = ""; return; }
     var hits = state.manifest.attendees
+      // Voided tickets stay searchable on purpose: somebody typing a refunded
+      // code should be told it was refunded, not "nadie con ese nombre".
       .filter(function (a) {
         return a.n.toLowerCase().indexOf(q) >= 0 || a.sc.toLowerCase().indexOf(q) >= 0;
       })
@@ -292,15 +304,16 @@
     }
     hits.forEach(function (a) {
       var row = document.createElement("div");
-      row.className = "srow" + (a.c ? " in" : "");
+      row.className = "srow" + (a.c ? " in" : "") + (a.v ? " voided" : "");
       var left = document.createElement("div");
       left.innerHTML = "<b></b><small></small>";
       left.querySelector("b").textContent = a.n;
-      left.querySelector("small").textContent =
-        a.sc + (a.f ? " · " + a.f : "") + (a.c ? " · ya entró" : "");
+      left.querySelector("small").textContent = a.v
+        ? a.sc + " · reembolsado"
+        : a.sc + (a.f ? " · " + a.f : "") + (a.c ? " · ya entró" : "");
       var btn = document.createElement("button");
-      btn.textContent = a.c ? "Adentro" : "Marcar";
-      btn.disabled = !!a.c;
+      btn.textContent = a.v ? "Anulado" : a.c ? "Adentro" : "Marcar";
+      btn.disabled = !!a.c || !!a.v;
       btn.onclick = function () { handleToken(a.t); renderSearch(); };
       row.appendChild(left);
       row.appendChild(btn);

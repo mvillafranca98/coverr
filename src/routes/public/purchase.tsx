@@ -3,7 +3,11 @@ import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import * as s from "../../db/schema";
 import { findEventWithBand } from "../../db/queries/events";
-import { confirmedTicketCount, uniqueShortCode } from "../../db/queries/orders";
+import {
+  confirmedTicketCount,
+  ticketsSoldUnderRule,
+  uniqueShortCode,
+} from "../../db/queries/orders";
 import { findDuplicateProof, insertUnreadProof } from "../../db/queries/proofs";
 import { resolveSellableRule } from "../../db/queries/price-rules";
 import { readPurchaseForm } from "../../lib/purchase-form";
@@ -68,6 +72,25 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
   const rule = await resolveSellableRule(db, event.id);
   if (!rule) return backToForm("Ya no hay boletos disponibles.");
   const expectedAmount = rule.amount * quantity;
+
+  // A rule's allocation is checked against the size of THIS order, not only
+  // against what has already sold. `resolveSellableRule` marks a rule sold out
+  // at `sold >= maxQty`, which lets one order walk straight through the limit:
+  // 99 of a 100-ticket presale sold, a buyer takes ten, and 109 go at the
+  // presale price. Refusing with the real number mirrors the capacity check
+  // below and tells the buyer something they can act on.
+  if (rule.maxQty != null) {
+    const soldUnderRule = await ticketsSoldUnderRule(db, event.id, rule.id);
+    if (soldUnderRule + quantity > rule.maxQty) {
+      const left = Math.max(0, rule.maxQty - soldUnderRule);
+      return backToForm(
+        left === 0
+          ? `Ya no quedan boletos en ${rule.label}.`
+          : `Sólo quedan ${left} boletos en ${rule.label}.`,
+        "quantity",
+      );
+    }
+  }
 
   if (event.capacityCap != null) {
     const sold = await confirmedTicketCount(db, event.id);
