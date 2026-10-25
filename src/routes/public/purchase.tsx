@@ -39,8 +39,12 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
   if (!found) return c.notFound();
   const { event, band } = found;
 
-  const backToForm = (message: string) =>
-    c.redirect(`/e/${slug}?error=${encodeURIComponent(message)}`, 303);
+  const backToForm = (message: string, field?: string) =>
+    c.redirect(
+      `/e/${slug}?error=${encodeURIComponent(message)}` +
+        (field ? `&campo=${encodeURIComponent(field)}` : ""),
+      303,
+    );
 
   // Every upload costs a vision call. This is the ceiling on that bill.
   if (!(await withinLimit(c.env.PURCHASE_LIMIT, `buy:${clientIp(c)}`))) {
@@ -48,7 +52,7 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
   }
 
   const form = readPurchaseForm(await c.req.parseBody());
-  if (!form.ok) return backToForm(form.message);
+  if (!form.ok) return backToForm(form.message, form.field);
   const {
     quantity,
     payerName,
@@ -67,7 +71,15 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
 
   if (event.capacityCap != null) {
     const sold = await confirmedTicketCount(db, event.id);
-    if (sold + quantity > event.capacityCap) return backToForm("Ya no hay cupo suficiente.");
+    const left = Math.max(0, event.capacityCap - sold);
+    // Saying how many are left beats "no hay cupo": a buyer wanting four when
+    // three remain can act on the number, not just be refused.
+    if (sold + quantity > event.capacityCap) {
+      return backToForm(
+        left === 0 ? "Ya no quedan boletos." : `Sólo quedan ${left} boletos.`,
+        "quantity",
+      );
+    }
   }
 
   const bytes = await proof.arrayBuffer();

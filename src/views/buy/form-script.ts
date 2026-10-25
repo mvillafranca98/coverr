@@ -197,6 +197,7 @@ export function buyFormScript(i: {
   // but no browser lets us re-populate a file input, so the proof is the one
   // thing that must be picked again. Say so, and re-enable the button.
   if (/[?&]error=/.test(location.search)) {
+    var params = new URLSearchParams(location.search);
     var dropName = document.getElementById('dropName');
     if (dropName && !dropName.textContent) {
       dropName.textContent = 'Volvé a elegir tu comprobante.';
@@ -205,6 +206,36 @@ export function buyFormScript(i: {
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Confirmar compra';
+    }
+
+    // Point at the field that was refused. A message alone leaves the buyer
+    // re-reading the whole form, and they have already transferred the money
+    // by this point — this is the worst place in the product to be vague.
+    var field = params.get('campo');
+    var message = params.get('error');
+    if (field) {
+      var el = document.getElementsByName(field)[0] || document.getElementById(field);
+      if (el) {
+        el.classList.add('invalid');
+        el.setAttribute('aria-invalid', 'true');
+
+        if (message) {
+          var note = document.createElement('span');
+          note.className = 'field-error';
+          note.textContent = message;
+          // The file input is invisible, so its message belongs on the drop
+          // zone the buyer can actually see.
+          var anchor = el.type === 'file' ? (document.getElementById('drop') || el) : el;
+          (anchor.parentNode || anchor).insertBefore(note, anchor.nextSibling);
+        }
+
+        var target = el.type === 'file' ? (document.getElementById('drop') || el) : el;
+        try { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {
+          target.scrollIntoView();
+        }
+        // Focus after the scroll settles, or the browser jumps twice.
+        setTimeout(function () { try { el.focus({ preventScroll: true }); } catch (e) {} }, 350);
+      }
     }
   }
 })();`;

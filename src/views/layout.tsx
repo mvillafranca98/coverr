@@ -145,11 +145,29 @@ textarea{resize:vertical;min-height:44px}
 
 /* ---- file ---- */
 .drop{
+  /* position:relative is load-bearing — the file input inside is absolutely
+     positioned to fill it, and without a positioned ancestor it would size
+     against the viewport and cover the whole page, swallowing every click. */
+  position:relative;
   display:block;margin-top:14px;padding:24px 16px;border:1.5px dashed var(--line-control);
   border-radius:12px;background:var(--surface);text-align:center;cursor:pointer;
 }
 .drop.has{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
-.drop input{position:absolute;opacity:0;width:0;height:0}
+/* Invisible, but deliberately the full size of the drop zone rather than 0x0.
+   A required control the browser cannot point at produces no visible message:
+   constraint validation reports the FIRST invalid field, which is this one, so
+   a 0x0 input meant an empty form silently refused to submit and said nothing.
+   Full-size keeps it hidden and gives the bubble somewhere visible to anchor. */
+.drop input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.drop:focus-within{border-color:var(--accent-text);outline:2px solid var(--accent-text);outline-offset:-1px}
+
+/* Server-side rejection marks the offending field. */
+.invalid,input.invalid,textarea.invalid,select.invalid{
+  border-color:var(--crit)!important;background:var(--crit-bg);
+}
+.field-error{
+  display:block;margin-top:6px;font-size:13px;color:var(--crit);font-weight:600;
+}
 .drop-t{font-weight:650;font-size:15px}
 .drop-s{font-size:13px;color:var(--muted);margin-top:4px}
 .drop-s.name{color:var(--ok);font-family:var(--mono);font-size:12.5px;word-break:break-all}

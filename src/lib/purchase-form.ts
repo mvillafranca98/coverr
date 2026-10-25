@@ -16,9 +16,10 @@ export type PurchaseInput = {
   proof: File;
 };
 
+/** `field` is the name of the input at fault, so the page can point at it. */
 export type PurchaseFormResult =
   | { ok: true; values: PurchaseInput }
-  | { ok: false; message: string };
+  | { ok: false; message: string; field?: string };
 
 /**
  * Validate the buyer's checkout form.
@@ -38,28 +39,34 @@ export function readPurchaseForm(body: Record<string, unknown>): PurchaseFormRes
   const payerName = text("payer_name");
   const payerEmail = text("payer_email");
 
-  if (!payerName) return { ok: false, message: "Falta tu nombre." };
+  if (!payerName) return { ok: false, message: "Falta tu nombre.", field: "payer_name" };
   if (!EMAIL_PATTERN.test(payerEmail)) {
-    return { ok: false, message: "Revisá tu correo electrónico." };
+    return { ok: false, message: "Revisá tu correo electrónico.", field: "payer_email" };
   }
   if (body["consent"] !== "1") {
-    return { ok: false, message: "Tenés que aceptar los términos para continuar." };
+    return { ok: false, message: "Tenés que aceptar los términos para continuar.", field: "consent" };
   }
 
   // One named ticket per person: each attendee gets their own QR at the door.
   const attendees: { name: string; note: string | null }[] = [];
   for (let position = 1; position <= quantity; position++) {
     const name = text(`attendee_name_${position}`);
-    if (!name) return { ok: false, message: `Falta el nombre de la persona ${position}.` };
+    if (!name) {
+      return {
+        ok: false,
+        message: `Falta el nombre de la persona ${position}.`,
+        field: `attendee_name_${position}`,
+      };
+    }
     attendees.push({ name, note: text(`attendee_note_${position}`) || null });
   }
 
   const proof = body["proof"];
   if (!(proof instanceof File) || proof.size === 0) {
-    return { ok: false, message: "Subí tu comprobante de pago." };
+    return { ok: false, message: "Subí tu comprobante de pago.", field: "proof" };
   }
   if (proof.size > MAX_PROOF_BYTES) {
-    return { ok: false, message: "El archivo es muy grande (máximo 10 MB)." };
+    return { ok: false, message: "El archivo es muy grande (máximo 10 MB).", field: "proof" };
   }
 
   return {

@@ -92,7 +92,37 @@ And separately: **should a checked-in attendee be refundable at all?** A one-lin
 
 ## F3 · The checkout form fails without saying which field is wrong
 
-**Severity: high · pre-launch**
+**Severity: high · pre-launch** — ✅ **FIXED 2026-10-25**
+
+### Root cause, found by testing rather than reading
+
+The form was not merely vague — for an empty submit it said **nothing at all**, and the reason
+was not the server. Constraint validation reports only the **first** invalid control in DOM
+order. That is `proof`, the file input, which `.drop input` styled to `width:0;height:0;opacity:0`
+so a label could stand in for it. The browser tried to anchor *"Please select a file."* to a
+zero-size invisible element, so no message appeared and the form simply refused to submit. Every
+visible field below it would have shown a bubble, but none ever got the chance.
+
+### What changed
+
+- `.drop input` now fills the drop zone instead of collapsing to nothing, so the browser's own
+  message has somewhere visible to anchor. `.drop` gained `position:relative` — load-bearing,
+  since without a positioned ancestor the input sized against the viewport and covered the whole
+  page, swallowing every click. Caught by testing reachability of the other fields.
+- `readPurchaseForm` failures now carry a `field`, which `backToForm` passes as `&campo=`.
+- The page marks that field `.invalid` and `aria-invalid`, puts the message against it, scrolls
+  it into view and focuses it. For the file input the message and scroll target are the visible
+  drop zone, not the invisible control.
+- The capacity refusal now says how many remain — *"Sólo quedan 3 boletos"* rather than
+  *"Ya no hay cupo suficiente"* (the sub-item noted in **F15**).
+
+The `aria-invalid` and focus handling also move **FE-05** forward.
+
+### Verified
+
+Empty submit anchors to a 382×98 visible region; server rejections mark, annotate, scroll and
+focus for both a visible field and the hidden file input; all other fields remain reachable; a
+valid submit still completes to the ticket page.
 
 **Observed.** Deliberately submitting an incomplete form correctly refuses the purchase, but
 nothing indicates *what* is missing. No field is marked, nothing scrolls, and the buyer is left
