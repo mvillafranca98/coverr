@@ -139,3 +139,7 @@ h2 { font-size: 1rem; font-weight: 650; margin: 0 0 4px }
    "nadie con ese nombre". Not actionable — the button is disabled. */
 .srow.voided{opacity:.62}
 .srow.voided b{text-decoration:line-through}
+
+/* The door list is long and read on a phone, so it scrolls inside the pane
+   rather than pushing the search box off the top of the screen. */
+#searchResults { max-height: 62vh; overflow-y: auto; -webkit-overflow-scrolling: touch }

@@ -371,7 +371,7 @@ refactor.
 
 ## F9 · Both shareable links need copy-to-clipboard, and they are easy to confuse
 
-**Severity: medium**
+**Severity: medium** — ✅ **FIXED 2026-10-25**
 
 The public sale link and the staff scanner link are both shown as plain text to be selected by
 hand. Neither copies.
@@ -380,23 +380,45 @@ Worse, they are confusable, and the consequence is asymmetric: the scanner link 
 token. **Anyone holding it can check people in.** Posting it where the sale link should have
 gone hands door control to the public.
 
-**Proposed.** Copy buttons on both. For the staff link specifically, a button that first warns —
-*"este enlace es sólo para el personal de la puerta; quien lo tenga puede registrar entradas"* —
-and copies only on acknowledgement. The warning is the point; the copy is the convenience.
+### Fixed
+
+A `CopyLink` component with the click handler delegated once from `AdminLayout`, so a page can
+show as many as it likes without repeating a script. Both places that print a link now use it:
+the dashboard's *Entrada* block and the event's *Ajustes*.
+
+The staff link carries `warn`, so it asks before copying and copies only on acknowledgement. The
+sale link does not — it is public by design and a prompt there would train the band to dismiss
+prompts.
+
+Falls back to selecting the text where `navigator.clipboard` is unavailable, rather than leaving
+a dead button.
+
+Verified: the sale link copies with no prompt; the staff link prompts and then copies; declining
+the prompt leaves the clipboard untouched and the button unchanged.
+
+---
 
 ---
 
 ## F10 · The door list is cached but cannot be browsed
 
-**Severity: low · nice to have**
+**Severity: low** — ✅ **FIXED 2026-10-25**
 
 The scanner downloads the full attendee list on load and says so. **Buscar** uses it only for
 lookup by typed name, so staff cannot simply read the list — useful when a name is misspelled,
 misheard, or the buyer does not know which name the ticket is under.
 
-**Proposed.** Show the cached list under **Buscar** when the search box is empty: a scrolling
-list of names with their check-in state, filtering as you type. No new data and no network — it
-is already on the device.
+### Fixed
+
+An empty search box now shows the whole list rather than nothing, with a header counting who is
+still outside — *"6 personas por entrar · 157 en la lista"*. It renders on opening the tab, not
+only on typing.
+
+**Still outside first, then alphabetical.** That is who staff are looking for; the people already
+in are the ones they do not need. The list scrolls inside the pane so the search box stays put,
+and typing filters it exactly as before.
+
+No new data and no network: the device already had all of it and said so on load.
 
 
 ---

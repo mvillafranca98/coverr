@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { AdminLayout } from "../admin/layout";
+import { CopyLink } from "../admin/copy-link";
 import { Fields, type EventFormValues } from "./event-form";
 
 export const EventSettingsPage: FC<{
@@ -35,9 +36,7 @@ export const EventSettingsPage: FC<{
       {event.status === "live" ? (
         <>
           <b>La venta está abierta.</b> Este es el enlace que va en el flyer o la bio:
-          <div style="margin-top:8px;font-family:var(--mono);font-size:13px;word-break:break-all;color:var(--text)">
-            {origin}/e/{event.slug}
-          </div>
+          <CopyLink url={`${origin}/e/${event.slug}`} />
         </>
       ) : (
         <>
@@ -60,9 +59,7 @@ export const EventSettingsPage: FC<{
       <b>Enlace del personal de puerta.</b> Quien lo tenga puede registrar entradas — compartilo sólo
       con tu staff.
       {event.staffToken ? (
-        <div style="margin-top:8px;font-family:var(--mono);font-size:13px;word-break:break-all;color:var(--text)">
-          {origin}/scan/{event.staffToken}
-        </div>
+        <CopyLink url={`${origin}/scan/${event.staffToken}`} warn="Este enlace es sólo para el personal de la puerta. Quien lo tenga puede registrar entradas. ¿Copiarlo?" />
       ) : (
         <div style="margin-top:8px" class="muted">
           Todavía no se ha generado.

@@ -79,9 +79,58 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
 .kv dd{margin:0;color:var(--text)}
 .muted{color:var(--muted)}
 .right{text-align:right}
+.copyline{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;
+  padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);
+}
+.copyline code{
+  flex:1;min-width:0;font-family:var(--mono);font-size:12.5px;
+  word-break:break-all;color:var(--text);
+}
 footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--dim)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 `;
+
+/**
+ * Copies a link, after asking first when the link carries authority.
+ *
+ * `navigator.clipboard` needs a secure context, which production is and
+ * localhost counts as. Where it is missing the text is selected instead, so
+ * the band can still copy it by hand rather than being left with a dead
+ * button.
+ */
+const COPY_SCRIPT = `
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest ? e.target.closest('[data-copy]') : null;
+  if (!btn) return;
+
+  var warn = btn.getAttribute('data-warn');
+  if (warn && !window.confirm(warn)) return;
+
+  var text = btn.getAttribute('data-copy');
+  var done = function () {
+    var was = btn.textContent;
+    btn.textContent = 'Copiado';
+    setTimeout(function () { btn.textContent = was; }, 1600);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, select);
+  } else {
+    select();
+  }
+
+  function select() {
+    var code = btn.parentNode && btn.parentNode.querySelector('code');
+    if (!code) return;
+    var range = document.createRange();
+    range.selectNodeContents(code);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    btn.textContent = 'Copialo a mano';
+  }
+});`;
 
 export const AdminLayout: FC<
   PropsWithChildren<{ title: string; bandName?: string; active?: string; eventSlug?: string }>
@@ -132,6 +181,10 @@ export const AdminLayout: FC<
           <LegalLinks />
         </footer>
       </div>
+      {/* One delegated handler for every CopyLink on the page. Inline because
+          this surface ships no script files and a copy button is not worth
+          starting. */}
+      <script dangerouslySetInnerHTML={{ __html: COPY_SCRIPT }} />
     </body>
   </html>
 );

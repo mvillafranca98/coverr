@@ -338,22 +338,51 @@
 
   // ---------------------------------------------------------------- search
 
+  /**
+   * With a query, the matches. With an empty box, the whole list.
+   *
+   * The device already holds every attendee — it says so on load — but the
+   * list could only be interrogated by typing an exact-ish name. Staff hit
+   * this constantly: a name misheard at the door, a misspelling, a buyer who
+   * does not know whose name the ticket is under. Showing the list costs
+   * nothing and needs no network.
+   */
   function renderSearch() {
     var q = el.searchInput.value.trim().toLowerCase();
-    if (!q || !state.manifest) { el.searchResults.innerHTML = ""; return; }
-    var hits = state.manifest.attendees
+    if (!state.manifest) { el.searchResults.innerHTML = ""; return; }
+
+    var all = state.manifest.attendees;
+    var hits = q
       // Voided tickets stay searchable on purpose: somebody typing a refunded
       // code should be told it was refunded, not "nadie con ese nombre".
-      .filter(function (a) {
-        return a.n.toLowerCase().indexOf(q) >= 0 || a.sc.toLowerCase().indexOf(q) >= 0;
-      })
-      .slice(0, 25);
+      ? all.filter(function (a) {
+          return a.n.toLowerCase().indexOf(q) >= 0 || a.sc.toLowerCase().indexOf(q) >= 0;
+        })
+      // Browsing: still waiting outside first, because that is who staff are
+      // looking for. Alphabetical within each group.
+      : all.slice().sort(function (x, y) {
+          var xi = x.c || x.v ? 1 : 0;
+          var yi = y.c || y.v ? 1 : 0;
+          if (xi !== yi) return xi - yi;
+          return x.n.localeCompare(y.n, "es");
+        });
 
     el.searchResults.innerHTML = "";
+
+    if (!q) {
+      var pending = hits.filter(function (a) { return !a.c && !a.v; }).length;
+      var head = document.createElement("div");
+      head.className = "hint";
+      head.textContent =
+        pending + (pending === 1 ? " persona por entrar" : " personas por entrar") +
+        " · " + hits.length + " en la lista";
+      el.searchResults.appendChild(head);
+    }
+
     if (!hits.length) {
       var none = document.createElement("div");
       none.className = "hint";
-      none.textContent = "Nadie con ese nombre.";
+      none.textContent = q ? "Nadie con ese nombre." : "La lista está vacía.";
       el.searchResults.appendChild(none);
       return;
     }
@@ -447,7 +476,11 @@
     t.addEventListener("click", function () {
       el.tabs.forEach(function (x) { x.classList.toggle("on", x === t); });
       el.panes.forEach(function (p) { p.hidden = p.dataset.pane !== t.dataset.tab; });
-      if (t.dataset.tab === "buscar") el.searchInput.focus();
+      if (t.dataset.tab === "buscar") {
+        el.searchInput.focus();
+        // Opening the tab shows the list, not an empty box over a cached list.
+        renderSearch();
+      }
     });
   });
 

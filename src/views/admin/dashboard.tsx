@@ -2,6 +2,7 @@ import type { FC } from "hono/jsx";
 import { formatLps, formatLpsShort, formatEventDate, bankLabel } from "../../lib/core";
 import type { Settlement } from "../../lib/settlement";
 import { AdminLayout } from "./layout";
+import { CopyLink } from "./copy-link";
 
 export type DashProps = {
   bandName: string;
@@ -167,9 +168,7 @@ export const DashboardPage: FC<DashProps> = (p) => {
           <div class="note">
             Enlace para el personal de la puerta. Quien lo tenga puede registrar entradas — compartilo
             sólo con tu staff.
-            <div style="margin-top:8px;font-family:var(--mono);font-size:12.5px;word-break:break-all;color:var(--text)">
-              {p.scanUrl}
-            </div>
+            <CopyLink url={p.scanUrl} warn="Este enlace es sólo para el personal de la puerta. Quien lo tenga puede registrar entradas. ¿Copiarlo?" />
           </div>
         </>
       ) : null}
