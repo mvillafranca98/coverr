@@ -273,7 +273,7 @@ exists.
 
 ## F7 · An amber scan admits the attendee before staff decide
 
-**Severity: high · the most substantive finding of the run**
+**Severity: high** — ✅ **FIXED 2026-10-25**
 
 **Observed.** Scanning `DAY-B5Z1` — the order carrying two critical flags — correctly showed
 amber **and named the reason**. But the attendee was marked *adentro* in the same action. Staff
@@ -299,6 +299,41 @@ event put 229 people through a door, and a confirmation on *every* scan doubles 
 
 Option 2 looks like the right shape, but this is a call about how a door actually runs, not a
 technical one.
+
+### Fixed — option 2
+
+A flagged scan now stops and waits: amber, the reason, and two buttons — *Verificar y dejar
+pasar* / *No dejar pasar*. Nothing is written until one is tapped. A clean scan is still a single
+tap, so the queue never waits on the ~95% that are fine.
+
+Three things fell out of building it:
+
+- **`state.pending` blocks further scans while a decision is open.** Without it the next person
+  in the queue wipes the decision off the screen before anybody has made it. Verified: with a
+  confirmation open, checking somebody else in does nothing and the decision stays up.
+- **`#result` had to move out of the tab panes.** It lived inside *escanear*, so a check-in
+  driven from *buscar* rendered where nobody could see it. Harmless while a result was only
+  informational — not harmless once it carries the buttons deciding whether somebody gets in. My
+  first attempt shipped exactly that bug: the confirmation appeared, invisible, and the scan
+  waited for a tap that could not happen. This also fixes the Part 4 observation that a green
+  result was invisible when driven from search.
+- **Door staff were deliberately *not* given "anular compra".** See below.
+
+### Why the door cannot void an order
+
+The original note asked for *"anular compra"* as the second option. It is not implemented, on
+purpose:
+
+- The scanner link is a **bearer token** (**F9**) — anyone holding it can act. Voiding an order
+  is irreversible from the door's point of view and removes a paid ticket from a band's totals.
+- The people holding it are volunteers on the night, tapping a phone in the dark, and the button
+  would sit next to the one they press hundreds of times.
+- Nothing is lost by withholding it. *No dejar pasar* already stops entry, which is the decision
+  that has to be made in the moment. Voiding is an accounting decision the band makes in the
+  admin, where `/anular` and `/reembolsar` already live (**F11**).
+
+Worth revisiting if a band actually asks for it, with the reason recorded and the action
+attributed to a device.
 
 ---
 

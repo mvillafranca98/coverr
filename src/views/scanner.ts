@@ -52,11 +52,17 @@ export function scannerShellHtml(i: ScannerShellInput): string {
     <button class="tab" data-tab="efectivo">Efectivo</button>
   </div>
 
+  <!-- The result sits outside the panes on purpose. It used to live inside
+       "escanear", so a check-in driven from "buscar" — or a cash sale from
+       "efectivo" — rendered where nobody could see it. Harmless while a result
+       was only ever informational; not harmless once an amber result carries
+       the buttons that decide whether somebody gets in. -->
+  <div class="result" id="result" hidden></div>
+
   <section class="pane" data-pane="escanear">
     <button class="big" id="startBtn">Abrir cámara</button>
     <div id="cam" hidden><video id="video" muted playsinline></video></div>
     <canvas id="canvas" hidden></canvas>
-    <div class="result" id="result" hidden></div>
   </section>
 
   <section class="pane" data-pane="buscar" hidden>

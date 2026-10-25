@@ -174,6 +174,40 @@
     el.statBands.textContent = start != null ? start - inside : "—";
   }
 
+  /**
+   * An amber result that waits for a decision. The buttons own what happens
+   * next, so nothing is committed until somebody taps. `state.pending` blocks
+   * further scans while it is up — without that, the next person in the queue
+   * wipes the decision off the screen before anyone has made it.
+   */
+  function showConfirm(a, sub) {
+    state.pending = true;
+    el.result.className = "result amber";
+    el.result.innerHTML =
+      '<div class="r-title"></div><div class="r-sub"></div><div class="r-detail"></div>' +
+      '<div class="r-actions"><button type="button" class="r-go"></button>' +
+      '<button type="button" class="r-no"></button></div>';
+    el.result.querySelector(".r-title").textContent = "Revisar antes de dejar pasar";
+    el.result.querySelector(".r-sub").textContent = sub;
+    el.result.querySelector(".r-detail").textContent = a.f;
+    var go = el.result.querySelector(".r-go");
+    var no = el.result.querySelector(".r-no");
+    go.textContent = "Verificar y dejar pasar";
+    no.textContent = "No dejar pasar";
+    go.onclick = function () {
+      state.pending = false;
+      commitCheckIn(a);
+      show("green", "Adelante", sub, a.no || a.sc);
+      flush();
+    };
+    no.onclick = function () {
+      state.pending = false;
+      show("red", "No ingresó", sub, "Nadie fue registrado — avisale a la banda");
+    };
+    el.result.hidden = false;
+    if (navigator.vibrate) navigator.vibrate([60, 50, 60]);
+  }
+
   function show(kind, title, sub, detail) {
     el.result.className = "result " + kind;
     el.result.innerHTML =
@@ -189,6 +223,8 @@
   // ------------------------------------------------------------- check-in
 
   function handleToken(token) {
+    // A pending amber decision owns the screen until staff answer it.
+    if (state.pending) return;
     var now = Date.now();
     // The camera fires many frames a second; ignore repeats of the same code.
     if (token === state.lastToken && now - state.lastAt < 2500) return;
@@ -215,19 +251,29 @@
       return;
     }
 
+    var sub = a.n + (a.q > 1 ? " · boleto de " + a.q : "");
+
+    // A flagged order stops here. It used to be admitted first and the reason
+    // shown afterwards, which is backwards for the one scan where somebody
+    // might reasonably be held at the door. A clean scan stays a single tap:
+    // the queue does not wait on the 95% that are fine.
+    if (a.f) {
+      showConfirm(a, sub);
+      return;
+    }
+
+    commitCheckIn(a);
+    show("green", "Adelante", sub, a.no || a.sc);
+    flush();
+  }
+
+  /** Marks the attendee in and queues the scan for sync. */
+  function commitCheckIn(a) {
     a.c = nowIso();
-    state.queue.push({ t: token, at: a.c, device: DEVICE });
+    state.queue.push({ t: a.t, at: a.c, device: DEVICE });
     indexManifest();
     save();
     renderStats();
-
-    var sub = a.n + (a.q > 1 ? " · boleto de " + a.q : "");
-    if (a.f) {
-      show("amber", "Revisar", sub, a.f);
-    } else {
-      show("green", "Adelante", sub, a.no || a.sc);
-    }
-    flush();
   }
 
   // ---------------------------------------------------------------- camera

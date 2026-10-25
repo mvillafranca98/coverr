@@ -87,6 +87,16 @@ header { padding: 16px 0 12px; border-bottom: 1px solid var(--line) }
 .r-sub { font-size: 1.05rem; font-weight: 600; margin-top: 5px }
 .r-detail { font-size: 13.5px; margin-top: 7px; opacity: .9 }
 
+/* Actions on an amber result. Tall and full width: this is tapped on a phone,
+   at night, by somebody holding a queue. 52px clears the 44px floor. */
+.r-actions { display: grid; gap: 8px; margin-top: 14px }
+.r-actions button {
+  min-height: 52px; border-radius: 10px; font-size: 15px; font-weight: 700;
+  border: 1px solid currentColor; width: 100%;
+}
+.r-go { background: var(--amber-ink); color: var(--amber) }
+.r-no { background: transparent; color: var(--amber-ink) }
+
 /* ---- search ---- */
 input[type=text], input[type=number] {
   width: 100%; padding: 13px; border: 1px solid var(--line-control); border-radius: 9px;
