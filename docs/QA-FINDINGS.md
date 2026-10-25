@@ -189,7 +189,28 @@ nothing.
 **Retest.** Buy **5 tickets (L5)** and upload the same L1 receipt. The L4 shortfall clears the
 tolerance. No new transfer needed.
 
-**Worth considering.** A proportional floor — `max(200, 1% of expected)` — would behave the same
-at real prices and stop the check silently disabling itself at small totals. Also note L2 does
-not cover the ~L40 ACH fee, so if any bank ever deducts the fee from the transferred amount
-rather than charging the sender on top, every cross-bank payment would flag short.
+### Where the number came from, and why it does not hold up
+
+The commit that introduced it (`852d06f`) says *"Amounts tolerate L2 for rounding."* Neither
+rounding nor fees can produce a gap that size:
+
+- **Rounding cannot.** Both sides are integer centavos. Expected is `rule.amount × quantity`,
+  exact. Extracted is `Math.round(fields.amount * 100)`, which absorbs sub-centavo float noise.
+  The one real rounding case is a price carrying centavos — L166.67 × 3 = L500.01, where a
+  buyer sending L500.00 is short **one centavo**. That justifies a few centavos, not two hundred.
+- **Fees cannot.** The ACH fee is charged to the sender on top — the buy page says so:
+  *"Tu banco te va a cobrar una comisión de ~L40"*. The band receives the full amount, nothing
+  is deducted. And L2 would not cover L40 if a bank ever did deduct it, so every cross-bank
+  transfer would flag short regardless.
+
+So the value is defensive rather than derived. In production it is nearly harmless — L2 on a
+L200 ticket masks a shortfall nobody would chase. Its real cost was disabling a whole class of
+check during QA while prices are set to L1.
+
+**Recommendation.** Reduce it to ~5 centavos, or remove it. `AMOUNT_SHORT` is a *warning*: the
+QR still issues and the buyer is never stopped, so a false positive costs the band a glance. A
+false negative means the band is quietly short-paid and never learns. The costs are asymmetric
+and the current value is tuned for the wrong one.
+
+If it stays absolute, note it should at minimum be smaller than the cheapest sellable ticket, or
+it disables itself again the next time anyone tests at a low price.
