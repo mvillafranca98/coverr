@@ -225,6 +225,77 @@ export function signupEmailSubject(i: SignupEmailInput): string {
 
 // ------------------------------------------------------------ refund request
 
+type FlagAlertInput = {
+  event: { name: string; slug: string };
+  order: {
+    id: string;
+    shortCode: string;
+    payerName: string;
+    payerEmail: string;
+    quantity: number;
+    expectedAmount: number;
+  };
+  /** Only the critical ones. A warning does not earn an interruption. */
+  flags: { code: string; detail: string }[];
+  origin: string;
+};
+
+/**
+ * Tells the band a purchase failed a check that cannot be explained away.
+ *
+ * Critical means the proof was recycled or the money went somewhere else —
+ * the two cases where somebody may be getting in without paying. The buyer
+ * already has their QR codes and keeps them; this is so the band finds out
+ * tonight rather than while reconciling next week.
+ *
+ * Each flag's own detail is quoted verbatim, because those strings are written
+ * to be said out loud to a buyer standing at a door.
+ */
+export function flagAlertEmailHtml(i: FlagAlertInput): string {
+  const rows = i.flags
+    .map(
+      (f) =>
+        `<tr><td style="background:#fff;border:1px solid #ddd8cf;border-radius:10px;padding:14px 16px;font:400 15px/1.6 inherit;color:#57534b;margin-bottom:8px">
+<b style="color:#8a1c0f;font:600 12px/1 inherit;letter-spacing:.08em">${escapeHtml(f.code)}</b><br>
+${escapeHtml(f.detail)}
+</td></tr><tr><td style="height:8px"></td></tr>`,
+    )
+    .join("");
+
+  return `<!doctype html><html lang="es"><body style="margin:0;background:#f3f1ea;padding:26px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:460px;text-align:left">
+<tr><td style="font:700 20px/1.25 inherit;color:#191713;padding-bottom:12px">Una compra necesita revisión</td></tr>
+<tr><td style="font:400 15px/1.7 inherit;color:#57534b;padding-bottom:16px">
+<b style="color:#191713">Orden:</b> ${escapeHtml(i.order.shortCode)}<br>
+<b style="color:#191713">Evento:</b> ${escapeHtml(i.event.name)}<br>
+<b style="color:#191713">Compró:</b> ${escapeHtml(i.order.payerName)} (${escapeHtml(i.order.payerEmail)})<br>
+<b style="color:#191713">Boletos:</b> ${i.order.quantity} · ${formatLpsShort(i.order.expectedAmount)}
+</td></tr>
+${rows}
+<tr><td style="padding-top:10px"><a href="${i.origin}/admin/e/${i.event.slug}/orden/${i.order.id}" style="display:inline-block;padding:12px 20px;border-radius:9px;background:#191713;color:#fff;font:600 15px/1 inherit;text-decoration:none">Ver la orden</a></td></tr>
+<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:20px">Los códigos QR ya se entregaron y siguen sirviendo — esto es para que lo revisés, no para frenar a nadie en la puerta. Respondé este correo para escribirle a quien compró.</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export function flagAlertEmailText(i: FlagAlertInput): string {
+  const lines = i.flags.map((f) => `- ${f.code}: ${f.detail}`).join("\n");
+  return `Una compra necesita revisión — ${i.order.shortCode}
+
+Evento: ${i.event.name}
+Compró: ${i.order.payerName} (${i.order.payerEmail})
+Boletos: ${i.order.quantity} · ${formatLpsShort(i.order.expectedAmount)}
+
+${lines}
+
+Ver la orden: ${i.origin}/admin/e/${i.event.slug}/orden/${i.order.id}
+
+Los códigos QR ya se entregaron y siguen sirviendo.`;
+}
+
+export function flagAlertEmailSubject(i: FlagAlertInput): string {
+  return `Revisar ${i.order.shortCode} — ${i.event.name}`;
+}
+
 type RefundAlertInput = {
   event: { name: string; slug: string };
   order: {

@@ -10,6 +10,7 @@ import {
 import { resolveSellableRule } from "../../db/queries/price-rules";
 import { findDuplicateProof, insertUnreadProof } from "../../db/queries/proofs";
 import * as s from "../../db/schema";
+import { notifyCriticalFlags } from "../../jobs/notify-flags";
 import { sendTickets } from "../../jobs/send-tickets";
 import { runVerification } from "../../jobs/verify-proof";
 import {
@@ -196,7 +197,13 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
   // Reads the proof and raises flags. Runs after the response for the same
   // reason mail does: the buyer already has their QR codes and nothing here
   // can take them away.
-  c.executionCtx.waitUntil(runVerification(c.env, orderId));
+  // Verify, then alert. Composed here rather than nested inside the verifier
+  // so the alert sees every unresolved critical flag on the order, including
+  // the HASH_DUPLICATE raised above at upload — a recycled proof is the case
+  // most worth hearing about, and the verifier never raises it.
+  c.executionCtx.waitUntil(
+    runVerification(c.env, orderId).then(() => notifyCriticalFlags(c.env, orderId)),
+  );
 
   return c.redirect(`/boletos/${orderId}`, 303);
 });

@@ -195,7 +195,7 @@ Option 1 regardless; option 2 is the question worth deciding.
 
 ## F5 · A critical flag notifies nobody
 
-**Severity: medium · raised from the `HASH_DUPLICATE` test**
+**Severity: medium** — ✅ **FIXED 2026-10-27**
 
 **Observed.** `DAY-B5Z1` came back flagged `HASH_DUPLICATE` **and** `REF_DUPLICATE`, both
 critical, and the order correctly reads *Revisar*. But that state sits in the admin until
@@ -206,15 +206,48 @@ deliberate attempt to get in without paying, and it arrives silently.
 which order, which check failed, and a direct link to it. Warnings and info stay silent —
 `NAME_MISMATCH` fires on ordinary group purchases and would train the band to ignore the alert.
 
-Belongs in `src/jobs/` beside the existing verification job, since it reads the database and
-runs after the response. Worth a per-event cap so a band running 300 orders cannot be mailed 300
-times by one bad batch.
+### Fixed
 
-**The same gap covers refund requests, and there it is worse.** During the Part 7 run a refund
-request on `DAY-77NY` sat `open` and nothing told the band — it was found only by querying the
-database. The buyer had been shown *"Le avisamos a Daydrinking. Te van a contactar al correo con
-el que compraste."* Nobody was avisado. A promise was made on the band's behalf and silently not
-kept, which is worse than an unnoticed flag.
+`src/jobs/notify-flags.ts` emails the band's contact address when an order carries an unresolved
+**critical** flag: which order, which checks failed with their own wording, and a direct link.
+`replyTo` is the buyer, because the band's next move is usually to ask them what happened.
+
+Warnings and info stay silent. `NAME_MISMATCH` fires on ordinary group purchases, and a band
+emailed about those learns to filter the sender inside a week — which would cost them the alert
+that mattered.
+
+Capped at **10 orders per event**. Past that the band has a problem no email conveys, and every
+flag is still in the dashboard; only the interruption stops. The policy is a pure function,
+`shouldAlert`, separated from the queries so it can be tested — nine cases covering severity and
+the cap.
+
+### Two things the build got wrong first
+
+**The alert was nested inside the verifier**, gated on its computed severity. That would have
+missed `HASH_DUPLICATE` entirely — it is raised at upload in `purchase.tsx`, not by the
+verifier, and it is the single most alert-worthy case. It would also never have run at all when
+extraction is skipped. The route now composes the two jobs instead, so the alert queries the
+order's own flags and sees everything.
+
+**The admin's re-check button calls the same verifier.** Emailing a band about something they
+just clicked, on the order they are already looking at, is noise. Only the purchase path alerts.
+
+Verified end to end: the same proof bought twice issues both QRs, raises `HASH_DUPLICATE` on the
+second, and sends exactly one alert — to the band, not the buyer — while the clean purchase
+stays silent.
+
+**Correction — refund requests were never part of this gap.** I extended this finding to claim
+refund alerts notified nobody, reasoning from a request on `DAY-77NY` that sat `open` through
+the Part 7 run. That was an inference, not a check. `src/routes/public/refunds.tsx:85` already
+emails the band's contact address on every request, in `waitUntil`, with `replyTo` set to the
+buyer and a direct link to the order. It has worked the whole time.
+
+What actually happened is duller: that alert went to `mvillafranca98@gmail.com` — the band's
+contact address, which is the same inbox receiving every other test email — and was not noticed
+among them. The request sat open because nobody acted on it, not because nobody was told.
+
+So this finding is only about **verification flags**, which genuinely notify nobody:
+`src/jobs/verify-proof.ts` writes flags to the database and sends nothing.
 
 ---
 

@@ -119,6 +119,8 @@ orderRoutes.post("/e/:slug/orden/:id/revisar", async (c) => {
   const order = await findOrderInEvent(db, event.id, c.req.param("id"));
   if (!order) return c.notFound();
 
+  // Deliberately no alert: the band pressed this button and is already
+  // looking at the order it belongs to.
   await runVerification(c.env, order.id);
   return c.redirect(orderPath(event.slug, order.id), 303);
 });
