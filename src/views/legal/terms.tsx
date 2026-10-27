@@ -1,8 +1,8 @@
 import type { FC } from "hono/jsx";
-import { LegalDoc } from "./doc";
-import { CONTACT_EMAIL, UPDATED } from "./constants";
 import { formatLpsShort } from "../../lib/core";
 import { priceBracket } from "../../lib/settlement";
+import { CONTACT_EMAIL, UPDATED } from "./constants";
+import { LegalDoc } from "./doc";
 
 /**
  * The terms of service.
@@ -43,9 +43,9 @@ export const TermsPage: FC<{ origin: string }> = ({ origin }) => (
 
     <h2>Lo más importante: el dinero no pasa por acá</h2>
     <div class="callout">
-      <b>Coverr nunca recibe, retiene ni mueve tu dinero.</b> Vos transferís de tu banco al banco
-      de la banda, directo. Coverr es la herramienta que registra esa venta, te manda el código QR
-      y lo valida en la puerta.
+      <b>Coverr nunca recibe, retiene ni mueve tu dinero.</b> Vos transferís de tu banco al banco de
+      la banda, directo. Coverr es la herramienta que registra esa venta, te manda el código QR y lo
+      valida en la puerta.
     </div>
     <p>
       De ahí se desprende casi todo lo demás. Coverr no puede devolverte plata que nunca tuvo, no
@@ -64,9 +64,9 @@ export const TermsPage: FC<{ origin: string }> = ({ origin }) => (
         primero y vos te quedás afuera — no hay forma de distinguirlos.
       </li>
       <li>
-        <b>Los códigos se emiten en el momento</b>, en pantalla, antes de que verifiquemos nada.
-        Si tu comprobante queda marcado para revisión, eso lo resuelve la banda; tu boleto no
-        queda en espera.
+        <b>Los códigos se emiten en el momento</b>, en pantalla, antes de que verifiquemos nada. Si
+        tu comprobante queda marcado para revisión, eso lo resuelve la banda; tu boleto no queda en
+        espera.
       </li>
       <li>
         <b>El reembolso se rige por la política que estaba vigente el día de tu compra</b>, que
@@ -78,8 +78,8 @@ export const TermsPage: FC<{ origin: string }> = ({ origin }) => (
         algo que el sistema detecta y la banda puede anular la orden.
       </li>
       <li>
-        <b>Dale bien tu correo.</b> Es la única forma de recuperar tus boletos si cerrás la
-        página, y no podemos mandarlos a una dirección equivocada.
+        <b>Dale bien tu correo.</b> Es la única forma de recuperar tus boletos si cerrás la página,
+        y no podemos mandarlos a una dirección equivocada.
       </li>
     </ul>
 
@@ -87,8 +87,8 @@ export const TermsPage: FC<{ origin: string }> = ({ origin }) => (
     <ul>
       <li>
         <b>La cuenta bancaria que publicás es tuya y respondés por ella.</b> Coverr la muestra tal
-        como la escribiste; un dígito mal escrito manda el dinero de tus compradores a otra
-        persona, y eso no lo podemos revertir.
+        como la escribiste; un dígito mal escrito manda el dinero de tus compradores a otra persona,
+        y eso no lo podemos revertir.
       </li>
       <li>
         <b>Honrás los boletos que vendiste.</b> Si cancelás o movés el evento, resolvés con tus
@@ -103,16 +103,16 @@ export const TermsPage: FC<{ origin: string }> = ({ origin }) => (
         mandarles publicidad de nadie más.
       </li>
       <li>
-        <b>Vos declarás los costos, los porcentajes y los adelantos.</b> Coverr hace la
-        aritmética y la muestra; no audita tus números ni media entre integrantes.
+        <b>Vos declarás los costos, los porcentajes y los adelantos.</b> Coverr hace la aritmética y
+        la muestra; no audita tus números ni media entre integrantes.
       </li>
     </ul>
 
     <h2>Edad mínima</h2>
     <p>
-      <b>Coverr es para personas de 18 años o más</b>, tanto para comprar como para crear una
-      banda. Si sos menor de edad, no uses el servicio. Esto es sobre el uso de la plataforma; el
-      ingreso a un evento lo define la banda y el local.
+      <b>Coverr es para personas de 18 años o más</b>, tanto para comprar como para crear una banda.
+      Si sos menor de edad, no uses el servicio. Esto es sobre el uso de la plataforma; el ingreso a
+      un evento lo define la banda y el local.
     </p>
 
     <h2>Qué cuesta</h2>
@@ -122,9 +122,9 @@ export const TermsPage: FC<{ origin: string }> = ({ origin }) => (
       historial de una banda nunca se bloquea.
     </p>
     <p>
-      Lo único que se cobra es el <b>reporte de reparto</b> al final de cada evento, cuando el
-      toque ya pasó y el dinero ya está en la cuenta de la banda. El primer evento de cada banda
-      es gratis, sin importar su tamaño. Las cortesías no cuentan para el tramo.
+      Lo único que se cobra es el <b>reporte de reparto</b> al final de cada evento, cuando el toque
+      ya pasó y el dinero ya está en la cuenta de la banda. El primer evento de cada banda es
+      gratis, sin importar su tamaño. Las cortesías no cuentan para el tramo.
     </p>
     <ul class="rows">
       {REPORT_TIERS.map((tier) => (
@@ -136,20 +136,20 @@ export const TermsPage: FC<{ origin: string }> = ({ origin }) => (
     </ul>
     <p>
       <b>Hoy el cobro está desactivado</b> y todas las bandas ven el reporte completo sin pagar,
-      mientras el producto se gana su lugar en la escena. Cuando eso cambie se avisa con
-      antelación y nunca de forma retroactiva: un evento ya desbloqueado queda desbloqueado. No
-      hay suscripción ni plan mensual.
+      mientras el producto se gana su lugar en la escena. Cuando eso cambie se avisa con antelación
+      y nunca de forma retroactiva: un evento ya desbloqueado queda desbloqueado. No hay suscripción
+      ni plan mensual.
     </p>
 
     <h2>Qué no prometemos</h2>
     <p>
-      Coverr se ofrece tal como está. No prometemos que esté disponible sin interrupciones: la
-      noche de un toque depende también del wifi del local, de la señal del teléfono y de servicios
-      de terceros que no controlamos.
+      Coverr se ofrece tal como está. No prometemos que esté disponible sin interrupciones: la noche
+      de un toque depende también del wifi del local, de la señal del teléfono y de servicios de
+      terceros que no controlamos.
     </p>
     <p>
-      Por eso el escáner de la puerta <b>funciona sin internet</b> — guarda la lista completa en
-      el teléfono y valida localmente — y por eso los códigos QR quedan en pantalla y se pueden
+      Por eso el escáner de la puerta <b>funciona sin internet</b> — guarda la lista completa en el
+      teléfono y valida localmente — y por eso los códigos QR quedan en pantalla y se pueden
       descargar. Si algo nuestro falla esa noche, el boleto sigue siendo verificable.
     </p>
     <p>
@@ -188,8 +188,8 @@ export const TermsPage: FC<{ origin: string }> = ({ origin }) => (
       evento, escribile a la banda.
     </p>
     <p>
-      Cómo tratamos tus datos está en el <a href="/privacidad">aviso de privacidad</a>, que es
-      parte de estos términos.
+      Cómo tratamos tus datos está en el <a href="/privacidad">aviso de privacidad</a>, que es parte
+      de estos términos.
     </p>
   </LegalDoc>
 );

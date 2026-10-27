@@ -1,9 +1,7 @@
 const REFUND_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 /** Open, or closed with the reason the buyer is shown. */
-export type RefundWindow =
-  | { open: true }
-  | { open: false; headline: string; detail: string };
+export type RefundWindow = { open: true } | { open: false; headline: string; detail: string };
 
 /**
  * Decides whether a refund can still be asked for.
@@ -25,7 +23,11 @@ export function refundGate(order: {
     return { open: false, headline: "Orden anulada", detail: "Esta orden ya no está activa." };
   }
   if (order.channel === "comp") {
-    return { open: false, headline: "Cortesía", detail: "Esta entrada no se pagó, así que no hay nada que devolver." };
+    return {
+      open: false,
+      headline: "Cortesía",
+      detail: "Esta entrada no se pagó, así que no hay nada que devolver.",
+    };
   }
   if (order.refundPolicy === "none") {
     return {

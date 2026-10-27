@@ -1,17 +1,14 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import * as s from "../schema";
 import { newShortCode } from "../../lib/core";
+import * as s from "../schema";
 
 /**
  * One order with the event and band it belongs to — what every buyer-facing
  * page keyed by an order id needs, since the order id is the only thing the
  * buyer carries.
  */
-export async function findOrderWithEventAndBand(
-  db: DrizzleD1Database<typeof s>,
-  orderId: string,
-) {
+export async function findOrderWithEventAndBand(db: DrizzleD1Database<typeof s>, orderId: string) {
   const rows = await db
     .select({ order: s.orders, event: s.events, band: s.bands })
     .from(s.orders)

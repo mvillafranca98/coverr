@@ -9,7 +9,10 @@ import { matrixToPng } from "./png";
  * Error correction M: survives a cracked phone screen or a bad camera angle
  * without inflating the module count the way H would.
  */
-export function qrSvg(text: string, opts: { size?: number; dark?: string; light?: string } = {}): string {
+export function qrSvg(
+  text: string,
+  opts: { size?: number; dark?: string; light?: string } = {},
+): string {
   const { size = 320, dark = "#000000", light = "#FFFFFF" } = opts;
 
   const qr = qrcode(0, "M");

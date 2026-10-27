@@ -1,23 +1,23 @@
-import { Hono, type MiddlewareHandler } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono, type MiddlewareHandler } from "hono";
 import * as s from "../../db/schema";
-import { LoginPage } from "../../views/admin/login";
-import { loginEmailHtml, loginEmailText, LOGIN_EMAIL_SUBJECT } from "../../views/email";
-import { makeTransport } from "../../lib/email";
 import {
-  sign,
-  verify,
-  SESSION_COOKIE,
+  clearCookie,
   LOGIN_TTL,
+  readCookie,
+  SESSION_COOKIE,
   SESSION_TTL,
   sessionCookie,
-  clearCookie,
-  readCookie,
+  sign,
+  verify,
 } from "../../lib/auth";
 import { normalizeEmail } from "../../lib/core";
+import { makeTransport } from "../../lib/email";
+import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { LoginPage } from "../../views/admin/login";
+import { LOGIN_EMAIL_SUBJECT, loginEmailHtml, loginEmailText } from "../../views/email";
 import type { AdminEnv, Bindings } from "./context";
-import { withinLimit, clientIp, TOO_MANY_REQUESTS } from "../../lib/rate-limit";
 
 function secretOf(env: Bindings): string {
   // Without a configured secret the admin is not safe to serve at all, so fail
@@ -30,12 +30,7 @@ function secretOf(env: Bindings): string {
 const isHttps = (origin: string) => origin.startsWith("https://");
 
 /** The only admin paths reachable without a session — everything sign-in needs. */
-const PUBLIC_PATHS = new Set([
-  "/admin/acceso",
-  "/admin/login",
-  "/admin/entrar",
-  "/admin/salir",
-]);
+const PUBLIC_PATHS = new Set(["/admin/acceso", "/admin/login", "/admin/entrar", "/admin/salir"]);
 
 /**
  * Gate for everything under /admin. Registered on the parent router before any

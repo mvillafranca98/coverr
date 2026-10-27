@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
-import { AdminLayout } from "../admin/layout";
 import { CopyLink } from "../admin/copy-link";
-import { Fields, type EventFormValues } from "./event-form";
+import { AdminLayout } from "../admin/layout";
+import { type EventFormValues, Fields } from "./event-form";
 
 export const EventSettingsPage: FC<{
   bandName: string;
@@ -27,7 +27,8 @@ export const EventSettingsPage: FC<{
   >
     <h1>Ajustes</h1>
     <p class="sub">
-      {event.name} · <span class={`chip ${event.status === "live" ? "ok" : "info"}`}>{event.status}</span>
+      {event.name} ·{" "}
+      <span class={`chip ${event.status === "live" ? "ok" : "info"}`}>{event.status}</span>
     </p>
     {saved ? <div class="note ok">Guardado.</div> : null}
     {error ? <div class="note crit">{error}</div> : null}
@@ -45,11 +46,7 @@ export const EventSettingsPage: FC<{
         </>
       )}
       <form method="post" action={`/admin/e/${event.slug}/ajustes/estado`} style="margin-top:12px">
-        <input
-          type="hidden"
-          name="status"
-          value={event.status === "live" ? "closed" : "live"}
-        />
+        <input type="hidden" name="status" value={event.status === "live" ? "closed" : "live"} />
         <button class={`btn sm ${event.status === "live" ? "ghost" : ""}`} type="submit">
           {event.status === "live" ? "Cerrar la venta" : "Publicar y abrir la venta"}
         </button>
@@ -57,10 +54,13 @@ export const EventSettingsPage: FC<{
     </div>
 
     <div class="note">
-      <b>Enlace del personal de puerta.</b> Quien lo tenga puede registrar entradas — compartilo sólo
-      con tu staff.
+      <b>Enlace del personal de puerta.</b> Quien lo tenga puede registrar entradas — compartilo
+      sólo con tu staff.
       {event.staffToken ? (
-        <CopyLink url={`${origin}/scan/${event.staffToken}`} warn="Este enlace es sólo para el personal de la puerta. Quien lo tenga puede registrar entradas. ¿Copiarlo?" />
+        <CopyLink
+          url={`${origin}/scan/${event.staffToken}`}
+          warn="Este enlace es sólo para el personal de la puerta. Quien lo tenga puede registrar entradas. ¿Copiarlo?"
+        />
       ) : (
         <div style="margin-top:8px" class="muted">
           Todavía no se ha generado.

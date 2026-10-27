@@ -16,7 +16,7 @@ export function toCsv(header: readonly string[], rows: readonly unknown[][]): st
     header.map(escapeCell).join(","),
     ...rows.map((row) => row.map(escapeCell).join(",")),
   ];
-  return "﻿" + lines.join("\r\n");
+  return `﻿${lines.join("\r\n")}`;
 }
 
 export const CSV_CONTENT_TYPE = "text/csv; charset=utf-8";

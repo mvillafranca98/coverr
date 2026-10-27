@@ -27,9 +27,7 @@ export const REFUND_TEXT: Record<string, string | null> = {
     "Podés solicitar reembolso dentro de las 24 horas siguientes a tu compra escribiendo al correo de la banda.",
 };
 
-export type EventFormResult =
-  | { ok: true; values: EventInput }
-  | { ok: false; message: string };
+export type EventFormResult = { ok: true; values: EventInput } | { ok: false; message: string };
 
 /**
  * Validate the new-event and event-settings form, which are the same shape.
@@ -39,8 +37,7 @@ export type EventFormResult =
  * handling an exception.
  */
 export function readEventForm(body: Record<string, unknown>): EventFormResult {
-  const text = (key: string) =>
-    typeof body[key] === "string" ? (body[key] as string).trim() : "";
+  const text = (key: string) => (typeof body[key] === "string" ? (body[key] as string).trim() : "");
   const nonNegativeInt = (key: string) => {
     const raw = text(key);
     if (!raw) return null;

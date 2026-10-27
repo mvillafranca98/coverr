@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import { formatLps, bankLabel, isRenderableImage } from "../../lib/core";
+import { bankLabel, formatLps, isRenderableImage } from "../../lib/core";
 import { AdminLayout } from "./layout";
 import { CHANNEL_LABEL, type OrderRow } from "./order-row";
 
@@ -28,7 +28,13 @@ export const OrderPage: FC<{
     /** Set once the retention window has run; the file is gone from R2. */
     purgedAt: string | null;
   } | null;
-  flags: { id: string; code: string; severity: string; detail: string; resolvedAt: string | null }[];
+  flags: {
+    id: string;
+    code: string;
+    severity: string;
+    detail: string;
+    resolvedAt: string | null;
+  }[];
   refund: { id: string; requestedAt: string; reason: string | null; status: string } | null;
 }> = ({ bandName, event, order, attendees, proof, flags, refund }) => (
   <AdminLayout
@@ -49,7 +55,11 @@ export const OrderPage: FC<{
       .map((f) => (
         <div class={`note ${f.severity === "critical" ? "crit" : "warn"}`} key={f.id}>
           <b>{f.code}</b> — {f.detail}
-          <form method="post" action={`/admin/e/${event.slug}/orden/${order.id}/resolver`} style="margin-top:10px">
+          <form
+            method="post"
+            action={`/admin/e/${event.slug}/orden/${order.id}/resolver`}
+            style="margin-top:10px"
+          >
             <input type="hidden" name="flag_id" value={f.id} />
             <button class="btn sm" type="submit">
               Revisado y resuelto
@@ -188,9 +198,7 @@ export const OrderPage: FC<{
           </dd>
         </dl>
 
-        <h4
-          style="font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0 0 8px;font-weight:600"
-        >
+        <h4 style="font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0 0 8px;font-weight:600">
           Lo que dice el comprobante
         </h4>
         {proof.xReference || proof.xAmount != null || proof.xSenderName ? (
@@ -248,10 +256,9 @@ export const OrderPage: FC<{
         </form>
         {proof.purgedAt ? (
           <div class="note">
-            El comprobante se borró el{" "}
-            {new Date(proof.purgedAt).toLocaleDateString("es-HN")}, 30 días después del evento.
-            Los datos de la cuenta de quien pagó se borraron con él — eran de un tercero. Lo que
-            queda arriba es lo que no identifica a nadie.
+            El comprobante se borró el {new Date(proof.purgedAt).toLocaleDateString("es-HN")}, 30
+            días después del evento. Los datos de la cuenta de quien pagó se borraron con él — eran
+            de un tercero. Lo que queda arriba es lo que no identifica a nadie.
           </div>
         ) : isRenderableImage(proof.contentType) ? (
           <img
@@ -285,7 +292,11 @@ export const OrderPage: FC<{
         <div class="note">
           <b>Anular</b> invalida los códigos QR y descuenta la orden de los totales, sin registrar
           ninguna devolución. Para una orden que no debió existir.
-          <form method="post" action={`/admin/e/${event.slug}/orden/${order.id}/anular`} style="margin-top:10px">
+          <form
+            method="post"
+            action={`/admin/e/${event.slug}/orden/${order.id}/anular`}
+            style="margin-top:10px"
+          >
             <button class="btn danger sm" type="submit">
               Anular esta orden
             </button>
@@ -294,8 +305,8 @@ export const OrderPage: FC<{
 
         {order.channel === "comp" ? null : (
           <div class="note" style="margin-top:12px">
-            <b>Reembolsar</b> hace lo mismo y además deja constancia de la devolución, con el
-            motivo y la fecha. Usalo si le vas a devolver la plata{" "}
+            <b>Reembolsar</b> hace lo mismo y además deja constancia de la devolución, con el motivo
+            y la fecha. Usalo si le vas a devolver la plata{" "}
             {attendees.length > 1 ? (
               <>
                 — anula los <b>{attendees.length} boletos</b> de esta orden, no se puede devolver

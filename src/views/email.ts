@@ -1,13 +1,18 @@
-import { formatLpsShort, formatEventDate, formatEventTime, escapeHtml } from "../lib/core";
+import { escapeHtml, formatEventDate, formatEventTime, formatLpsShort } from "../lib/core";
 
 type TicketEmailInput = {
   band: { name: string; contactEmail: string };
   event: {
-    name: string; venue: string; startsAt: string;
+    name: string;
+    venue: string;
+    startsAt: string;
     thankYouNote: string | null;
   };
   order: {
-    id: string; shortCode: string; quantity: number; expectedAmount: number;
+    id: string;
+    shortCode: string;
+    quantity: number;
+    expectedAmount: number;
     /** The policy this order was sold under, not the event's current one. */
     refundPolicy: string;
   };

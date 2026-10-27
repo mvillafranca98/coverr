@@ -223,7 +223,10 @@ export const AdminLayout: FC<
                   <a href={`/admin/e/${eventSlug}/dinero`} class={active === "money" ? "on" : ""}>
                     Dinero
                   </a>
-                  <a href={`/admin/e/${eventSlug}/ajustes`} class={active === "settings" ? "on" : ""}>
+                  <a
+                    href={`/admin/e/${eventSlug}/ajustes`}
+                    class={active === "settings" ? "on" : ""}
+                  >
                     Ajustes
                   </a>
                 </span>

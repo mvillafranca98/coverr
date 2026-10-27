@@ -19,7 +19,7 @@ import { writeFileSync } from "node:fs";
 
 /** Mulberry32 — small, seeded, and good enough to pick names with. */
 function rng(seed) {
-  return function () {
+  return () => {
     seed |= 0;
     seed = (seed + 0x6d2b79f5) | 0;
     let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -31,14 +31,54 @@ const rand = rng(20261020);
 const pick = (list) => list[Math.floor(rand() * list.length)];
 
 const FIRST = [
-  "Alejandra", "Marvin", "Keyla", "Josué", "Dariela", "Elder", "Nohelia", "Kevin",
-  "Suyapa", "Óscar", "Gabriela", "Wilmer", "Katherine", "Róger", "Fernanda", "Dennis",
-  "Scarleth", "Yefry", "Mariela", "Allan", "Génesis", "Héctor", "Lourdes", "Bryan",
-  "Massiel", "Edwin", "Johana", "Cristian", "Paola", "Ramón",
+  "Alejandra",
+  "Marvin",
+  "Keyla",
+  "Josué",
+  "Dariela",
+  "Elder",
+  "Nohelia",
+  "Kevin",
+  "Suyapa",
+  "Óscar",
+  "Gabriela",
+  "Wilmer",
+  "Katherine",
+  "Róger",
+  "Fernanda",
+  "Dennis",
+  "Scarleth",
+  "Yefry",
+  "Mariela",
+  "Allan",
+  "Génesis",
+  "Héctor",
+  "Lourdes",
+  "Bryan",
+  "Massiel",
+  "Edwin",
+  "Johana",
+  "Cristian",
+  "Paola",
+  "Ramón",
 ];
 const LAST = [
-  "Zelaya", "Discua", "Banegas", "Interiano", "Maradiaga", "Pavón", "Nuila", "Ordóñez",
-  "Erazo", "Bustillo", "Cerrato", "Midence", "Fiallos", "Lagos", "Quiroz", "Amaya",
+  "Zelaya",
+  "Discua",
+  "Banegas",
+  "Interiano",
+  "Maradiaga",
+  "Pavón",
+  "Nuila",
+  "Ordóñez",
+  "Erazo",
+  "Bustillo",
+  "Cerrato",
+  "Midence",
+  "Fiallos",
+  "Lagos",
+  "Quiroz",
+  "Amaya",
 ];
 const fullName = () => `${pick(FIRST)} ${pick(LAST)}`;
 
@@ -81,14 +121,14 @@ out(
 out("");
 out("INSERT INTO band_members (id, band_id, name, split_pct, is_core, sort_order) VALUES");
 out(
-  [
+  `${[
     ["mem_demo_1", "Keyla", 28],
     ["mem_demo_2", "Marvin", 28],
     ["mem_demo_3", "Josué", 24],
     ["mem_demo_4", "Elder", 20],
   ]
     .map(([id, name, pct], i) => `  ('${id}', '${BAND}', '${name}', ${pct}, 1, ${i})`)
-    .join(",\n") + ";",
+    .join(",\n")};`,
 );
 out("");
 out(
@@ -166,32 +206,33 @@ out(
     "  price_rule_id, expected_amount, channel, status, verification_status, bank_selected,\n" +
     "  refund_policy, created_at) VALUES",
 );
-out(orderRows.join(",\n") + ";");
+out(`${orderRows.join(",\n")};`);
 out("");
 out(
   "INSERT INTO attendees (id, order_id, name, note, qr_token, checked_in_at, checked_in_by, checked_in_device) VALUES",
 );
-out(attendeeRows.join(",\n") + ";");
+out(`${attendeeRows.join(",\n")};`);
 out("");
 out("INSERT INTO expenses (id, event_id, label, category, amount, paid, created_at) VALUES");
 out(
-  [
+  `${[
     ["exp_demo_1", "Sonido", "sonido", 450000],
     ["exp_demo_2", "Arte y flyer", "arte", 120000],
     ["exp_demo_3", "Fotografía", "fotos", 100000],
     ["exp_demo_4", "Local", "local", 200000],
   ]
-    .map(([id, label, cat, amt]) => `  ('${id}', '${EVENT}', '${label}', '${cat}', ${amt}, 1, '2026-10-20T00:00:00Z')`)
-    .join(",\n") + ";",
+    .map(
+      ([id, label, cat, amt]) =>
+        `  ('${id}', '${EVENT}', '${label}', '${cat}', ${amt}, 1, '2026-10-20T00:00:00Z')`,
+    )
+    .join(",\n")};`,
 );
 
-writeFileSync("seed/demo.sql", lines.join("\n") + "\n", "utf8");
+writeFileSync("seed/demo.sql", `${lines.join("\n")}\n`, "utf8");
 
-const gross = CHANNELS.reduce((sum, c) => sum, 0);
 console.log(`seed/demo.sql written
   orders      ${n}
   people      ${people}
   checked in  ${checkedIn} (${people - checkedIn} never showed)
   scanner     /scan/${STAFF_TOKEN}
   dashboard   /admin/e/noche-de-ruido`);
-void gross;

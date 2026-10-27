@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
-import { LegalDoc } from "./doc";
 import { CONTACT_EMAIL, PROOF_RETENTION_DAYS, UPDATED } from "./constants";
+import { LegalDoc } from "./doc";
 
 /**
  * The privacy notice.
@@ -32,8 +32,8 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       banda. Eso cambia qué datos existen y quién los ve, así que vale la pena leer esto.
     </p>
     <p>
-      Coverr lo opera macawly.dev. Cuando comprás un boleto, la banda que organiza el evento
-      también ve tus datos: es ella la que te recibe en la puerta.
+      Coverr lo opera macawly.dev. Cuando comprás un boleto, la banda que organiza el evento también
+      ve tus datos: es ella la que te recibe en la puerta.
     </p>
 
     <h2>Qué guardamos y para qué</h2>
@@ -41,16 +41,16 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
     <h3>Si comprás un boleto</h3>
     <ul>
       <li>
-        <b>Tu nombre, tu correo y tu teléfono</b> (el teléfono es opcional). Para emitir tus
-        códigos QR, mandártelos por correo y que puedas recuperarlos si los perdés.
+        <b>Tu nombre, tu correo y tu teléfono</b> (el teléfono es opcional). Para emitir tus códigos
+        QR, mandártelos por correo y que puedas recuperarlos si los perdés.
       </li>
       <li>
         <b>El nombre de cada asistente</b> y una nota opcional. Es lo que lee el personal en la
         puerta cuando te escanean.
       </li>
       <li>
-        <b>Tu comprobante de transferencia.</b> Tiene su propia sección más abajo, porque es el
-        dato más delicado del producto.
+        <b>Tu comprobante de transferencia.</b> Tiene su propia sección más abajo, porque es el dato
+        más delicado del producto.
       </li>
       <li>
         <b>Cuántos boletos, el monto y la hora.</b> Es el registro de la venta, y de ahí sale el
@@ -78,8 +78,8 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       formulario de compra y en el acceso de bandas. Nada más.
     </p>
     <p>
-      No hay analítica, ni píxeles, ni publicidad, ni rastreadores de terceros en ninguna página
-      de Coverr. No vendemos datos, no los alquilamos y no los usamos para perfilar a nadie.
+      No hay analítica, ni píxeles, ni publicidad, ni rastreadores de terceros en ninguna página de
+      Coverr. No vendemos datos, no los alquilamos y no los usamos para perfilar a nadie.
     </p>
 
     <h2>El comprobante de pago</h2>
@@ -95,14 +95,14 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       </li>
       <li>
         Se manda a Anthropic (Claude) para leer los campos por su etiqueta: banco, referencia,
-        monto, fecha y nombre. Nada más.{" "}
-        <b>Ningún modelo decide si tu comprobante es auténtico</b> — eso lo hacen reglas fijas y
-        escritas, cada una con un motivo que se puede decir en voz alta.
+        monto, fecha y nombre. Nada más. <b>Ningún modelo decide si tu comprobante es auténtico</b>{" "}
+        — eso lo hacen reglas fijas y escritas, cada una con un motivo que se puede decir en voz
+        alta.
       </li>
       <li>
-        <b>Se borra {PROOF_RETENTION_DAYS} días después del evento</b>, automáticamente, todas
-        las noches. Con la imagen se borran también de la base el nombre y el número de cuenta de
-        quien pagó y de quien recibió.
+        <b>Se borra {PROOF_RETENTION_DAYS} días después del evento</b>, automáticamente, todas las
+        noches. Con la imagen se borran también de la base el nombre y el número de cuenta de quien
+        pagó y de quien recibió.
       </li>
       <li>
         Quedan guardados el número de referencia y una huella digital del archivo. Sirven para
@@ -112,8 +112,8 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
 
     <h2>Con quién lo compartimos</h2>
     <p>
-      Sólo con los servicios que hacen funcionar el producto. Esta lista está completa: si algún
-      día se agrega otro, se agrega acá en el mismo cambio.
+      Sólo con los servicios que hacen funcionar el producto. Esta lista está completa: si algún día
+      se agrega otro, se agrega acá en el mismo cambio.
     </p>
     <ul class="rows">
       <li>
@@ -126,15 +126,15 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       <li>
         <strong>Cloudflare — D1</strong>
         <span>
-          La base de datos. Guarda tu nombre, correo y teléfono, los nombres de los asistentes,
-          las órdenes, los registros de entrada y los datos de la banda.
+          La base de datos. Guarda tu nombre, correo y teléfono, los nombres de los asistentes, las
+          órdenes, los registros de entrada y los datos de la banda.
         </span>
       </li>
       <li>
         <strong>Cloudflare — R2</strong>
         <span>
-          Guarda la imagen de tu comprobante, privada, hasta que se borra{" "}
-          {PROOF_RETENTION_DAYS} días después del evento.
+          Guarda la imagen de tu comprobante, privada, hasta que se borra {PROOF_RETENTION_DAYS}{" "}
+          días después del evento.
         </span>
       </li>
       <li>
@@ -147,8 +147,8 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       <li>
         <strong>Resend</strong>
         <span>
-          Manda los correos: tus boletos a tu dirección, y el enlace de acceso al correo de
-          contacto de la banda.
+          Manda los correos: tus boletos a tu dirección, y el enlace de acceso al correo de contacto
+          de la banda.
         </span>
       </li>
       <li>
@@ -160,8 +160,8 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       </li>
     </ul>
     <p>
-      Fuera de eso, compartimos datos únicamente si una autoridad hondureña competente lo exige
-      por escrito.
+      Fuera de eso, compartimos datos únicamente si una autoridad hondureña competente lo exige por
+      escrito.
     </p>
 
     <h2>Cuánto tiempo lo guardamos</h2>
@@ -190,8 +190,8 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> y te respondemos.
     </p>
     <p>
-      Si querés que borremos tu nombre y tu correo de una orden, decilo y lo hacemos conservando
-      el registro de la venta sin tus datos, para que el reparto de la banda siga cuadrando.
+      Si querés que borremos tu nombre y tu correo de una orden, decilo y lo hacemos conservando el
+      registro de la venta sin tus datos, para que el reparto de la banda siga cuadrando.
     </p>
     <p>
       Lo que no podemos hacer es esconderte de la banda mientras tengas un boleto válido: la banda
@@ -213,8 +213,8 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       Todo el sitio va por HTTPS y una visita por HTTP se redirige antes de que viaje cualquier
       dato. Los comprobantes no son públicos ni tienen enlace adivinable: se sirven sólo detrás de
       una sesión de banda y sólo para los eventos de esa banda. Las páginas que muestran datos de
-      una persona — tu boleto, la cuenta bancaria de la banda — están marcadas para que no
-      aparezcan en buscadores.
+      una persona — tu boleto, la cuenta bancaria de la banda — están marcadas para que no aparezcan
+      en buscadores.
     </p>
     <p>
       Ningún sistema es perfecto. Si encontrás algo que no debería ser accesible, escribinos a{" "}

@@ -1,21 +1,26 @@
 import type { FC } from "hono/jsx";
-import { Layout } from "../layout";
+import { formatEventDate, formatEventTime, formatLpsShort } from "../../lib/core";
 import { qrDataUri } from "../../lib/qr";
-import { ticketScript } from "./ticket-script";
+import { Layout } from "../layout";
 import { LegalLinks } from "../legal/links";
-import { formatLpsShort, formatEventDate, formatEventTime } from "../../lib/core";
+import { ticketScript } from "./ticket-script";
 
 export type ConfirmProps = {
   band: { name: string };
   event: {
-    name: string; venue: string; startsAt: string;
+    name: string;
+    venue: string;
+    startsAt: string;
     thankYouNote: string | null;
     /** Only used to clear the buy form's saved draft, which is keyed by slug. */
     slug: string;
   };
   order: {
-    id: string; shortCode: string; quantity: number;
-    expectedAmount: number; payerEmail: string;
+    id: string;
+    shortCode: string;
+    quantity: number;
+    expectedAmount: number;
+    payerEmail: string;
     /** The policy this order was sold under, not the event's current one. */
     refundPolicy: string;
   };

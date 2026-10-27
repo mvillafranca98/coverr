@@ -146,9 +146,6 @@ for (const statement of statements) {
       insertsByTable.get(table).push(statement);
     }
   } else if (head.startsWith("PRAGMA")) {
-    // Dropped deliberately: D1 ignores it on import, and keeping it implies a
-    // guarantee that is the whole reason this script has to exist.
-    continue;
   } else {
     others.push(statement);
   }
@@ -168,7 +165,7 @@ for (const table of insertsByTable.keys()) {
 
 const inserts = loadOrder.flatMap((table) => insertsByTable.get(table) ?? []);
 const ordered = [...creates, ...others, ...inserts, ...indexes];
-writeFileSync(output, ordered.join("\n") + "\n", "utf8");
+writeFileSync(output, `${ordered.join("\n")}\n`, "utf8");
 
 console.log(
   `reordered ${statements.length} statements -> ${ordered.length} written\n` +

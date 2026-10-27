@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import * as s from "../schema";
 import { slugify } from "../../lib/core";
+import * as s from "../schema";
 
 /** The band behind the current session, or null if the row is gone. */
 export async function findBand(db: DrizzleD1Database<typeof s>, bandId: string) {

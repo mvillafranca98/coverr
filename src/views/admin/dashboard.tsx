@@ -1,8 +1,8 @@
 import type { FC } from "hono/jsx";
-import { formatLps, formatLpsShort, formatEventDate, bankLabel } from "../../lib/core";
+import { bankLabel, formatEventDate, formatLps, formatLpsShort } from "../../lib/core";
 import type { Settlement } from "../../lib/settlement";
-import { AdminLayout } from "./layout";
 import { CopyLink } from "./copy-link";
+import { AdminLayout } from "./layout";
 
 export type DashProps = {
   bandName: string;
@@ -17,7 +17,11 @@ export type DashProps = {
     comp: number;
   };
   channels: {
-    presale: number; doorTransfer: number; doorCash: number; manual: number; comp: number;
+    presale: number;
+    doorTransfer: number;
+    doorCash: number;
+    manual: number;
+    comp: number;
   };
   byAccount: { bank: string; count: number; amount: number }[];
   wristbands: { start: number | null; left: number | null };
@@ -167,9 +171,12 @@ export const DashboardPage: FC<DashProps> = (p) => {
         <>
           <h2>Entrada</h2>
           <div class="note">
-            Enlace para el personal de la puerta. Quien lo tenga puede registrar entradas — compartilo
-            sólo con tu staff.
-            <CopyLink url={p.scanUrl} warn="Este enlace es sólo para el personal de la puerta. Quien lo tenga puede registrar entradas. ¿Copiarlo?" />
+            Enlace para el personal de la puerta. Quien lo tenga puede registrar entradas —
+            compartilo sólo con tu staff.
+            <CopyLink
+              url={p.scanUrl}
+              warn="Este enlace es sólo para el personal de la puerta. Quien lo tenga puede registrar entradas. ¿Copiarlo?"
+            />
           </div>
         </>
       ) : null}

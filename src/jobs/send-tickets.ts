@@ -1,8 +1,8 @@
-import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
 import * as s from "../db/schema";
 import { makeTransport } from "../lib/email";
-import { ticketEmailHtml, ticketEmailText, ticketEmailSubject } from "../views/email";
+import { ticketEmailHtml, ticketEmailSubject, ticketEmailText } from "../views/email";
 
 type Env = {
   DB: D1Database;
@@ -27,7 +27,7 @@ export async function sendTickets(env: Env, orderId: string): Promise<boolean> {
     .where(eq(s.orders.id, orderId))
     .limit(1);
   const row = rows[0];
-  if (!row || row.order.status !== "confirmed") return false;
+  if (row?.order.status !== "confirmed") return false;
 
   const atts = await db.select().from(s.attendees).where(eq(s.attendees.orderId, orderId));
   if (atts.length === 0) return false;

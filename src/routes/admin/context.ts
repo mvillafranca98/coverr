@@ -1,5 +1,5 @@
-import type { Limiter } from "../../lib/rate-limit";
 import type { Context } from "hono";
+import type { Limiter } from "../../lib/rate-limit";
 
 export type Bindings = {
   DB: D1Database;

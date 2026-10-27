@@ -12,9 +12,7 @@ export const RecoverPage: FC<{ sent?: boolean; error?: string }> = ({ sent, erro
     <header class="hero">
       <div class="band">Coverr</div>
       <h1>Recuperar mis boletos</h1>
-      <p class="blurb">
-        Escribí el correo que usaste al comprar y te reenviamos tus códigos QR.
-      </p>
+      <p class="blurb">Escribí el correo que usaste al comprar y te reenviamos tus códigos QR.</p>
     </header>
 
     {sent ? (
@@ -34,7 +32,11 @@ export const RecoverPage: FC<{ sent?: boolean; error?: string }> = ({ sent, erro
     ) : (
       <form method="post" action="/recuperar">
         <section class="step">
-          {error ? <div class="err" style="margin-bottom:14px">{error}</div> : null}
+          {error ? (
+            <div class="err" style="margin-bottom:14px">
+              {error}
+            </div>
+          ) : null}
           <label class="fl" for="email">
             Correo electrónico
           </label>

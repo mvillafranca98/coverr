@@ -169,9 +169,15 @@ export const MoneyPage: FC<{
           <b>{formatLpsShort(bracket.amount)}</b>
           {isFirstEvent ? " (pero tu primer evento es gratis)" : ""}.
         </p>
-        <form method="post" action={`/admin/e/${event.slug}/dinero/desbloquear`} style="margin-top:12px">
+        <form
+          method="post"
+          action={`/admin/e/${event.slug}/dinero/desbloquear`}
+          style="margin-top:12px"
+        >
           <button class="btn" type="submit">
-            {isFirstEvent ? "Desbloquear gratis" : `Desbloquear por ${formatLpsShort(bracket.amount)}`}
+            {isFirstEvent
+              ? "Desbloquear gratis"
+              : `Desbloquear por ${formatLpsShort(bracket.amount)}`}
           </button>
         </form>
       </div>

@@ -1,0 +1,32 @@
+name: check
+
+# Every push and every pull request. The point is that a broken change cannot
+# reach main quietly — CQ-11 in docs/STANDARDS.md.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # `npm ci` rather than `install`: it installs exactly the lockfile, so CI
+      # cannot pass against a different dependency tree than the one committed.
+      - run: npm ci
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Lint and format
+        run: npm run lint
+
+      - name: Tests
+        run: npm test

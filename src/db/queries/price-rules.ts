@@ -40,8 +40,7 @@ export async function resolveSellableRule(
     .groupBy(s.orders.priceRuleId);
   for (const c of counts) if (c.ruleId) soldByRule.set(c.ruleId, Number(c.qty));
 
-  const isSoldOut = (r: PriceRule) =>
-    r.maxQty != null && (soldByRule.get(r.id) ?? 0) >= r.maxQty;
+  const isSoldOut = (r: PriceRule) => r.maxQty != null && (soldByRule.get(r.id) ?? 0) >= r.maxQty;
 
   const now = new Date();
   for (const rule of rules) {

@@ -1,16 +1,16 @@
 import type { FC } from "hono/jsx";
+import { bankLabel, formatEventDate, formatEventTime, formatLpsShort } from "../../lib/core";
 import { Layout } from "../layout";
-import { bankLabel, formatLpsShort, formatEventDate, formatEventTime } from "../../lib/core";
-import { buyFormScript } from "./form-script";
 import { LegalLinks } from "../legal/links";
+import { buyFormScript } from "./form-script";
 import {
-  QuantityStep,
-  BankStep,
-  ProofStep,
-  PayerStep,
   AttendeesStep,
-  ConsentStep,
   type BankAccount,
+  BankStep,
+  ConsentStep,
+  PayerStep,
+  ProofStep,
+  QuantityStep,
 } from "./steps";
 
 export type BuyProps = {
@@ -75,7 +75,12 @@ export const BuyPage: FC<BuyProps> = ({
 
       {error ? <div class="err">{error}</div> : null}
 
-      <form id="buyForm" method="post" action={`/e/${event.slug}/comprar`} enctype="multipart/form-data">
+      <form
+        id="buyForm"
+        method="post"
+        action={`/e/${event.slug}/comprar`}
+        enctype="multipart/form-data"
+      >
         <input type="hidden" name="short_code" value={shortCode} />
         <input type="hidden" name="price_rule_id" value={rule.id} />
 
@@ -88,10 +93,7 @@ export const BuyPage: FC<BuyProps> = ({
         <ProofStep />
         <PayerStep />
         <AttendeesStep />
-        <ConsentStep
-          refundPolicy={event.refundPolicy}
-          refundPolicyText={event.refundPolicyText}
-        />
+        <ConsentStep refundPolicy={event.refundPolicy} refundPolicyText={event.refundPolicyText} />
       </form>
 
       <footer>

@@ -1,12 +1,12 @@
-import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
-import * as s from "../../db/schema";
-import { OrdersPage } from "../../views/admin/orders";
+import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug } from "../../db/queries/events";
-import { listOrdersForEvent, type EventOrderRow } from "../../db/queries/orders";
+import { type EventOrderRow, listOrdersForEvent } from "../../db/queries/orders";
+import * as s from "../../db/schema";
+import { CSV_CONTENT_TYPE, csvAttachment, toCsv } from "../../lib/csv";
 import { filterOrders } from "../../lib/order-filter";
-import { toCsv, csvAttachment, CSV_CONTENT_TYPE } from "../../lib/csv";
+import { OrdersPage } from "../../views/admin/orders";
 import type { AdminEnv } from "./context";
 
 export const ordersRoutes = new Hono<AdminEnv>();
@@ -35,8 +35,20 @@ ordersRoutes.get("/e/:slug/ordenes", async (c) => {
 });
 
 const CSV_HEADER = [
-  "codigo", "comprador", "correo", "telefono", "asistentes", "cantidad",
-  "adentro", "canal", "monto_lps", "estado", "banco", "fecha", "nota", "alerta",
+  "codigo",
+  "comprador",
+  "correo",
+  "telefono",
+  "asistentes",
+  "cantidad",
+  "adentro",
+  "canal",
+  "monto_lps",
+  "estado",
+  "banco",
+  "fecha",
+  "nota",
+  "alerta",
 ] as const;
 
 function csvRow(order: EventOrderRow): unknown[] {

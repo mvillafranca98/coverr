@@ -59,8 +59,7 @@ export function computeSettlement(input: {
   headcount: number;
 }): Settlement {
   const { channels, costs, members, headcount } = input;
-  const gross =
-    channels.presale + channels.doorTransfer + channels.doorCash + channels.manual;
+  const gross = channels.presale + channels.doorTransfer + channels.doorCash + channels.manual;
   const net = gross - costs;
 
   const pctTotal = members.reduce((n, m) => n + m.splitPct, 0);

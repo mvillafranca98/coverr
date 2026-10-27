@@ -57,9 +57,18 @@ export async function eventMetrics(db: D1Database, bandId: string): Promise<Even
     )
     .bind(bandId)
     .all<{
-      id: string; slug: string; name: string; venue: string; starts_at: string; status: string;
-      presale_people: number; door_online_people: number; door_cash_people: number;
-      manual_people: number; comp_people: number; gross: number;
+      id: string;
+      slug: string;
+      name: string;
+      venue: string;
+      starts_at: string;
+      status: string;
+      presale_people: number;
+      door_online_people: number;
+      door_cash_people: number;
+      manual_people: number;
+      comp_people: number;
+      gross: number;
     }>();
 
   const costs = await db
@@ -86,7 +95,13 @@ export async function eventMetrics(db: D1Database, bandId: string): Promise<Even
         GROUP BY o.event_id`,
     )
     .bind(bandId)
-    .all<{ event_id: string; total: number; inside: number; presale_tickets: number; presale_inside: number }>();
+    .all<{
+      event_id: string;
+      total: number;
+      inside: number;
+      presale_tickets: number;
+      presale_inside: number;
+    }>();
   const attBy = new Map(attend.results.map((r) => [r.event_id, r]));
 
   return results.map((r) => {

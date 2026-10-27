@@ -33,7 +33,9 @@ export const ProofSchema = z.object({
   dest_account: z
     .string()
     .nullable()
-    .describe("Destination account number exactly as printed, including any masking like *****7371."),
+    .describe(
+      "Destination account number exactly as printed, including any masking like *****7371.",
+    ),
   dest_name: z.string().nullable().describe("Name of the destination account holder."),
   amount: z
     .number()
@@ -44,11 +46,11 @@ export const ProofSchema = z.object({
     .string()
     .nullable()
     .describe(
-        "Transaction date and time as ISO-8601 with a four-digit year. Use the " +
-          "document's own timezone if shown. Many receipts print only a day and " +
-          "month — if the year is not written on the document, return null rather " +
-          "than guessing or emitting a partial date.",
-      ),
+      "Transaction date and time as ISO-8601 with a four-digit year. Use the " +
+        "document's own timezone if shown. Many receipts print only a day and " +
+        "month — if the year is not written on the document, return null rather " +
+        "than guessing or emitting a partial date.",
+    ),
   reference: z.string().nullable().describe("Reference or transaction number, digits only."),
   detail: z
     .string()
@@ -137,7 +139,9 @@ export async function extractProof(
   }
 }
 
-function normalizeImageType(contentType: string): "image/jpeg" | "image/png" | "image/gif" | "image/webp" {
+function normalizeImageType(
+  contentType: string,
+): "image/jpeg" | "image/png" | "image/gif" | "image/webp" {
   const t = contentType.toLowerCase();
   if (t.includes("png")) return "image/png";
   if (t.includes("gif")) return "image/gif";

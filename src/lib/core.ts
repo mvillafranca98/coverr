@@ -40,7 +40,11 @@ export function newQrToken(): string {
  * unambiguous — no I, L, O, U.
  */
 export function newShortCode(bandSlug: string): string {
-  const prefix = bandSlug.replace(/[^a-z]/gi, "").slice(0, 3).toUpperCase().padEnd(3, "X");
+  const prefix = bandSlug
+    .replace(/[^a-z]/gi, "")
+    .slice(0, 3)
+    .toUpperCase()
+    .padEnd(3, "X");
   return `${prefix}-${randomBase32(4)}`;
 }
 
@@ -102,8 +106,9 @@ export async function sha256Hex(buf: ArrayBuffer): Promise<string> {
 }
 
 export function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+  return s.replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
   );
 }
 
@@ -111,8 +116,18 @@ export function formatEventDate(iso: string): string {
   const d = new Date(iso);
   const days = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
   const months = [
-    "enero", "febrero", "marzo", "abril", "mayo", "junio",
-    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
   ];
   // Honduras is UTC-6 year round, no DST.
   const local = new Date(d.getTime() - 6 * 3600 * 1000);
@@ -138,13 +153,15 @@ export function newStaffToken(): string {
  * stays typable and shareable.
  */
 export function slugify(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48) || "evento";
+  return (
+    text
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 48) || "evento"
+  );
 }
 
 /**

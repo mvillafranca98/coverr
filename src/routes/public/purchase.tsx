@@ -1,30 +1,30 @@
-import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
-import * as s from "../../db/schema";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
 import { findEventWithBand } from "../../db/queries/events";
 import {
   confirmedTicketCount,
   ticketsSoldUnderRule,
   uniqueShortCode,
 } from "../../db/queries/orders";
-import { findDuplicateProof, insertUnreadProof } from "../../db/queries/proofs";
 import { resolveSellableRule } from "../../db/queries/price-rules";
-import { readPurchaseForm } from "../../lib/purchase-form";
-import { runVerification } from "../../jobs/verify-proof";
+import { findDuplicateProof, insertUnreadProof } from "../../db/queries/proofs";
+import * as s from "../../db/schema";
 import { sendTickets } from "../../jobs/send-tickets";
+import { runVerification } from "../../jobs/verify-proof";
 import {
   newId,
   newQrToken,
   newShortCode,
+  normalizeEmail,
+  normalizePhone,
   nowIso,
   purgeAfter,
   sha256Hex,
-  normalizeEmail,
-  normalizePhone,
 } from "../../lib/core";
+import { readPurchaseForm } from "../../lib/purchase-form";
+import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
 import type { PublicEnv } from "./context";
-import { withinLimit, clientIp, TOO_MANY_REQUESTS } from "../../lib/rate-limit";
 
 export const purchaseRoutes = new Hono<PublicEnv>();
 

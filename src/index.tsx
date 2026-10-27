@@ -1,20 +1,19 @@
 import { Hono } from "hono";
 import { secureHeaders } from "hono/secure-headers";
-import { scanApi } from "./routes/scan";
-import { admin } from "./routes/admin";
 import { purgeExpiredProofs } from "./jobs/purge-proofs";
-import type { Bindings } from "./routes/public/context";
+import { admin } from "./routes/admin";
 import { buyRoutes } from "./routes/public/buy";
-import { purchaseRoutes } from "./routes/public/purchase";
 import { confirmationRoutes } from "./routes/public/confirmation";
+import type { Bindings, PublicEnv } from "./routes/public/context";
+import { landingRoutes } from "./routes/public/landing";
+import { legalRoutes } from "./routes/public/legal";
+import { purchaseRoutes } from "./routes/public/purchase";
 import { qrFileRoutes } from "./routes/public/qr-files";
 import { recoveryRoutes } from "./routes/public/recovery";
-import { signupRoutes } from "./routes/public/signup";
-import { legalRoutes } from "./routes/public/legal";
 import { refundRoutes } from "./routes/public/refunds";
 import { scannerShellRoutes } from "./routes/public/scanner-shell";
-import { landingRoutes } from "./routes/public/landing";
-import type { PublicEnv } from "./routes/public/context";
+import { signupRoutes } from "./routes/public/signup";
+import { scanApi } from "./routes/scan";
 
 /**
  * The worker's entry point: it assembles the app and owns the two responses
@@ -83,7 +82,6 @@ app.use(
   }),
 );
 
-
 app.route("/", buyRoutes);
 app.route("/", purchaseRoutes);
 app.route("/", confirmationRoutes);
@@ -111,7 +109,7 @@ app.notFound((c) =>
 );
 
 app.onError((err, c) => {
-  console.error(`unhandled: ${err instanceof Error ? err.stack ?? err.message : String(err)}`);
+  console.error(`unhandled: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
   return c.html(
     `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
      <body style="font-family:system-ui;background:#0C0B09;color:#F6F2EB;padding:48px 24px;text-align:center">

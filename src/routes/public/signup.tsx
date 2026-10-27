@@ -1,14 +1,14 @@
-import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
-import * as s from "../../db/schema";
-import { SignupPage, SignupSentPage } from "../../views/signup";
-import { signupEmailHtml, signupEmailText, signupEmailSubject } from "../../views/email";
+import { Hono } from "hono";
 import { findBandByEmail, uniqueBandSlug } from "../../db/queries/bands";
+import * as s from "../../db/schema";
+import { LOGIN_TTL, sign } from "../../lib/auth";
+import { newId, normalizeEmail, nowIso } from "../../lib/core";
 import { makeTransport } from "../../lib/email";
-import { sign, LOGIN_TTL } from "../../lib/auth";
-import { newId, nowIso, normalizeEmail } from "../../lib/core";
+import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { signupEmailHtml, signupEmailSubject, signupEmailText } from "../../views/email";
+import { SignupPage, SignupSentPage } from "../../views/signup";
 import type { PublicEnv } from "./context";
-import { withinLimit, clientIp, TOO_MANY_REQUESTS } from "../../lib/rate-limit";
 
 export const signupRoutes = new Hono<PublicEnv>();
 
@@ -29,7 +29,9 @@ signupRoutes.post("/registro", async (c) => {
 
   const db = drizzle(c.env.DB, { schema: s });
   const body = await c.req.parseBody();
-  const name = String(body["name"] ?? "").trim().slice(0, 80);
+  const name = String(body["name"] ?? "")
+    .trim()
+    .slice(0, 80);
   const email = normalizeEmail(String(body["email"] ?? ""));
 
   if (!name) return c.html(<SignupPage error="Falta el nombre de la banda." email={email} />, 400);

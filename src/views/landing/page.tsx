@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
 import { LegalLinks } from "../legal/links";
-import { LANDING_CSS } from "./styles";
 import { landingMotionScript, revealGuardScript } from "./motion";
+import { LANDING_CSS } from "./styles";
 
 /**
  * The public front page. Carries its own document and stylesheet rather than
@@ -158,8 +158,8 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
             Vendé tus boletos sin que el dinero pase por <em>nadie más</em>.
           </h1>
           <p class="lede">
-            Tus compradores transfieren directo a la cuenta de tu banda. Nosotros nunca tocamos
-            el dinero.
+            Tus compradores transfieren directo a la cuenta de tu banda. Nosotros nunca tocamos el
+            dinero.
           </p>
           {/* The primary action sits above the fold on purpose: a band that
               already knows what this is should not have to scroll to start. */}
@@ -176,9 +176,7 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
 
       <div class="marquee" aria-hidden="true">
         <div class="marquee__track">
-          {[0, 1].map((copy) =>
-            MARQUEE.map((item) => <span key={`${copy}-${item}`}>{item}</span>),
-          )}
+          {[0, 1].map((copy) => MARQUEE.map((item) => <span key={`${copy}-${item}`}>{item}</span>))}
         </div>
       </div>
 
@@ -192,9 +190,9 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
               Lo que estás haciendo <em>hoy</em>
             </h2>
             <p data-reveal>
-              Un hilo de WhatsApp lleno de capturas. Una hoja de cálculo escrita a mano, nombre
-              por nombre. Un conteo en la puerta que nunca cuadra con los brazaletes, y al final
-              alguien promedia para que cierre.
+              Un hilo de WhatsApp lleno de capturas. Una hoja de cálculo escrita a mano, nombre por
+              nombre. Un conteo en la puerta que nunca cuadra con los brazaletes, y al final alguien
+              promedia para que cierre.
             </p>
             <p data-reveal>Coverr hace esa parte. Vos tocás.</p>
           </section>
@@ -225,9 +223,8 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
               Así se ve <em>tu toque</em>
             </h2>
             <p data-reveal>
-              Capturas del producto tal como está hoy.{" "}
-              <b>Los datos son de una banda de ejemplo</b> — Coverr no publica las cuentas ni los
-              compradores de nadie.
+              Capturas del producto tal como está hoy. <b>Los datos son de una banda de ejemplo</b>{" "}
+              — Coverr no publica las cuentas ni los compradores de nadie.
             </p>
             <ul class="shots">
               {SHOTS.map((shot) => (
@@ -261,9 +258,9 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
               Sólo pagás cuando <em>ya cobraste</em>
             </h2>
             <p data-reveal>
-              La preventa, los códigos QR, la entrada, las ventas en efectivo y el resumen en
-              vivo son <b>gratis, siempre</b>. Sólo se paga el reporte de reparto al final de
-              cada evento — cuando el toque ya pasó y la plata ya está en la cuenta.
+              La preventa, los códigos QR, la entrada, las ventas en efectivo y el resumen en vivo
+              son <b>gratis, siempre</b>. Sólo se paga el reporte de reparto al final de cada evento
+              — cuando el toque ya pasó y la plata ya está en la cuenta.
             </p>
             <div data-reveal>
               <table class="tiers">
@@ -285,8 +282,8 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
               </table>
             </div>
             <p class="note" data-reveal>
-              Las cortesías no cuentan para el tramo. No hay suscripción ni plan mensual: una
-              banda que toca dos veces al año paga dos veces al año y conserva su historial.
+              Las cortesías no cuentan para el tramo. No hay suscripción ni plan mensual: una banda
+              que toca dos veces al año paga dos veces al año y conserva su historial.
             </p>
           </section>
 

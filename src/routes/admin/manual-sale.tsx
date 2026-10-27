@@ -1,12 +1,12 @@
-import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
-import * as s from "../../db/schema";
-import { ManualSalePage } from "../../views/manual";
+import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug } from "../../db/queries/events";
 import { currentPriceRule } from "../../db/queries/price-rules";
+import * as s from "../../db/schema";
 import { sendTickets } from "../../jobs/send-tickets";
-import { newId, newQrToken, newShortCode, nowIso, lpsToCentavos } from "../../lib/core";
+import { lpsToCentavos, newId, newQrToken, newShortCode, nowIso } from "../../lib/core";
+import { ManualSalePage } from "../../views/manual";
 import type { AdminContext, AdminEnv } from "./context";
 
 export const manualSaleRoutes = new Hono<AdminEnv>();
@@ -67,8 +67,7 @@ manualSaleRoutes.post("/e/:slug/venta", async (c) => {
   if (!band || !event) return c.notFound();
 
   const body = await c.req.parseBody();
-  const text = (key: string) =>
-    typeof body[key] === "string" ? (body[key] as string).trim() : "";
+  const text = (key: string) => (typeof body[key] === "string" ? (body[key] as string).trim() : "");
 
   // Captured before any validation so every refusal can hand them back. The
   // operator is standing at a door with a queue; retyping a list of names
@@ -86,7 +85,8 @@ manualSaleRoutes.post("/e/:slug/venta", async (c) => {
     .map((name) => name.trim())
     .filter(Boolean)
     .slice(0, MAX_NAMES_PER_SALE);
-  if (names.length === 0) return renderManualSale(c, { error: "Poné al menos un nombre.", values: typed });
+  if (names.length === 0)
+    return renderManualSale(c, { error: "Poné al menos un nombre.", values: typed });
 
   const unitPrice = lpsToCentavos(text("unit_price"));
   if (unitPrice == null) return renderManualSale(c, { error: "Revisá el monto.", values: typed });

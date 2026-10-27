@@ -1,7 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import * as s from "../schema";
 import { computeSettlement } from "../../lib/settlement";
+import * as s from "../schema";
 
 /** Revenue and headcount per channel. Comps contribute people, never money. */
 export async function channelTotals(db: DrizzleD1Database<typeof s>, eventId: string) {
@@ -25,8 +25,7 @@ export async function channelTotals(db: DrizzleD1Database<typeof s>, eventId: st
     sold: 0,
     inside: 0,
   };
-  counts.sold =
-    counts.presale + counts.doorOnline + counts.doorCash + counts.manual + counts.comp;
+  counts.sold = counts.presale + counts.doorOnline + counts.doorCash + counts.manual + counts.comp;
 
   const channels = {
     presale: Number(by("online")?.amount ?? 0),

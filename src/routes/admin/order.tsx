@@ -1,13 +1,13 @@
-import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import * as s from "../../db/schema";
-import { OrderPage } from "../../views/admin/order";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug } from "../../db/queries/events";
-import { listOrdersForEvent, findOrderInEvent } from "../../db/queries/orders";
+import { findOrderInEvent, listOrdersForEvent } from "../../db/queries/orders";
+import * as s from "../../db/schema";
 import { runVerification } from "../../jobs/verify-proof";
 import { newId, nowIso } from "../../lib/core";
+import { OrderPage } from "../../views/admin/order";
 import type { AdminEnv } from "./context";
 
 export const orderRoutes = new Hono<AdminEnv>();
@@ -30,11 +30,7 @@ orderRoutes.get("/e/:slug/orden/:id", async (c) => {
 
   const [attendees, proofs, flags, refunds] = await Promise.all([
     db.select().from(s.attendees).where(eq(s.attendees.orderId, order.id)),
-    db
-      .select()
-      .from(s.paymentProofs)
-      .where(eq(s.paymentProofs.orderId, order.id))
-      .limit(1),
+    db.select().from(s.paymentProofs).where(eq(s.paymentProofs.orderId, order.id)).limit(1),
     db.select().from(s.verificationFlags).where(eq(s.verificationFlags.orderId, order.id)),
     db
       .select()
@@ -104,9 +100,7 @@ orderRoutes.post("/e/:slug/orden/:id/resolver", async (c) => {
   const [unresolved] = await db
     .select({ n: sql<number>`count(*)` })
     .from(s.verificationFlags)
-    .where(
-      and(eq(s.verificationFlags.orderId, orderId), isNull(s.verificationFlags.resolvedAt)),
-    );
+    .where(and(eq(s.verificationFlags.orderId, orderId), isNull(s.verificationFlags.resolvedAt)));
   if (Number(unresolved?.n ?? 0) === 0) {
     await db
       .update(s.orders)
@@ -209,7 +203,9 @@ orderRoutes.post("/e/:slug/orden/:id/reembolsar", async (c) => {
     id: newId("ref"),
     orderId: order.id,
     requestedAt: ts,
-    reason: reason ? `Reembolso iniciado por la banda: ${reason}` : "Reembolso iniciado por la banda.",
+    reason: reason
+      ? `Reembolso iniciado por la banda: ${reason}`
+      : "Reembolso iniciado por la banda.",
     status: "approved",
     handledBy: bandId,
     handledAt: ts,

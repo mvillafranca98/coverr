@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
+import { formatEventDate, formatLpsShort } from "../lib/core";
 import { Layout } from "./layout";
 import { LegalLinks } from "./legal/links";
-import { formatLpsShort, formatEventDate } from "../lib/core";
 
 /**
  * Buyer-facing refund request.
@@ -26,8 +26,8 @@ const Head: FC<Common> = ({ band, event, order }) => (
         <b>{event.name}</b> · {formatEventDate(event.startsAt)}
       </div>
       <div>
-        {order.shortCode} · {order.quantity}{" "}
-        {order.quantity === 1 ? "boleto" : "boletos"} · {formatLpsShort(order.expectedAmount)}
+        {order.shortCode} · {order.quantity} {order.quantity === 1 ? "boleto" : "boletos"} ·{" "}
+        {formatLpsShort(order.expectedAmount)}
       </div>
     </div>
   </header>
@@ -43,13 +43,21 @@ const Contact: FC<{ email: string }> = ({ email }) => (
   </p>
 );
 
-export const RefundRequestPage: FC<
-  Common & { policyText: string | null; error?: string }
-> = ({ band, event, order, policyText, error }) => (
+export const RefundRequestPage: FC<Common & { policyText: string | null; error?: string }> = ({
+  band,
+  event,
+  order,
+  policyText,
+  error,
+}) => (
   <Layout title={`Reembolso — ${event.name}`}>
     <Head band={band} event={event} order={order} />
     <section class="step">
-      {error ? <div class="err" style="margin-bottom:14px">{error}</div> : null}
+      {error ? (
+        <div class="err" style="margin-bottom:14px">
+          {error}
+        </div>
+      ) : null}
       {policyText ? <p class="hint">{policyText}</p> : null}
       <form method="post">
         <label class="fl" for="reason">
@@ -84,9 +92,7 @@ export const RefundSentPage: FC<Common> = ({ band, event, order }) => (
     <section class="step">
       <div class="free" style="margin-top:0">
         <span>✓</span>
-        <div>
-          Le avisamos a {band.name}. Te van a contactar al correo con el que compraste.
-        </div>
+        <div>Le avisamos a {band.name}. Te van a contactar al correo con el que compraste.</div>
       </div>
       <Contact email={band.contactEmail} />
     </section>

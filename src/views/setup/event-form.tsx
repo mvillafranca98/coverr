@@ -31,12 +31,26 @@ export const Fields: FC<{ v: Partial<EventFormValues> }> = ({ v }) => (
     <label class="fl" for="name">
       Nombre
     </label>
-    <input type="text" name="name" id="name" required value={v.name ?? ""} placeholder="Noche de rock" />
+    <input
+      type="text"
+      name="name"
+      id="name"
+      required
+      value={v.name ?? ""}
+      placeholder="Noche de rock"
+    />
 
     <label class="fl" for="venue">
       Lugar
     </label>
-    <input type="text" name="venue" id="venue" required value={v.venue ?? ""} placeholder="La Jungla" />
+    <input
+      type="text"
+      name="venue"
+      id="venue"
+      required
+      value={v.venue ?? ""}
+      placeholder="La Jungla"
+    />
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div>
@@ -67,7 +81,13 @@ export const Fields: FC<{ v: Partial<EventFormValues> }> = ({ v }) => (
     <label class="fl" for="music_type">
       Tipo de música <span style="font-weight:400;color:var(--dim)">(opcional)</span>
     </label>
-    <input type="text" name="music_type" id="music_type" value={v.musicType ?? ""} placeholder="Rock / indie" />
+    <input
+      type="text"
+      name="music_type"
+      id="music_type"
+      value={v.musicType ?? ""}
+      placeholder="Rock / indie"
+    />
 
     <label class="fl" for="description">
       Descripción <span style="font-weight:400;color:var(--dim)">(opcional)</span>
@@ -112,7 +132,8 @@ export const Fields: FC<{ v: Partial<EventFormValues> }> = ({ v }) => (
       </div>
     </div>
     <label class="fl" for="presale_max">
-      Límite de preventa <span style="font-weight:400;color:var(--dim)">(opcional — en blanco = sin límite)</span>
+      Límite de preventa{" "}
+      <span style="font-weight:400;color:var(--dim)">(opcional — en blanco = sin límite)</span>
     </label>
     <input
       type="number"

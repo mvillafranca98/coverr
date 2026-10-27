@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { execFileSync } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 /**
  * Takes the product screenshots on the landing page.
  *
@@ -25,9 +28,6 @@
  * scanner at 1360px wide would be a picture of something nobody sees.
  */
 import { chromium } from "playwright-core";
-import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 
 const ORIGIN = "http://127.0.0.1:8787";
 const OUT = "public/img";
@@ -94,10 +94,10 @@ function wrangler(args, opts = {}) {
 }
 
 function d1(sql) {
-  const out = wrangler(
-    ["d1", "execute", "coverr-db", "--local", "--json", "--command", sql],
-    { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
-  );
+  const out = wrangler(["d1", "execute", "coverr-db", "--local", "--json", "--command", sql], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
   return JSON.parse(out.slice(out.indexOf("[")))[0].results;
 }
 
@@ -113,16 +113,29 @@ function notYetCheckedIn() {
 /** Same HMAC the worker uses; see src/lib/auth.ts. */
 async function signSession() {
   const vars = readFileSync(".dev.vars", "utf8");
-  const secret = vars.match(/^SESSION_SECRET=(.*)$/m)?.[1].trim().replace(/^["']|["']$/g, "");
+  const secret = vars
+    .match(/^SESSION_SECRET=(.*)$/m)?.[1]
+    .trim()
+    .replace(/^["']|["']$/g, "");
   if (!secret) throw new Error("SESSION_SECRET missing from .dev.vars");
 
   const enc = new TextEncoder();
   const b64url = (bytes) =>
-    Buffer.from(bytes).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    Buffer.from(bytes)
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
 
-  const body = b64url(enc.encode(JSON.stringify({ b: BAND, exp: Math.floor(Date.now() / 1000) + 600 })));
+  const body = b64url(
+    enc.encode(JSON.stringify({ b: BAND, exp: Math.floor(Date.now() / 1000) + 600 })),
+  );
   const key = await crypto.subtle.importKey(
-    "raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
   );
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(body));
   return `${body}.${b64url(new Uint8Array(sig))}`;
@@ -143,7 +156,7 @@ async function toWebp(page, png, width, height) {
   const dataUrl = await page.evaluate(
     async ({ b64, w, h }) => {
       const img = new Image();
-      img.src = "data:image/png;base64," + b64;
+      img.src = `data:image/png;base64,${b64}`;
       await img.decode();
       const c = document.createElement("canvas");
       c.width = w;

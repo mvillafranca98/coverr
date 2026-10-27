@@ -220,7 +220,7 @@ kept, which is worse than an unnoticed flag.
 
 ## F6 · The amount tolerance is fixed, and larger than a test ticket
 
-**Severity: low as a bug · but it invalidated a QA check**
+**Severity: low as a bug** — ✅ **IMPLEMENTED 2026-10-27**
 
 **Observed.** `DAY-YAAG` expected **L2.00**, the proof read **L1.00**, and the order came back
 `matched` with no flag — reported as "4.4 failed".
@@ -282,9 +282,14 @@ With the tolerance gone, any difference between quoted and received raises `AMOU
 gets a line it can act on. The one-centavo case from a price carrying centavos would flag too —
 acceptable, and avoidable by not pricing in centavos.
 
-**To implement:** delete `TOLERANCE` in `src/lib/verify.ts` and compare `diff` against 0. Update
-the test expectations and the comment, which currently explains a tolerance that no longer
-exists.
+**Implemented 2026-10-27.** `TOLERANCE` is gone and `diff` is compared against 0, with the
+reasoning left in the comment where the constant used to be.
+
+Worth recording how it got done: the decision was made on 25 Oct and then quietly not
+implemented. Writing `tests/verify.test.ts` two days later failed four cases on the first run —
+a lempira short, a lempira over, a single centavo short, and the combined unreadable case — all
+because the tolerance was still there. Nobody noticed in between. That is the argument for
+**CQ-10** better than any audit row.
 
 
 ---

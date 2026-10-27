@@ -1,17 +1,17 @@
-import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { and, eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
+import { findOrderWithEventAndBand } from "../../db/queries/orders";
 import * as s from "../../db/schema";
-import { RefundRequestPage, RefundSentPage, RefundClosedPage } from "../../views/refund";
+import { newId, nowIso } from "../../lib/core";
+import { makeTransport } from "../../lib/email";
+import { refundGate } from "../../lib/refund-policy";
 import {
   refundAlertEmailHtml,
-  refundAlertEmailText,
   refundAlertEmailSubject,
+  refundAlertEmailText,
 } from "../../views/email";
-import { findOrderWithEventAndBand } from "../../db/queries/orders";
-import { refundGate } from "../../lib/refund-policy";
-import { makeTransport } from "../../lib/email";
-import { newId, nowIso } from "../../lib/core";
+import { RefundClosedPage, RefundRequestPage, RefundSentPage } from "../../views/refund";
 import type { PublicEnv } from "./context";
 
 export const refundRoutes = new Hono<PublicEnv>();
@@ -54,7 +54,9 @@ refundRoutes.post("/reembolso/:orderId", async (c) => {
     return c.html(<RefundClosedPage {...common} headline={gate.headline} detail={gate.detail} />);
   }
 
-  const reason = String((await c.req.parseBody())["reason"] ?? "").trim().slice(0, 2000);
+  const reason = String((await c.req.parseBody())["reason"] ?? "")
+    .trim()
+    .slice(0, 2000);
   if (!reason) {
     return c.html(
       <RefundRequestPage
@@ -89,7 +91,8 @@ refundRoutes.post("/reembolso/:orderId", async (c) => {
         text: refundAlertEmailText(mail),
       })
       .then((result) => {
-        if (!result.ok) console.error(`[refund] alert failed for ${order.shortCode}: ${result.error}`);
+        if (!result.ok)
+          console.error(`[refund] alert failed for ${order.shortCode}: ${result.error}`);
       }),
   );
 

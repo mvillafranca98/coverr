@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/d1";
 import { and, isNull, lte, sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
 import * as s from "../db/schema";
 import { nowIso } from "../lib/core";
 
@@ -79,6 +79,8 @@ export async function purgeExpiredProofs(env: Env): Promise<{ purged: number; fa
     }
   }
 
-  console.log(`[purge] purged=${purged} failed=${failed} remaining_in_batch=${due.length - purged - failed}`);
+  console.log(
+    `[purge] purged=${purged} failed=${failed} remaining_in_batch=${due.length - purged - failed}`,
+  );
   return { purged, failed };
 }

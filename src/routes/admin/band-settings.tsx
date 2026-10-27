@@ -1,10 +1,10 @@
-import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { and, desc, eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
+import { findBand, findBandEventById, findBandMember } from "../../db/queries/bands";
 import * as s from "../../db/schema";
+import { lpsToCentavos, newId, normalizeEmail, nowIso } from "../../lib/core";
 import { BandSettingsPage } from "../../views/setup/band-settings";
-import { findBand, findBandMember, findBandEventById } from "../../db/queries/bands";
-import { newId, nowIso, normalizeEmail, lpsToCentavos } from "../../lib/core";
 import type { AdminContext, AdminEnv } from "./context";
 
 export const bandSettingsRoutes = new Hono<AdminEnv>();
@@ -13,10 +13,7 @@ const SAVED = "/admin/banda?saved=1";
 
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-async function renderBandSettings(
-  c: AdminContext,
-  opts: { error?: string; saved?: boolean } = {},
-) {
+async function renderBandSettings(c: AdminContext, opts: { error?: string; saved?: boolean } = {}) {
   const db = drizzle(c.env.DB, { schema: s });
   const bandId = c.get("bandId");
   const band = await findBand(db, bandId);
@@ -60,9 +57,7 @@ async function renderBandSettings(
         memberName: row.member.name,
         amount: row.advance.amount,
         date: row.advance.date,
-        eventName: row.advance.eventId
-          ? (eventNameById.get(row.advance.eventId) ?? null)
-          : null,
+        eventName: row.advance.eventId ? (eventNameById.get(row.advance.eventId) ?? null) : null,
       }))}
       error={opts.error}
       saved={opts.saved}

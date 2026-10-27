@@ -1,13 +1,13 @@
-import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { and, eq, sql } from "drizzle-orm";
-import * as s from "../../db/schema";
-import { NewEventPage } from "../../views/setup/new-event";
-import { EventSettingsPage } from "../../views/setup/event-settings";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug, uniqueEventSlug } from "../../db/queries/events";
-import { readEventForm, REFUND_TEXT, type EventInput } from "../../lib/event-form";
+import * as s from "../../db/schema";
 import { newId, newStaffToken, nowIso } from "../../lib/core";
+import { type EventInput, REFUND_TEXT, readEventForm } from "../../lib/event-form";
+import { EventSettingsPage } from "../../views/setup/event-settings";
+import { NewEventPage } from "../../views/setup/new-event";
 import type { AdminContext, AdminEnv } from "./context";
 
 export const eventSettingsRoutes = new Hono<AdminEnv>();

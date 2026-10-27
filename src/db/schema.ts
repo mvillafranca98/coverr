@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 /**
  * Conventions
@@ -251,10 +251,7 @@ export const verificationFlags = sqliteTable(
     resolvedBy: text("resolved_by"),
     resolutionNote: text("resolution_note"),
   },
-  (t) => [
-    index("idx_flags_order").on(t.orderId),
-    index("idx_flags_open").on(t.resolvedAt),
-  ],
+  (t) => [index("idx_flags_order").on(t.orderId), index("idx_flags_open").on(t.resolvedAt)],
 );
 
 export const expenses = sqliteTable(

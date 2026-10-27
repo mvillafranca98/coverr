@@ -60,10 +60,7 @@ export async function findDuplicateProof(
     .select({ orderId: s.paymentProofs.orderId })
     .from(s.paymentProofs)
     .where(
-      and(
-        eq(s.paymentProofs.sha256, sha256),
-        sql`${s.paymentProofs.orderId} != ${exceptOrderId}`,
-      ),
+      and(eq(s.paymentProofs.sha256, sha256), sql`${s.paymentProofs.orderId} != ${exceptOrderId}`),
     )
     .limit(1);
   if (duplicates.length === 0) return null;

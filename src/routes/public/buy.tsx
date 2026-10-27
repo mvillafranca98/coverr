@@ -1,11 +1,11 @@
-import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { and, eq } from "drizzle-orm";
-import * as s from "../../db/schema";
-import { BuyPage } from "../../views/buy/page";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
 import { findEventWithBand } from "../../db/queries/events";
 import { resolveSellableRule } from "../../db/queries/price-rules";
+import * as s from "../../db/schema";
 import { newShortCode } from "../../lib/core";
+import { BuyPage } from "../../views/buy/page";
 import type { PublicEnv } from "./context";
 
 export const buyRoutes = new Hono<PublicEnv>();
@@ -44,7 +44,8 @@ buyRoutes.get("/e/:slug", async (c) => {
     .from(s.bankAccounts)
     .where(and(eq(s.bankAccounts.bandId, band.id), eq(s.bankAccounts.active, 1)))
     .orderBy(s.bankAccounts.sortOrder);
-  if (accounts.length === 0) return c.text("Este evento no tiene cuenta bancaria configurada.", 500);
+  if (accounts.length === 0)
+    return c.text("Este evento no tiene cuenta bancaria configurada.", 500);
 
   return c.html(
     <BuyPage

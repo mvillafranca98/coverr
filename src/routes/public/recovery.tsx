@@ -1,12 +1,12 @@
-import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { and, eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
 import * as s from "../../db/schema";
-import { RecoverPage } from "../../views/recover";
 import { sendTickets } from "../../jobs/send-tickets";
 import { normalizeEmail } from "../../lib/core";
+import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { RecoverPage } from "../../views/recover";
 import type { PublicEnv } from "./context";
-import { withinLimit, clientIp, TOO_MANY_REQUESTS } from "../../lib/rate-limit";
 
 export const recoveryRoutes = new Hono<PublicEnv>();
 

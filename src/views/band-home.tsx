@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
+import type { CategoryRow, EventMetrics, FanStats } from "../db/queries/stats";
+import { formatEventDate, formatLpsShort } from "../lib/core";
 import { AdminLayout } from "./admin/layout";
-import { formatLpsShort, formatEventDate } from "../lib/core";
-import type { EventMetrics, CategoryRow, FanStats } from "../db/queries/stats";
 import { OnboardingChecklist } from "./signup";
 
 /**
@@ -68,7 +68,9 @@ export const BandHomePage: FC<{
         <div class="card">
           <span>Personas</span>
           <b>{totals.attendance}</b>
-          <small>en {played.length} {played.length === 1 ? "evento" : "eventos"}</small>
+          <small>
+            en {played.length} {played.length === 1 ? "evento" : "eventos"}
+          </small>
         </div>
         <div class="card">
           <span>Bruto</span>

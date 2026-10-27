@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
-import { AdminLayout } from "./admin/layout";
 import { formatLpsShort } from "../lib/core";
+import { AdminLayout } from "./admin/layout";
 
 /**
  * A sale the band makes away from both the link and the door: a friend hands
@@ -23,7 +23,13 @@ export const ManualSalePage: FC<{
    * operator mid-queue should never have to retype a list of names because
    * one field was wrong.
    */
-  values?: { names?: string; unitPrice?: string; note?: string; payerName?: string; payerEmail?: string };
+  values?: {
+    names?: string;
+    unitPrice?: string;
+    note?: string;
+    payerName?: string;
+    payerEmail?: string;
+  };
 }> = ({ bandName, event, defaultPrice, priceLabel, created, error, values }) => (
   <AdminLayout
     title={`Venta manual — ${event.name}`}
@@ -62,13 +68,9 @@ export const ManualSalePage: FC<{
       <p class="sub" style="margin-top:0">
         Un nombre por línea. Cada uno recibe su propio código QR.
       </p>
-      <textarea
-        name="names"
-        id="names"
-        rows={4}
-        required
-        placeholder={"Marvin Mora\nKeyla Discua"}
-      >{values?.names ?? ""}</textarea>
+      <textarea name="names" id="names" rows={4} required placeholder={"Marvin Mora\nKeyla Discua"}>
+        {values?.names ?? ""}
+      </textarea>
 
       <h2>¿Cuánto cobraste?</h2>
       <label class="fl" for="unit_price">

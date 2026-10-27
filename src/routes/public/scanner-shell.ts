@@ -1,8 +1,8 @@
-import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
+import { findEventByStaffToken } from "../../db/queries/events";
 import * as s from "../../db/schema";
 import { scannerShellHtml } from "../../views/scanner";
-import { findEventByStaffToken } from "../../db/queries/events";
 import type { PublicEnv } from "./context";
 
 export const scannerShellRoutes = new Hono<PublicEnv>();

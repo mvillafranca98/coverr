@@ -1,9 +1,9 @@
-import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
+import { findOrderWithEventAndBand } from "../../db/queries/orders";
 import * as s from "../../db/schema";
 import { ConfirmPage } from "../../views/confirm/page";
-import { findOrderWithEventAndBand } from "../../db/queries/orders";
 import type { PublicEnv } from "./context";
 
 export const confirmationRoutes = new Hono<PublicEnv>();
@@ -24,11 +24,6 @@ confirmationRoutes.get("/boletos/:orderId", async (c) => {
     .where(eq(s.attendees.orderId, found.order.id));
 
   return c.html(
-    <ConfirmPage
-      band={found.band}
-      event={found.event}
-      order={found.order}
-      attendees={attendees}
-    />,
+    <ConfirmPage band={found.band} event={found.event} order={found.order} attendees={attendees} />,
   );
 });

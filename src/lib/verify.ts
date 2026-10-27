@@ -1,5 +1,5 @@
-import type { ProofFields } from "./extract";
 import { formatLps } from "./core";
+import type { ProofFields } from "./extract";
 
 /**
  * Turns extracted fields into flags.
@@ -82,7 +82,8 @@ function nameLooselyMatches(a: string, b: string): boolean {
 const HAS_FULL_YEAR = /^\d{4}-\d{2}-\d{2}/;
 
 export function verifyProof(input: VerifyInput): Flag[] {
-  const { fields, expectedAmount, payerName, bandAccounts, eventCreatedAt, knownReferences } = input;
+  const { fields, expectedAmount, payerName, bandAccounts, eventCreatedAt, knownReferences } =
+    input;
   const flags: Flag[] = [];
 
   if (!fields.is_payment_confirmation) {
@@ -129,15 +130,23 @@ export function verifyProof(input: VerifyInput): Flag[] {
   if (fields.amount != null && expectedAmount > 0) {
     const paid = Math.round(fields.amount * 100);
     const diff = paid - expectedAmount;
-    // A couple of lempiras either way is rounding or a bank fee, not a problem.
-    const TOLERANCE = 200;
-    if (diff < -TOLERANCE) {
+    // No tolerance. There used to be L2 of slack "for rounding", but rounding
+    // cannot produce a gap that size — both sides are integer centavos and
+    // Math.round absorbs sub-centavo noise — and the ACH fee is charged to the
+    // sender on top rather than deducted. What it did produce was a check that
+    // silently disabled itself whenever a ticket cost less than the tolerance.
+    //
+    // A transfer funded in another currency can also convert to slightly more
+    // or less than quoted, and that is exactly an order a band should look at.
+    // Both amount flags are warnings: the QR still issues and no buyer is ever
+    // blocked by this. See docs/QA-FINDINGS.md F6.
+    if (diff < 0) {
       flags.push({
         code: "AMOUNT_SHORT",
         severity: "warning",
         detail: `Faltan ${formatLps(-diff)} — pagó ${formatLps(paid)} de ${formatLps(expectedAmount)}`,
       });
-    } else if (diff > TOLERANCE) {
+    } else if (diff > 0) {
       flags.push({
         code: "AMOUNT_OVER",
         severity: "warning",

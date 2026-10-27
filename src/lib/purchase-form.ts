@@ -32,8 +32,7 @@ export type PurchaseFormResult =
  * can fix, so the caller sends them back to the form with the message.
  */
 export function readPurchaseForm(body: Record<string, unknown>): PurchaseFormResult {
-  const text = (key: string) =>
-    typeof body[key] === "string" ? (body[key] as string).trim() : "";
+  const text = (key: string) => (typeof body[key] === "string" ? (body[key] as string).trim() : "");
 
   const quantity = Math.min(MAX_TICKETS, Math.max(1, parseInt(text("quantity"), 10) || 1));
   const payerName = text("payer_name");
@@ -44,7 +43,11 @@ export function readPurchaseForm(body: Record<string, unknown>): PurchaseFormRes
     return { ok: false, message: "Revisá tu correo electrónico.", field: "payer_email" };
   }
   if (body["consent"] !== "1") {
-    return { ok: false, message: "Tenés que aceptar los términos para continuar.", field: "consent" };
+    return {
+      ok: false,
+      message: "Tenés que aceptar los términos para continuar.",
+      field: "consent",
+    };
   }
 
   // One named ticket per person: each attendee gets their own QR at the door.

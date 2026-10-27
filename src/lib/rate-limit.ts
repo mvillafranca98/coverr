@@ -28,10 +28,7 @@ export function clientIp(c: Context): string {
  * buyer because the limiter is unavailable is a worse failure than the one
  * being prevented. The same reasoning as the QR issuing before verification.
  */
-export async function withinLimit(
-  limiter: Limiter | undefined,
-  key: string,
-): Promise<boolean> {
+export async function withinLimit(limiter: Limiter | undefined, key: string): Promise<boolean> {
   if (!limiter) return true;
   try {
     const { success } = await limiter.limit({ key });
@@ -43,5 +40,4 @@ export async function withinLimit(
 }
 
 /** Shown whenever a limit is hit. Vague on purpose — it is not a diagnosis. */
-export const TOO_MANY_REQUESTS =
-  "Demasiados intentos seguidos. Esperá un minuto y volvé a probar.";
+export const TOO_MANY_REQUESTS = "Demasiados intentos seguidos. Esperá un minuto y volvé a probar.";

@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import { BANKS, bankLabel, formatLps, formatEventDate } from "../../lib/core";
+import { BANKS, bankLabel, formatEventDate, formatLps } from "../../lib/core";
 import { AdminLayout } from "../admin/layout";
 
 export const BandSettingsPage: FC<{
@@ -13,7 +13,13 @@ export const BandSettingsPage: FC<{
     active: number;
   }[];
   members: { id: string; name: string; splitPct: number }[];
-  advances: { id: string; memberName: string; amount: number; date: string; eventName: string | null }[];
+  advances: {
+    id: string;
+    memberName: string;
+    amount: number;
+    date: string;
+    eventName: string | null;
+  }[];
   events: { id: string; name: string; startsAt: string }[];
   saved?: boolean;
   error?: string;
@@ -38,7 +44,13 @@ export const BandSettingsPage: FC<{
           <label class="fl" for="contact_email">
             Correo (con este entrás al panel)
           </label>
-          <input type="email" name="contact_email" id="contact_email" required value={band.contactEmail} />
+          <input
+            type="email"
+            name="contact_email"
+            id="contact_email"
+            required
+            value={band.contactEmail}
+          />
         </div>
         <button class="btn" type="submit">
           Guardar
@@ -148,7 +160,11 @@ export const BandSettingsPage: FC<{
               members.map((m) => (
                 <tr key={m.id}>
                   <td>
-                    <form method="post" action="/admin/banda/integrante" style="display:flex;gap:6px">
+                    <form
+                      method="post"
+                      action="/admin/banda/integrante"
+                      style="display:flex;gap:6px"
+                    >
                       <input type="hidden" name="id" value={m.id} />
                       <input type="text" name="name" value={m.name} style="min-width:140px" />
                       <input

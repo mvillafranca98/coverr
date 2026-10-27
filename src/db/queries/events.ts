@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import * as s from "../schema";
 import { slugify } from "../../lib/core";
+import * as s from "../schema";
 
 /**
  * The event behind a public `/e/:slug` link, with the band that runs it.

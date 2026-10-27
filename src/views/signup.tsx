@@ -21,15 +21,20 @@ export const SignupPage: FC<{ error?: string; name?: string; email?: string }> =
         Coverr
       </div>
       <h1 style="margin-top:8px">Crear tu banda</h1>
-      <p class="sub">
-        Sin contraseña. Te mandamos un enlace para entrar cada vez.
-      </p>
+      <p class="sub">Sin contraseña. Te mandamos un enlace para entrar cada vez.</p>
       {error ? <div class="note crit">{error}</div> : null}
       <form method="post" action="/registro">
         <label class="fl" for="name">
           Nombre de la banda
         </label>
-        <input type="text" name="name" id="name" required value={name ?? ""} placeholder="daydrinking" />
+        <input
+          type="text"
+          name="name"
+          id="name"
+          required
+          value={name ?? ""}
+          placeholder="daydrinking"
+        />
 
         <label class="fl" for="email">
           Correo
@@ -67,9 +72,7 @@ export const SignupSentPage: FC<{ email: string }> = ({ email }) => (
       <div class="note ok">
         Te mandamos un enlace a <b>{email}</b>. Tocalo para entrar — vence en 15 minutos.
       </div>
-      <p class="sub">
-        Si no llega en un par de minutos, revisá la carpeta de spam.
-      </p>
+      <p class="sub">Si no llega en un par de minutos, revisá la carpeta de spam.</p>
     </div>
   </AdminLayout>
 );

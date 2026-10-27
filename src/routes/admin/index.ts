@@ -1,14 +1,14 @@
 import { Hono } from "hono";
-import type { AdminEnv } from "./context";
-import { requireSession, sessionRoutes } from "./session";
 import { bandHomeRoutes } from "./band-home";
-import { dashboardRoutes } from "./dashboard";
-import { ordersRoutes } from "./orders";
-import { orderRoutes } from "./order";
-import { moneyRoutes } from "./money";
-import { eventSettingsRoutes } from "./event-settings";
 import { bandSettingsRoutes } from "./band-settings";
+import type { AdminEnv } from "./context";
+import { dashboardRoutes } from "./dashboard";
+import { eventSettingsRoutes } from "./event-settings";
 import { manualSaleRoutes } from "./manual-sale";
+import { moneyRoutes } from "./money";
+import { orderRoutes } from "./order";
+import { ordersRoutes } from "./orders";
+import { requireSession, sessionRoutes } from "./session";
 
 /**
  * The band-facing app, mounted at /admin.
