@@ -399,6 +399,27 @@ curl -s https://coverr.a-mencias99.workers.dev/health
 and the migration this code expects has been applied. In Windows PowerShell use `curl.exe`;
 plain `curl` is an alias for `Invoke-WebRequest` there.
 
+### On a new Cloudflare account
+
+The ids in `wrangler.jsonc` belong to the account Coverr runs on today. To stand it up on
+another one:
+
+1. `npx wrangler login`, and put that account's id in `account_id`.
+2. `npx wrangler d1 create coverr-db`, and paste the `database_id` it prints over the one in
+   `wrangler.jsonc`.
+3. `npx wrangler r2 bucket create coverr-proofs`.
+4. Set `APP_ORIGIN` to the URL the worker will answer on, and `ALERT_EMAIL` to whoever should
+   hear about crashes. While `EMAIL_FROM` is unset, that has to be the address the Resend
+   account is registered under — see [docs/EMAIL-SETUP.md](docs/EMAIL-SETUP.md).
+5. `npm run db:migrate:remote && npm run deploy`.
+6. `npx wrangler secret put SESSION_SECRET`, with a value generated the way
+   [Set up](#set-up) shows. Add `RESEND_API_KEY` and `ANTHROPIC_API_KEY` the same way when
+   email and receipt reading should work. Each secret takes effect as soon as it is set.
+7. Check `/health` on the new origin.
+
+The two rate limiters and the nightly cron need nothing created: they deploy with the worker,
+and a limiter's `namespace_id` only has to be unique within the account.
+
 ## Operating it
 
 [`docs/RUNBOOK.md`](docs/RUNBOOK.md) holds the procedures, and marks which ones have actually
