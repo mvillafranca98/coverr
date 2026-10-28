@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { accountDeletionRoutes } from "./account-deletion";
 import { bandHomeRoutes } from "./band-home";
 import { bandSettingsRoutes } from "./band-settings";
 import type { AdminEnv } from "./context";
@@ -31,4 +32,5 @@ admin.route("/", orderRoutes);
 admin.route("/", moneyRoutes);
 admin.route("/", eventSettingsRoutes);
 admin.route("/", bandSettingsRoutes);
+admin.route("/", accountDeletionRoutes);
 admin.route("/", manualSaleRoutes);

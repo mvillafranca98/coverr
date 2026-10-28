@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono, type MiddlewareHandler } from "hono";
+import { findBand } from "../../db/queries/bands";
 import * as s from "../../db/schema";
 import {
   clearCookie,
@@ -44,6 +45,13 @@ export const requireSession: MiddlewareHandler<AdminEnv> = async (c, next) => {
   if (!raw) return c.redirect("/admin/acceso", 302);
   const payload = await verify<{ b: string }>(secretOf(c.env), raw);
   if (!payload?.b) return c.redirect("/admin/acceso", 302);
+
+  // A signed session outlives its band when the band deletes its account from
+  // another device, and so does a sign-in link sent just before. Without this
+  // check every write in the admin would hit a foreign key that no longer
+  // exists and crash; with it, the session just ends.
+  const band = await findBand(drizzle(c.env.DB, { schema: s }), payload.b);
+  if (!band) return c.redirect("/admin/salir", 302);
 
   c.set("bandId", payload.b);
   return next();

@@ -17,4 +17,4 @@ export { PROOF_RETENTION_DAYS };
 export const CONTACT_EMAIL = "coverr@macawly.dev";
 
 /** Both documents were written at once; they share a date until one changes. */
-export const UPDATED = "19 de octubre de 2026";
+export const UPDATED = "28 de octubre de 2026";

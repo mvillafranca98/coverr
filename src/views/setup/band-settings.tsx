@@ -294,6 +294,15 @@ export const BandSettingsPage: FC<{
           </button>
         </form>
       ) : null}
+
+      <h2>Borrar la cuenta</h2>
+      <p class="sub">
+        Borra a la banda y todo lo que tiene en Coverr: eventos, órdenes, boletos y comprobantes. No
+        se puede deshacer, y antes te mostramos exactamente qué se va.
+      </p>
+      <a class="btn danger" href="/admin/banda/borrar">
+        Borrar la cuenta…
+      </a>
     </AdminLayout>
   );
 };

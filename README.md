@@ -94,6 +94,11 @@ every past event and a view of returning fans built from normalised emails and p
 **Refunds** are per ticket. A band can give back two of a four-ticket order: those two codes
 stop working at the door and leave every total; the other two keep scanning.
 
+**Leaving** is self-service. A band can delete its account from its settings: everything it has
+in Coverr — events, orders, buyers' details, proof images — goes at once, after it has seen what
+will go and typed its name. It is refused only while a buyer is still owed something: an event
+that has not happened yet with live tickets, or an unanswered refund request.
+
 ## Principles that are not up for negotiation
 
 These are product decisions, not implementation details. Breaking one breaks the product.

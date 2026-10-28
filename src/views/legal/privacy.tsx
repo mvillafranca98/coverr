@@ -173,8 +173,9 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       <li>
         <strong>Órdenes, boletos y registros de entrada</strong>
         <span>
-          Mientras la banda exista. Es su historial, y es la única fuente del reparto — por eso un
-          reembolso no borra la orden: la anula y escribe una línea negativa.
+          Mientras la banda tenga su cuenta; si la borra, se borran con ella. Es su historial, y es
+          la única fuente del reparto — por eso un reembolso no borra la orden: la anula y escribe
+          una línea negativa.
         </span>
       </li>
       <li>
@@ -188,6 +189,19 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       En Honduras podés pedir ver, corregir o eliminar tus datos personales — es el{" "}
       <i>habeas data</i> del artículo 182 de la Constitución. Escribinos a{" "}
       <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> y te respondemos.
+    </p>
+    <p>
+      <b>Si administrás una banda</b>, podés borrar la cuenta vos mismo desde{" "}
+      <i>Ajustes → Borrar la cuenta</i>. Se borra en el momento todo lo que la banda tiene en
+      Coverr: eventos, órdenes, boletos, comprobantes, integrantes, cuentas bancarias y la lista de
+      fans. Las copias de seguridad automáticas de la base de datos lo guardan hasta 30 días más y
+      después desaparecen solas. Lo que ya se le mandó a Resend o a Anthropic queda sujeto a lo que
+      cada uno guarda; Coverr no puede borrarlo desde acá.
+    </p>
+    <p>
+      Mientras la banda tenga un evento por realizarse con boletos vendidos, o una solicitud de
+      reembolso sin responder, la cuenta no se puede borrar: primero hay que cumplirle a quien
+      compró.
     </p>
     <p>
       Si querés que borremos tu nombre y tu correo de una orden, decilo y lo hacemos conservando el

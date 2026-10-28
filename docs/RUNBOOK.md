@@ -255,6 +255,20 @@ npx wrangler d1 time-travel restore coverr-db --bookmark=<bookmark>
 Take an export **before** restoring over anything. A failed restore on top of a broken database
 leaves nothing to go back to.
 
+**A restore brings deleted accounts back.** Rewinding D1 past the moment a band deleted its
+account restores every row it had: buyers' names, emails and phones included. The proof images
+stay gone, because R2 is not rewound. So after any restore, find the deletions made since the
+restore point — search Workers Logs in the dashboard for `[account] deleted band=` — and repeat
+each one:
+
+```bash
+npx wrangler d1 execute coverr-db --remote --command "DELETE FROM bands WHERE id = 'bnd_…'"
+```
+
+The foreign keys' cascade takes the rest, exactly as the app's own deletion does. Workers Logs
+keep only a few days, which is one more reason Time Travel is for undoing minutes, not weeks. The
+same applies to a manual export: one taken before a band left still holds everything it had.
+
 ### Restore test log
 
 | Date | Rows | Export | Restore | Result |

@@ -24,6 +24,7 @@ import {
   purgeAfter,
   sha256Hex,
 } from "../../lib/core";
+import { proofObjectKey } from "../../lib/proof-storage";
 import { checkProofBytes, readPurchaseForm } from "../../lib/purchase-form";
 import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
 import type { PublicEnv } from "./context";
@@ -126,7 +127,7 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
 
   const orderId = newId("ord");
   const ts = nowIso();
-  const fileKey = `proofs/${event.id}/${orderId}`;
+  const fileKey = proofObjectKey(event.id, orderId);
 
   await c.env.PROOFS.put(fileKey, bytes, {
     httpMetadata: { contentType: checked.contentType },
