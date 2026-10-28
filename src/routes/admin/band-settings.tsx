@@ -3,7 +3,8 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findBand, findBandEventById, findBandMember } from "../../db/queries/bands";
 import * as s from "../../db/schema";
-import { lpsToCentavos, newId, normalizeEmail, nowIso } from "../../lib/core";
+import { BANKS, lpsToCentavos, newId, normalizeEmail, nowIso } from "../../lib/core";
+import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { BandSettingsPage } from "../../views/setup/band-settings";
 import type { AdminContext, AdminEnv } from "./context";
 
@@ -76,6 +77,10 @@ bandSettingsRoutes.post("/banda", async (c) => {
   const contactEmail = normalizeEmail(String(body["contact_email"] ?? ""));
 
   if (!name) return renderBandSettings(c, { error: "Falta el nombre de la banda." });
+  const bandError =
+    tooLong(name, TEXT_LIMITS.name, "El nombre de la banda") ??
+    tooLong(contactEmail, TEXT_LIMITS.email, "El correo");
+  if (bandError) return renderBandSettings(c, { error: bandError });
   if (!EMAIL_PATTERN.test(contactEmail)) {
     return renderBandSettings(c, { error: "Revisá el correo." });
   }
@@ -100,6 +105,12 @@ bandSettingsRoutes.post("/banda/cuenta", async (c) => {
   if (!accountNumber || !holderName) {
     return renderBandSettings(c, { error: "Falta el número de cuenta o el titular." });
   }
+  // Buyers are shown this account, holder and bank to transfer to.
+  const accountError =
+    tooLong(accountNumber, TEXT_LIMITS.accountNumber, "El número de cuenta") ??
+    tooLong(holderName, TEXT_LIMITS.accountHolder, "El nombre del titular") ??
+    (BANKS.some((b) => b.code === bank) ? null : "Elegí un banco de la lista.");
+  if (accountError) return renderBandSettings(c, { error: accountError });
 
   const existing = await db
     .select({ id: s.bankAccounts.id })
@@ -157,6 +168,8 @@ bandSettingsRoutes.post("/banda/integrante", async (c) => {
   if (!name || !Number.isFinite(splitPct) || splitPct < 0 || splitPct > 100) {
     return renderBandSettings(c, { error: "Revisá el nombre y el porcentaje (0 a 100)." });
   }
+  const memberError = tooLong(name, TEXT_LIMITS.name, "El nombre del integrante");
+  if (memberError) return renderBandSettings(c, { error: memberError });
 
   if (memberId) {
     await db

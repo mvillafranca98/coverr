@@ -10,6 +10,8 @@
  * Written as ES5 in a template literal on purpose — it ships to whatever
  * browser a buyer has, with no build step between here and them.
  */
+import { jsonForScript } from "../../lib/core";
+
 export type ScriptAccount = { n: string; h: string; b: string };
 
 export function buyFormScript(i: {
@@ -22,7 +24,7 @@ export function buyFormScript(i: {
 }): string {
   return `
 (function(){
-  var KEY = 'coverr:${i.eventSlug}';
+  var KEY = 'coverr:' + ${jsonForScript(i.eventSlug)};
   var qty = document.getElementById('qty');
   var qtyVal = document.getElementById('qtyVal');
   var qtyTotal = document.getElementById('qtyTotal');
@@ -33,8 +35,8 @@ export function buyFormScript(i: {
   var UNIT = ${i.unitAmount};
   var MAX = 10;
 
-  var ACCOUNTS = ${JSON.stringify(i.accountsByBank)};
-  var DEFAULT_BANK = ${JSON.stringify(i.defaultBank)};
+  var ACCOUNTS = ${jsonForScript(i.accountsByBank)};
+  var DEFAULT_BANK = ${jsonForScript(i.defaultBank)};
 
   function money(c){
     var w = Math.floor(c/100), r = c%100;
@@ -125,7 +127,7 @@ export function buyFormScript(i: {
   var chip = document.getElementById('copyCode');
   chip.addEventListener('click', function(){
     var label = chip.querySelector('.chip-action');
-    copy(${JSON.stringify(i.shortCode)}, label, 'Copiado');
+    copy(${jsonForScript(i.shortCode)}, label, 'Copiado');
     chip.classList.add('done');
   });
 

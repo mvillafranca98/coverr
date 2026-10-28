@@ -5,6 +5,7 @@ import {
   formatLpsShort,
   isReadableProof,
   isRenderableImage,
+  jsonForScript,
   lpsToCentavos,
   normalizeEmail,
   normalizePhone,
@@ -129,6 +130,53 @@ describe("normalizePhone", () => {
   it("returns null for nothing", () => {
     expect(normalizePhone(null)).toBeNull();
     expect(normalizePhone(undefined)).toBeNull();
+  });
+});
+
+// Band-controlled text — band, event, venue, account holder — is written into
+// inline scripts on buyer pages. A value must never be able to end the script
+// it sits in, and must still arrive unchanged.
+describe("jsonForScript", () => {
+  const LINE_SEPARATOR = String.fromCharCode(0x2028);
+  const PARAGRAPH_SEPARATOR = String.fromCharCode(0x2029);
+
+  it("cannot close the script it is written into", () => {
+    const out = jsonForScript("</script><script>alert(document.cookie)</script>");
+    expect(out).not.toContain("<");
+    expect(out).not.toContain(">");
+    expect(out.toLowerCase()).not.toContain("</script");
+  });
+
+  it("cannot open an HTML comment", () => {
+    expect(jsonForScript("<!-- Noche de Ruido")).not.toContain("<!--");
+  });
+
+  it("escapes as the \\u form JavaScript reads back", () => {
+    expect(jsonForScript("a<b&c>d")).toBe('"a\\u003cb\\u0026c\\u003ed"');
+  });
+
+  it("escapes the line separators older engines treat as line breaks", () => {
+    const out = jsonForScript(`uno${LINE_SEPARATOR}dos${PARAGRAPH_SEPARATOR}tres`);
+    expect(out).not.toContain(LINE_SEPARATOR);
+    expect(out).not.toContain(PARAGRAPH_SEPARATOR);
+    expect(out).toBe('"uno\\u2028dos\\u2029tres"');
+  });
+
+  // The page's script reads these values as JavaScript, so that is the test:
+  // evaluate the output and compare.
+  it("arrives unchanged when the page evaluates it", () => {
+    const value = {
+      band: "Los </script> Últimos & Cía",
+      venue: `Casa${LINE_SEPARATOR}Quinchón`,
+      accounts: { BAC: { n: "730-123456-7", h: "José <Pérez>", b: "BAC Credomatic" } },
+    };
+    const evaluated = new Function(`return ${jsonForScript(value)};`)();
+    expect(evaluated).toEqual(value);
+  });
+
+  it("leaves ordinary text alone", () => {
+    expect(jsonForScript("Noche de Ruido")).toBe('"Noche de Ruido"');
+    expect(jsonForScript(25000)).toBe("25000");
   });
 });
 

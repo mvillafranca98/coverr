@@ -8,6 +8,7 @@ import { readFlags } from "../../db/queries/flags";
 import * as s from "../../db/schema";
 import { newId, nowIso } from "../../lib/core";
 import { priceBracket } from "../../lib/settlement";
+import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { MoneyPage } from "../../views/admin/money";
 import type { AdminEnv } from "./context";
 
@@ -61,6 +62,7 @@ moneyRoutes.get("/e/:slug/dinero", async (c) => {
       unlocked={!flags.billing || !!unlock[0]}
       bracket={priceBracket(paidTickets)}
       isFirstEvent={await isFirstEventForBand(db, bandId)}
+      error={c.req.query("error") ?? undefined}
     />,
   );
 });
@@ -74,6 +76,11 @@ moneyRoutes.post("/e/:slug/dinero/costo", async (c) => {
   const label = String(body["label"] ?? "").trim();
   const category = String(body["category"] ?? "other");
   const lempiras = Number(body["amount"]);
+
+  const labelError = tooLong(label, TEXT_LIMITS.expenseLabel, "La descripción del gasto");
+  if (labelError) {
+    return c.redirect(`${moneyPath(event.slug)}?error=${encodeURIComponent(labelError)}`, 303);
+  }
 
   if (label && Number.isFinite(lempiras) && lempiras >= 0) {
     await db.insert(s.expenses).values({

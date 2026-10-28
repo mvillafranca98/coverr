@@ -16,6 +16,8 @@
  * gesture across a long await chain, and loading the QR image is long enough to
  * lose it, so by the time anyone taps, the File already exists.
  */
+import { jsonForScript } from "../../lib/core";
+
 export function ticketScript(i: {
   eventSlug: string;
   bandName: string;
@@ -30,15 +32,15 @@ export function ticketScript(i: {
   // The buy form keeps the buyer's draft in localStorage until their order
   // actually exists, so a refused submit never loses it. It exists now, so
   // this is the point where it stops being needed.
-  try { localStorage.removeItem('coverr:' + ${JSON.stringify(i.eventSlug)}); } catch (e) {}
+  try { localStorage.removeItem('coverr:' + ${jsonForScript(i.eventSlug)}); } catch (e) {}
 
   if (!window.HTMLCanvasElement || !document.createElement('canvas').getContext) return;
 
-  var BAND  = ${JSON.stringify(i.bandName)};
-  var EVENT = ${JSON.stringify(i.eventName)};
-  var WHEN  = ${JSON.stringify(i.whenLine)};
-  var VENUE = ${JSON.stringify(i.venue)};
-  var CODE  = ${JSON.stringify(i.shortCode)};
+  var BAND  = ${jsonForScript(i.bandName)};
+  var EVENT = ${jsonForScript(i.eventName)};
+  var WHEN  = ${jsonForScript(i.whenLine)};
+  var VENUE = ${jsonForScript(i.venue)};
+  var CODE  = ${jsonForScript(i.shortCode)};
 
   // Drawn the way the page draws it (DESIGN.md, light surface): the lime
   // ticket with a black outline and a hard shadow, the QR below the

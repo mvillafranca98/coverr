@@ -1,4 +1,5 @@
 import { localInputToIso, lpsToCentavos } from "./core";
+import { TEXT_LIMITS, tooLong } from "./text-limits";
 
 export type EventInput = {
   name: string;
@@ -49,6 +50,15 @@ export function readEventForm(body: Record<string, unknown>): EventFormResult {
   const venue = text("venue");
   if (!name) return { ok: false, message: "Falta el nombre del evento." };
   if (!venue) return { ok: false, message: "Falta el lugar." };
+
+  // Each of these is printed on every buyer's page and ticket.
+  const lengthError =
+    tooLong(name, TEXT_LIMITS.eventName, "El nombre del evento") ??
+    tooLong(venue, TEXT_LIMITS.venue, "El lugar") ??
+    tooLong(text("description"), TEXT_LIMITS.description, "La descripción") ??
+    tooLong(text("music_type"), TEXT_LIMITS.musicType, "El tipo de música") ??
+    tooLong(text("thank_you"), TEXT_LIMITS.thankYouNote, "La nota de agradecimiento");
+  if (lengthError) return { ok: false, message: lengthError };
 
   const startsAt = localInputToIso(text("starts_at"));
   if (!startsAt) return { ok: false, message: "Revisá la fecha de inicio." };

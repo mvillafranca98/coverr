@@ -12,7 +12,8 @@ export const MoneyPage: FC<{
   unlocked: boolean;
   bracket: { bracket: string; amount: number };
   isFirstEvent: boolean;
-}> = ({ bandName, event, expenses, settlement, unlocked, bracket, isFirstEvent }) => (
+  error?: string;
+}> = ({ bandName, event, expenses, settlement, unlocked, bracket, isFirstEvent, error }) => (
   <AdminLayout
     title={`Dinero — ${event.name}`}
     bandName={bandName}
@@ -22,6 +23,7 @@ export const MoneyPage: FC<{
   >
     <h1>Dinero</h1>
     <p class="sub">{event.name}</p>
+    {error ? <div class="note crit">{error}</div> : null}
 
     <h2>Costos</h2>
     <div class="scroll">

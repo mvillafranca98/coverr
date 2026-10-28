@@ -6,6 +6,7 @@ import { LOGIN_TTL, sign } from "../../lib/auth";
 import { newId, normalizeEmail, nowIso } from "../../lib/core";
 import { makeTransport } from "../../lib/email";
 import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { TEXT_LIMITS } from "../../lib/text-limits";
 import { signupEmailHtml, signupEmailSubject, signupEmailText } from "../../views/email";
 import { SignupPage, SignupSentPage } from "../../views/signup";
 import type { PublicEnv } from "./context";
@@ -35,7 +36,9 @@ signupRoutes.post("/registro", async (c) => {
   const email = normalizeEmail(String(body["email"] ?? ""));
 
   if (!name) return c.html(<SignupPage error="Falta el nombre de la banda." email={email} />, 400);
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+  // Checked before the address is looked up, so a long one is refused the
+  // same way whether or not a band already has it.
+  if (email.length > TEXT_LIMITS.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return c.html(<SignupPage error="Revisá el correo." name={name} />, 400);
   }
   if (!c.env.SESSION_SECRET) return c.text("SESSION_SECRET no está configurado.", 500);

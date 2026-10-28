@@ -1,4 +1,6 @@
+import { BANKS, isShortCode } from "./core";
 import { type ProofMediaType, sniffProof } from "./file-type";
+import { TEXT_LIMITS, tooLong } from "./text-limits";
 
 const MAX_PROOF_BYTES = 10 * 1024 * 1024;
 const MAX_TICKETS = 10;
@@ -44,6 +46,13 @@ export function readPurchaseForm(body: Record<string, unknown>): PurchaseFormRes
   if (!EMAIL_PATTERN.test(payerEmail)) {
     return { ok: false, message: "Revisá tu correo electrónico.", field: "payer_email" };
   }
+  const payerPhone = text("payer_phone");
+  const tooLongBuyerField = firstTooLong([
+    { value: payerName, max: TEXT_LIMITS.name, label: "Tu nombre", field: "payer_name" },
+    { value: payerEmail, max: TEXT_LIMITS.email, label: "Tu correo", field: "payer_email" },
+    { value: payerPhone, max: TEXT_LIMITS.phone, label: "Tu teléfono", field: "payer_phone" },
+  ]);
+  if (tooLongBuyerField) return { ok: false, ...tooLongBuyerField };
   if (body["consent"] !== "1") {
     return {
       ok: false,
@@ -63,7 +72,23 @@ export function readPurchaseForm(body: Record<string, unknown>): PurchaseFormRes
         field: `attendee_name_${position}`,
       };
     }
-    attendees.push({ name, note: text(`attendee_note_${position}`) || null });
+    const note = text(`attendee_note_${position}`);
+    const tooLongAttendeeField = firstTooLong([
+      {
+        value: name,
+        max: TEXT_LIMITS.name,
+        label: `El nombre de la persona ${position}`,
+        field: `attendee_name_${position}`,
+      },
+      {
+        value: note,
+        max: TEXT_LIMITS.ticketNote,
+        label: `La nota de la persona ${position}`,
+        field: `attendee_note_${position}`,
+      },
+    ]);
+    if (tooLongAttendeeField) return { ok: false, ...tooLongAttendeeField };
+    attendees.push({ name, note: note || null });
   }
 
   const proof = body["proof"];
@@ -80,13 +105,26 @@ export function readPurchaseForm(body: Record<string, unknown>): PurchaseFormRes
       quantity,
       payerName,
       payerEmail,
-      payerPhone: text("payer_phone") || null,
-      bankSelected: text("bank") || null,
-      shortCode: text("short_code") || null,
+      payerPhone: payerPhone || null,
+      // Both come back from hidden or fixed inputs the page filled in. Anything
+      // that is not one of ours is dropped rather than stored as the buyer sent it.
+      bankSelected: BANKS.some((b) => b.code === text("bank")) ? text("bank") : null,
+      shortCode: isShortCode(text("short_code")) ? text("short_code") : null,
       attendees,
       proof,
     },
   };
+}
+
+/** The first field over its length limit, as the error to send the buyer back with. */
+function firstTooLong(
+  fields: { value: string; max: number; label: string; field: string }[],
+): { message: string; field: string } | null {
+  for (const f of fields) {
+    const message = tooLong(f.value, f.max, f.label);
+    if (message) return { message, field: f.field };
+  }
+  return null;
 }
 
 /** The proof's real type, or why it cannot be accepted. */

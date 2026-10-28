@@ -9,6 +9,7 @@ import { runVerification } from "../../jobs/verify-proof";
 import { newId, nowIso } from "../../lib/core";
 import { safeProofDelivery } from "../../lib/file-type";
 import { planTicketRefund } from "../../lib/refund-plan";
+import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { OrderPage } from "../../views/admin/order";
 import type { AdminEnv } from "./context";
 
@@ -144,6 +145,15 @@ orderRoutes.post("/e/:slug/orden/:id/asistente", async (c) => {
   const body = await c.req.parseBody();
   const attendeeId = String(body["attendee_id"] ?? "");
   const name = String(body["name"] ?? "").trim();
+
+  // The name goes on the ticket and into the door's offline list.
+  const nameError = tooLong(name, TEXT_LIMITS.name, "El nombre");
+  if (nameError) {
+    return c.redirect(
+      `${orderPath(event.slug, orderId)}?error=${encodeURIComponent(nameError)}`,
+      303,
+    );
+  }
 
   if (name) {
     await db

@@ -48,6 +48,16 @@ export function newShortCode(bandSlug: string): string {
   return `${prefix}-${randomBase32(4)}`;
 }
 
+/**
+ * True for something shaped like a code `newShortCode` makes: three letters, a
+ * dash, four characters. The buy form sends back the code it showed the buyer
+ * so it can become the order's code; anything else in that field was not ours
+ * and is ignored, so the server makes a fresh one.
+ */
+export function isShortCode(value: string): boolean {
+  return /^[A-Z]{3}-[0-9A-Z]{4}$/.test(value);
+}
+
 export const BANKS = [
   { code: "BAC", label: "BAC Credomatic" },
   { code: "FICOHSA", label: "Ficohsa" },
@@ -123,6 +133,32 @@ export function escapeHtml(s: string): string {
   return s.replace(
     /[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+  );
+}
+
+/**
+ * Characters that are harmless inside a JSON string but not inside an inline
+ * `<script>`: `<` and `>` can close the script element or open an HTML
+ * comment, `&` can start an entity in some parsers, and the two Unicode line
+ * separators end a string literal on engines older than ES2019 — which the
+ * buy page ships to on purpose.
+ */
+const SCRIPT_UNSAFE = /[<>&\u2028\u2029]/g;
+
+/**
+ * A value as a JavaScript literal that is safe to place inside an inline
+ * `<script>`.
+ *
+ * `JSON.stringify` alone is not: it leaves `</script>` intact, so an event
+ * named `</script><script>…` would end the page's script and start its own on
+ * every buyer's screen. Each unsafe character becomes its `\uXXXX` escape,
+ * which JavaScript reads back as the same character, so the value arrives
+ * unchanged.
+ */
+export function jsonForScript(value: unknown): string {
+  return JSON.stringify(value).replace(
+    SCRIPT_UNSAFE,
+    (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`,
   );
 }
 

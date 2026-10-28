@@ -175,3 +175,57 @@ describe("checkProofBytes", () => {
     if (!r.ok) expect(r.message).toMatch(/captura|JPG/);
   });
 });
+
+// Strangers fill this form in, and what they type reaches the band's pages,
+// the tickets, the emails and the door's offline list.
+describe("length limits", () => {
+  it("refuses a payer name past the limit and points at it", () => {
+    const r = readPurchaseForm(form({ payer_name: "A".repeat(81) }));
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.field).toBe("payer_name");
+      expect(r.message).toBe("Tu nombre puede tener hasta 80 caracteres.");
+    }
+  });
+
+  it("accepts a name exactly at the limit", () => {
+    expect(readPurchaseForm(form({ payer_name: "A".repeat(80) })).ok).toBe(true);
+  });
+
+  it("refuses an over-long attendee note and names the person", () => {
+    const r = readPurchaseForm(form({ attendee_note_1: "x".repeat(201) }));
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.field).toBe("attendee_note_1");
+      expect(r.message).toContain("persona 1");
+    }
+  });
+
+  it("refuses an over-long phone", () => {
+    const r = readPurchaseForm(form({ payer_phone: "9".repeat(31) }));
+    expect(!r.ok && r.field).toBe("payer_phone");
+  });
+});
+
+// Both arrive from inputs the page filled in. A value the page could not have
+// sent is dropped, never stored as the buyer typed it.
+describe("fields the page fills in", () => {
+  it("keeps a short code shaped like ours", () => {
+    const r = readPurchaseForm(form({ short_code: "RUI-7JC4" }));
+    expect(r.ok && r.values.shortCode).toBe("RUI-7JC4");
+  });
+
+  it("ignores anything else, so the server makes a fresh code", () => {
+    for (const code of ["<b>x</b>", "RUI-7JC4-EXTRA", "rui-7jc4", "X".repeat(5000)]) {
+      const r = readPurchaseForm(form({ short_code: code }));
+      expect(r.ok && r.values.shortCode).toBeNull();
+    }
+  });
+
+  it("keeps a real bank code and drops anything else", () => {
+    const kept = readPurchaseForm(form({ bank: "FICOHSA" }));
+    expect(kept.ok && kept.values.bankSelected).toBe("FICOHSA");
+    const dropped = readPurchaseForm(form({ bank: "Banco de mentira" }));
+    expect(dropped.ok && dropped.values.bankSelected).toBeNull();
+  });
+});
