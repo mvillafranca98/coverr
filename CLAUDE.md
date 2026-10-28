@@ -18,6 +18,7 @@ src/db/       Drizzle schema and every query; migrations/ holds the generated SQ
 src/jobs/     background work run from waitUntil, after the response has gone
 src/routes/   HTTP — one router per flow, under public/ and admin/
 src/views/    presentation only; a view must never touch the database
+src/styles/   stylesheets; imported as text and inlined by the layouts, never linked
 src/index.tsx the entry point: creates the app, mounts the routers, handles 404
 public/       PWA scanner assets, service worker
 ```

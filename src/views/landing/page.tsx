@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
+import LANDING_CSS from "../../styles/landing.css";
 import { LegalLinks } from "../legal/links";
 import { landingMotionScript, revealGuardScript } from "./motion";
-import { LANDING_CSS } from "./styles";
 
 /**
  * The public front page. Carries its own document and stylesheet rather than

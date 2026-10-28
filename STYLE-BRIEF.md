@@ -4,102 +4,41 @@ This is a **presentation-only** change. Nothing about how the product works chan
 route, no query, no job, no verification rule, no money arithmetic. If you find yourself
 opening a file outside the allowed list below, stop and say so instead.
 
-Work in two passes. **Pass 1 is the plumbing and must land and typecheck before any
-visual work starts.** Do not do them together — a refactor and a redesign in one diff is
-unreviewable.
+Work in two passes. Pass 1, the plumbing, is done — see below. Pass 2 is the redesign.
 
 ---
 
-## Pass 1 — get the CSS out of the TSX, with no change to the rendered output
+## Pass 1 — done
 
-Today every stylesheet is a template literal inside a `.tsx` file:
+The CSS lives in real files and still reaches the browser inlined in the HTML, never as a
+second request.
 
-| Where it lives now | What it styles |
-|---|---|
-| `src/views/layout.tsx` → `export const CSS` | buyer surface (light) — buy, ticket, recover, refund, legal |
-| `src/views/admin/layout.tsx` → `const ADMIN_CSS` | band surface (dark) — dashboard, orders, money, settings |
-| `src/views/landing/styles.ts` → `export const LANDING_CSS` | the marketing page `/` |
-| `public/scanner.css` | the door scanner — **already a real file, leave it where it is** |
+| File | Inlined by | Styles |
+|---|---|---|
+| `src/styles/buyer.css` | `src/views/layout.tsx` | buyer surface (light) |
+| `src/styles/admin.css` | `src/views/admin/layout.tsx` | band surface (dark) |
+| `src/styles/legal.css` | `src/views/legal/doc.tsx` | legal prose — emitted *after* buyer.css, and that order is load-bearing |
+| `src/styles/landing.css` | `src/views/landing/page.tsx` | the marketing page |
+| `public/scanner.css` | linked by the scanner | unchanged — a static asset because the service worker precaches it |
 
-Move the first three into real `.css` files. Keep the inlined `<style>` tag exactly as it
-is: the CSS must still reach the browser in the HTML document, not as a second request.
-That is a deliberate product decision (buyers open these pages on venue wifi with a bank
-transfer half-made; a blocking stylesheet request there costs a sale) and this change must
-not quietly undo it.
+The mechanism is a Text module rule in `wrangler.jsonc`: `import css from "…/x.css"` yields
+the file's text, bundled into the Worker. `src/css.d.ts` types it. Rendered HTML was
+diffed against a pre-change baseline on six pages and is identical, apart from each
+`<style>` no longer opening on a blank line and the landing sheet carrying its design note
+as a leading comment.
 
-### The mechanism — verified against this repo, use exactly this
+Deliberately left for pass 2:
 
-Cloudflare Workers module rules let a `.css` file be imported as a **string** at build
-time. The file ships inside the Worker bundle, so there is no extra round trip and the
-HTML output is byte-identical to today.
-
-**1. `wrangler.jsonc`** — add alongside `"main"`:
-
-```jsonc
-"rules": [{ "type": "Text", "globs": ["**/*.css"], "fallthrough": true }],
-```
-
-`fallthrough: true` is required. Without it wrangler warns that it is shadowing the
-built-in rule for `**/*.txt`, `**/*.html` and `**/*.sql`. Nothing in `src/` imports those
-today, but silently disabling the default rule is a trap for the next person.
-
-**2. `src/css.d.ts`** — new file, so TypeScript knows what the import is:
-
-```ts
-declare module "*.css" {
-  const css: string;
-  export default css;
-}
-```
-
-**3. New files** under `src/styles/`:
-
-```
-src/styles/tokens.css     custom properties for both surfaces, nothing else
-src/styles/base.css       reset, html/body, shared primitives
-src/styles/buyer.css      the light surface
-src/styles/admin.css      the dark surface
-src/styles/landing.css    the marketing page
-```
-
-Each one keeps the comments that are already in the current CSS. Several of them record
-why a rule exists — the `position:relative` on `.drop`, the full-size invisible file
-input, the `[hidden]` override, the `--line-control` 3:1 note. Those are load-bearing;
-do not drop them in the move.
-
-**4. `src/views/css.ts`** — new, the one place that composes them:
-
-```ts
-import admin from "../styles/admin.css";
-import base from "../styles/base.css";
-import buyer from "../styles/buyer.css";
-import tokens from "../styles/tokens.css";
-
-export const BUYER_CSS = tokens + base + buyer;
-export const ADMIN_CSS = tokens + base + admin;
-```
-
-`landing.css` is imported directly by `src/views/landing/page.tsx` — it is a self-contained
-document with its own tokens and shares nothing with the other two.
-
-**5. The three view files** each lose their CSS literal and gain one import. That is the
-whole diff in those files. `src/views/landing/styles.ts` is deleted — its doc comment moves
-to the top of `landing.css`.
-
-**6. `biome.json`** — add `"src/**/*.css"` to `files.includes` so the new files are
-formatted and linted like everything else. If Biome's CSS rules turn out to be noisy
-against this stylesheet, say so and leave the glob out rather than rewriting CSS to
-satisfy a linter.
-
-### Pass 1 is done when
-
-- `npm run typecheck`, `npm run lint` and `npm test` all pass.
-- `npx wrangler deploy --dry-run --outdir <tmp>` builds clean, with no module-rule warning.
-- `git diff` on `src/routes`, `src/lib`, `src/db`, `src/jobs`, `migrations` and `tests` is
-  empty.
-- Rendering any page produces the same HTML as before, modulo whitespace in the `<style>`.
-
-Commit this on its own.
+- **No `tokens.css` yet.** The buyer and band palettes share token names but not values,
+  so they cannot live in one file without a surface selector in the markup. Create
+  `tokens.css` in pass 2 for what is genuinely shared — the type scale, the display face,
+  spacing, radii, `--sans`, `--mono` — and compose it ahead of each surface sheet
+  (`tokens + buyer`, `tokens + admin`). The palettes stay in their surface files.
+- **Biome does not cover the CSS yet.** Turning it on reformats every line of all four
+  files and flags 9 deliberate `!important`s (`[hidden]`, reduced motion, `.invalid` — each
+  has a reason) plus 5 `noDescendingSpecificity` hits on intentional cascade order. In
+  pass 2, add `"src/**/*.css"` to `biome.json`, turn `lint/complexity/noImportantStyles`
+  off, and format once while rewriting.
 
 ---
 
@@ -279,7 +218,7 @@ carry this.
 
 ### Work in this order
 
-1. Pass 1, committed on its own.
+1. ~~Pass 1~~ — done.
 2. Tokens and type scale — the shared foundation.
 3. The ticket. It is the highest-leverage surface; get it right before anything else.
 4. The buy page.

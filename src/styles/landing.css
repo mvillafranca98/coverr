@@ -1,3 +1,22 @@
+/* The landing page's stylesheet.
+
+   Lives apart from the markup because it is the larger half of the page and
+   the two change for different reasons — copy moves often, the visual system
+   rarely.
+
+   The type system is lifted from the Comport/Comseid house style: a geometric
+   sans for display with an italic serif set inside the headline as the accent,
+   and monospace reserved for micro-labels, indices and data. That pairing is
+   the whole character. The first version of this page had none of it and read
+   like every other gradient-and-glass landing page.
+
+   Dark rather than that house style's warm paper, because DESIGN.md assigns
+   dark to everything a band sees, and this page is marketing to bands.
+
+   Two webfonts, ~43KB, loaded here and on no other route. Same carve-out as
+   GSAP and the same reason: a buyer on venue wifi mid-transfer waits for
+   nothing. See DESIGN.md, "Motion and the landing page". */
+
 /* Self-hosted so the CSP stays 'self' and no third party sees who reads this
    page. swap, so text is never invisible while a font is in flight. */
 @font-face{
