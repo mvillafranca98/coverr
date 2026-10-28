@@ -3,10 +3,12 @@ import { secureHeaders } from "hono/secure-headers";
 import { purgeOldErrors } from "./jobs/purge-errors";
 import { purgeExpiredProofs } from "./jobs/purge-proofs";
 import { reportError } from "./jobs/report-error";
+import { isCanonicalHost } from "./lib/crawl";
 import { admin } from "./routes/admin";
 import { buyRoutes } from "./routes/public/buy";
 import { confirmationRoutes } from "./routes/public/confirmation";
 import type { Bindings, PublicEnv } from "./routes/public/context";
+import { crawlRoutes } from "./routes/public/crawl";
 import { healthRoutes } from "./routes/public/health";
 import { landingRoutes } from "./routes/public/landing";
 import { legalRoutes } from "./routes/public/legal";
@@ -85,6 +87,20 @@ app.use(
   }),
 );
 
+/**
+ * Only the production hostname may be indexed. Version preview URLs serve the
+ * whole site, landing page included, and once a custom domain becomes
+ * APP_ORIGIN the workers.dev address will too — both would otherwise compete
+ * with the real site in search. A header rather than a robots.txt block,
+ * because a crawler has to be let in to read a noindex.
+ */
+app.use("*", async (c, next) => {
+  await next();
+  if (!isCanonicalHost(c.req.url, c.env.APP_ORIGIN)) {
+    c.res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+});
+
 app.route("/", buyRoutes);
 app.route("/", purchaseRoutes);
 app.route("/", confirmationRoutes);
@@ -95,6 +111,7 @@ app.route("/", signupRoutes);
 app.route("/", legalRoutes);
 app.route("/", refundRoutes);
 app.route("/", healthRoutes);
+app.route("/", crawlRoutes);
 
 app.get("/admin/", (c) => c.redirect("/admin", 301));
 app.route("/admin", admin);
