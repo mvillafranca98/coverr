@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
@@ -8,6 +8,7 @@ import * as s from "../../db/schema";
 import { runVerification } from "../../jobs/verify-proof";
 import { newId, nowIso } from "../../lib/core";
 import { safeProofDelivery } from "../../lib/file-type";
+import { planTicketRefund } from "../../lib/refund-plan";
 import { OrderPage } from "../../views/admin/order";
 import type { AdminEnv } from "./context";
 
@@ -50,6 +51,7 @@ orderRoutes.get("/e/:slug/orden/:id", async (c) => {
       proof={proofs[0] ?? null}
       flags={flags}
       refund={refunds[0] ?? null}
+      error={c.req.query("error") ?? undefined}
     />,
   );
 });
@@ -187,7 +189,13 @@ orderRoutes.post("/e/:slug/orden/:id/anular", async (c) => {
  *
  * The money moves by bank transfer, outside Coverr, exactly as for an approved
  * buyer request. This records the decision, voids the QR codes and drops the
- * order from the totals.
+ * refunded tickets from the totals.
+ *
+ * Takes a ticket selection rather than always taking the whole order. Four
+ * bought and two friends dropping out is the common case; before this the band
+ * had to refund all four and have them buy two again at whatever the price is
+ * now. Covering every live ticket still closes the order exactly as it used
+ * to, so the ordinary full refund is unchanged.
  */
 orderRoutes.post("/e/:slug/orden/:id/reembolsar", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
@@ -202,27 +210,58 @@ orderRoutes.post("/e/:slug/orden/:id/reembolsar", async (c) => {
   // a moment earlier, must not write a second refund row.
   if (order.status !== "confirmed") return c.redirect(orderPath(event.slug, order.id), 303);
 
-  const reason = String((await c.req.parseBody())["motivo"] ?? "")
+  const body = await c.req.parseBody({ all: true });
+  const reason = String(body["motivo"] ?? "")
     .trim()
     .slice(0, 300);
+
+  // parseBody collapses a single checked box to a string and several to an
+  // array, so both shapes have to be read. An absent key means nothing was
+  // ticked, which `planTicketRefund` refuses rather than reading as "all".
+  const picked = body["boleto"];
+  const selectedIds = (Array.isArray(picked) ? picked : picked == null ? [] : [picked]).map(String);
+
+  const tickets = await db
+    .select({ id: s.attendees.id, voidedAt: s.attendees.voidedAt })
+    .from(s.attendees)
+    .where(eq(s.attendees.orderId, order.id));
+
+  const plan = planTicketRefund({ attendees: tickets, selectedIds });
+  if (!plan.ok) {
+    return c.redirect(
+      `${orderPath(event.slug, order.id)}?error=${encodeURIComponent(plan.message)}`,
+      303,
+    );
+  }
+
   const ts = nowIso();
+  const scope = plan.voidsWholeOrder
+    ? `los ${plan.voidIds.length} boletos`
+    : `${plan.voidIds.length} de ${tickets.length} boletos`;
 
   await db.insert(s.refundRequests).values({
     id: newId("ref"),
     orderId: order.id,
     requestedAt: ts,
     reason: reason
-      ? `Reembolso iniciado por la banda: ${reason}`
-      : "Reembolso iniciado por la banda.",
+      ? `Reembolso iniciado por la banda (${scope}): ${reason}`
+      : `Reembolso iniciado por la banda (${scope}).`,
     status: "approved",
+    ticketCount: plan.voidIds.length,
     handledBy: bandId,
     handledAt: ts,
   });
 
-  await db
-    .update(s.orders)
-    .set({ status: "refunded" })
-    .where(and(eq(s.orders.id, order.id), eq(s.orders.eventId, event.id)));
+  await db.update(s.attendees).set({ voidedAt: ts }).where(inArray(s.attendees.id, plan.voidIds));
+
+  // Only when nothing live is left. A partially refunded order stays
+  // `confirmed` because the tickets still on it have to keep scanning.
+  if (plan.voidsWholeOrder) {
+    await db
+      .update(s.orders)
+      .set({ status: "refunded" })
+      .where(and(eq(s.orders.id, order.id), eq(s.orders.eventId, event.id)));
+  }
 
   return c.redirect(orderPath(event.slug, order.id), 303);
 });
@@ -254,6 +293,18 @@ orderRoutes.post("/e/:slug/orden/:id/reembolso", async (c) => {
     .where(and(eq(s.refundRequests.orderId, orderId), eq(s.refundRequests.status, "open")));
 
   if (decision === "approved") {
+    const ts = nowIso();
+
+    // A buyer asks for the whole order back, so every ticket on it is stamped
+    // too. The aggregates would drop it on order status alone, but leaving the
+    // tickets unmarked would mean the same outcome had two shapes in the data,
+    // and the order page would show a refunded order whose tickets each still
+    // read as live.
+    await db
+      .update(s.attendees)
+      .set({ voidedAt: ts })
+      .where(and(eq(s.attendees.orderId, orderId), isNull(s.attendees.voidedAt)));
+
     await db
       .update(s.orders)
       .set({ status: "refunded" })

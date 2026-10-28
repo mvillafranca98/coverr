@@ -19,15 +19,27 @@ export async function findOrderWithEventAndBand(db: DrizzleD1Database<typeof s>,
   return rows[0] ?? null;
 }
 
-/** Tickets already sold on an event, for the capacity check at purchase. */
+/**
+ * Tickets already sold on an event, for the capacity check at purchase.
+ *
+ * Counts live ticket rows, so a refunded ticket hands its place back to the
+ * room rather than occupying capacity nobody is going to use.
+ */
 export async function confirmedTicketCount(
   db: DrizzleD1Database<typeof s>,
   eventId: string,
 ): Promise<number> {
   const [sold] = await db
-    .select({ n: sql<number>`coalesce(sum(${s.orders.quantity}), 0)` })
-    .from(s.orders)
-    .where(and(eq(s.orders.eventId, eventId), eq(s.orders.status, "confirmed")));
+    .select({ n: sql<number>`count(*)` })
+    .from(s.attendees)
+    .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
+    .where(
+      and(
+        eq(s.orders.eventId, eventId),
+        eq(s.orders.status, "confirmed"),
+        isNull(s.attendees.voidedAt),
+      ),
+    );
   return Number(sold?.n ?? 0);
 }
 
@@ -44,13 +56,15 @@ export async function ticketsSoldUnderRule(
   ruleId: string,
 ): Promise<number> {
   const [sold] = await db
-    .select({ n: sql<number>`coalesce(sum(${s.orders.quantity}), 0)` })
-    .from(s.orders)
+    .select({ n: sql<number>`count(*)` })
+    .from(s.attendees)
+    .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
     .where(
       and(
         eq(s.orders.eventId, eventId),
         eq(s.orders.priceRuleId, ruleId),
         eq(s.orders.status, "confirmed"),
+        isNull(s.attendees.voidedAt),
       ),
     );
   return Number(sold?.n ?? 0);

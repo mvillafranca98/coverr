@@ -1,18 +1,33 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { computeSettlement } from "../../lib/settlement";
 import * as s from "../schema";
 
-/** Revenue and headcount per channel. Comps contribute people, never money. */
+/**
+ * Revenue and headcount per channel. Comps contribute people, never money.
+ *
+ * Counted from ticket rows rather than from `orders.quantity`, because a
+ * partially refunded order keeps its quantity and loses tickets. While nothing
+ * is voided the two agree exactly — every write path inserts one attendee per
+ * ticket and sets `expected_amount = unit_amount * quantity` — so this is the
+ * same arithmetic until a band actually refunds part of an order.
+ */
 export async function channelTotals(db: DrizzleD1Database<typeof s>, eventId: string) {
   const rows = await db
     .select({
       channel: s.orders.channel,
-      people: sql<number>`sum(${s.orders.quantity})`,
-      amount: sql<number>`sum(${s.orders.expectedAmount})`,
+      people: sql<number>`count(*)`,
+      amount: sql<number>`sum(${s.orders.unitAmount})`,
     })
-    .from(s.orders)
-    .where(and(eq(s.orders.eventId, eventId), eq(s.orders.status, "confirmed")))
+    .from(s.attendees)
+    .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
+    .where(
+      and(
+        eq(s.orders.eventId, eventId),
+        eq(s.orders.status, "confirmed"),
+        isNull(s.attendees.voidedAt),
+      ),
+    )
     .groupBy(s.orders.channel);
 
   const by = (channel: string) => rows.find((r) => r.channel === channel);
@@ -43,6 +58,7 @@ export async function channelTotals(db: DrizzleD1Database<typeof s>, eventId: st
       and(
         eq(s.orders.eventId, eventId),
         eq(s.orders.status, "confirmed"),
+        isNull(s.attendees.voidedAt),
         sql`${s.attendees.checkedInAt} is not null`,
       ),
     );

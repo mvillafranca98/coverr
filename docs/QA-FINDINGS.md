@@ -571,6 +571,55 @@ two. Today the band must refund all four and have them buy two again — at what
 explicit decision that refunds are whole-order only and the UI says so before the band approves.
 The second is cheap and honest; the first is the real fix.
 
+### Fixed — 2026-10-28, the real fix
+
+`attendees.voided_at` marks one refunded ticket. The band picks tickets on the order page; every
+box starts ticked, so giving the whole order back is still one click, and unticking leaves the
+rest scanning.
+
+**What had to move with it.** The counts and the money stopped trusting `orders.quantity`, which
+a partially refunded order keeps while losing tickets. `channelTotals`, `confirmedTicketCount`
+and `ticketsSoldUnderRule` now count live ticket rows and sum `orders.unit_amount` — which is why
+**F14** had to land first. While nothing is voided the two agree exactly, so this was
+arithmetically a no-op on existing data; verified before changing it that every order has exactly
+`quantity` attendee rows (production 10 orders / 14 tickets / 14 quantity; local 227 orders, zero
+mismatches).
+
+A refunded ticket also hands its place back to the room — capacity and presale allocation both
+count live tickets now, so refunding two of a sold-out hundred lets two more people in.
+
+**The expensive mistake, avoided deliberately.** An empty selection is refused rather than read as
+"all". Treating nothing-ticked as the whole order would turn a mis-click into a full refund, so
+`planTicketRefund` says *"Elegí al menos un boleto"* instead. Unknown ids, already-voided ids and
+a repeated id are all dropped quietly, because a stale page or a double submit must not write a
+second refund.
+
+**Order status.** Covering every live ticket marks the order `refunded` exactly as before —
+including the second of two partial refunds, so a dead order never lingers in the live list. A
+partial refund leaves it `confirmed`, because the tickets still on it have to keep working.
+
+**The door.** A voided ticket is carried in the manifest and struck through rather than dropped,
+which keeps the **F12** fix: a refunded ticket must not look like a stranger's. Check-in refuses
+it server-side too, so a device on a stale cache cannot let it in.
+
+**Audit trail.** Each refund writes its own `refund_requests` row with `ticket_count`, so two
+partial refunds on one order read as 2 then 2 rather than one indistinguishable 4. The
+buyer-initiated approval path now stamps every ticket as well, so one outcome has one shape in the
+data.
+
+Verified end to end locally against live totals. Baseline 170 tickets / L36,700:
+
+| Step | Live tickets | Revenue | Order status |
+|---|---|---|---|
+| Buy 4 at L250 | 174 | L37,700 | confirmed |
+| Submit with nothing ticked | 174 | L37,700 | confirmed — refused |
+| Refund 2 of 4 | 172 | L37,200 | **confirmed** |
+| Refund the other 2 | 170 | L36,700 | **refunded** |
+| Submit a third time | 170 | L36,700 | refunded, no second row |
+
+The refunded tokens scan `voided` and the live ones `ok`; the manifest carries all 174 with `v=1`
+on the two returned. Two refund rows, `ticket_count` 2 and 2. 12 tests on the plan itself.
+
 ---
 
 ## F14 · Editing a price rule silently rewrites what past orders appear to have cost

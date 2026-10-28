@@ -190,6 +190,17 @@ export const attendees = sqliteTable(
     checkedInAt: text("checked_in_at"),
     checkedInBy: text("checked_in_by"),
     checkedInDevice: text("checked_in_device"),
+    /**
+     * Set when this one ticket is refunded, leaving the rest of the order
+     * alone. Null is the ordinary state, so nothing needed backfilling.
+     *
+     * Four bought and two friends drop out is the common case, and before this
+     * the band had to refund all four and have them buy two again at whatever
+     * the price is now. A voided ticket stops scanning, leaves the counts and
+     * drops its own unit_amount out of the takings — the other tickets on the
+     * order are untouched.
+     */
+    voidedAt: text("voided_at"),
   },
   (t) => [index("idx_attendees_order").on(t.orderId)],
 );
@@ -314,6 +325,15 @@ export const refundRequests = sqliteTable(
     reason: text("reason"),
     /** open | approved | denied */
     status: text("status").notNull().default("open"),
+    /**
+     * How many tickets this refund covered. Null means all of them, which is
+     * what every buyer-initiated request is and what every row written before
+     * partial refunds existed was.
+     *
+     * Not derivable: two partial refunds on one order leave three voided
+     * tickets and no way to tell whether that was 2+1 or 1+2.
+     */
+    ticketCount: integer("ticket_count"),
     handledBy: text("handled_by"),
     handledAt: text("handled_at"),
   },

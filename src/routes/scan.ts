@@ -43,6 +43,7 @@ scanApi.get("/:token/manifest", async (c) => {
       name: s.attendees.name,
       note: s.attendees.note,
       checkedInAt: s.attendees.checkedInAt,
+      voidedAt: s.attendees.voidedAt,
       shortCode: s.orders.shortCode,
       channel: s.orders.channel,
       quantity: s.orders.quantity,
@@ -108,7 +109,9 @@ scanApi.get("/:token/manifest", async (c) => {
       ch: r.channel,
       q: r.quantity,
       f: reasonByOrder.get(r.orderId) ?? null,
-      v: r.orderStatus === "confirmed" ? undefined : 1,
+      // A single refunded ticket on an otherwise live order is voided the same
+      // way as a whole refunded order: carried, struck through, uncounted.
+      v: r.orderStatus === "confirmed" && r.voidedAt === null ? undefined : 1,
     })),
     syncedAt: nowIso(),
   });
@@ -143,6 +146,7 @@ scanApi.post("/:token/checkin", async (c) => {
         id: s.attendees.id,
         checkedInAt: s.attendees.checkedInAt,
         checkedInDevice: s.attendees.checkedInDevice,
+        voidedAt: s.attendees.voidedAt,
         orderStatus: s.orders.status,
       })
       .from(s.attendees)
@@ -158,7 +162,7 @@ scanApi.post("/:token/checkin", async (c) => {
     // The manifest already excludes refunded and voided orders, but a device
     // holding a stale cache would still queue the scan — so the server refuses
     // it rather than trusting whatever the client had downloaded.
-    if (row.orderStatus !== "confirmed") {
+    if (row.orderStatus !== "confirmed" || row.voidedAt !== null) {
       results.push({ t: scan.t, status: "voided" });
       continue;
     }
@@ -188,7 +192,13 @@ scanApi.post("/:token/checkin", async (c) => {
     })
     .from(s.attendees)
     .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
-    .where(and(eq(s.orders.eventId, found.event.id), eq(s.orders.status, "confirmed")));
+    .where(
+      and(
+        eq(s.orders.eventId, found.event.id),
+        eq(s.orders.status, "confirmed"),
+        isNull(s.attendees.voidedAt),
+      ),
+    );
 
   return c.json({
     results,
