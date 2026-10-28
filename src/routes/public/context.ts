@@ -13,6 +13,8 @@ export type Bindings = {
   EMAIL_FROM?: string;
   SESSION_SECRET?: string;
   ANTHROPIC_API_KEY?: string;
+  /** Where crash alerts go — the operator's address, never a band's. */
+  ALERT_EMAIL?: string;
   /** Rate limiters. Optional: `unsafe` bindings may be absent in local dev. */
   PURCHASE_LIMIT?: Limiter;
   EMAIL_LIMIT?: Limiter;

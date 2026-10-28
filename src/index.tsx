@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { secureHeaders } from "hono/secure-headers";
+import { purgeOldErrors } from "./jobs/purge-errors";
 import { purgeExpiredProofs } from "./jobs/purge-proofs";
+import { reportError } from "./jobs/report-error";
 import { admin } from "./routes/admin";
 import { buyRoutes } from "./routes/public/buy";
 import { confirmationRoutes } from "./routes/public/confirmation";
@@ -108,8 +110,20 @@ app.notFound((c) =>
   ),
 );
 
+/**
+ * Crashes have to reach somebody. The report runs after the response so the
+ * buyer waits on nothing, and `c.req.routePath` is the matched pattern rather
+ * than the real path — `/t/:token`, not a live QR token. See jobs/report-error.
+ */
 app.onError((err, c) => {
-  console.error(`unhandled: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
+  c.executionCtx.waitUntil(
+    reportError(c.env, {
+      kind: "request",
+      error: err,
+      path: c.req.routePath,
+      method: c.req.method,
+    }),
+  );
   return c.html(
     `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
      <body style="font-family:system-ui;background:#0C0B09;color:#F6F2EB;padding:48px 24px;text-align:center">
@@ -120,13 +134,23 @@ app.onError((err, c) => {
 });
 
 /**
- * The worker has two entry points now: `fetch` for requests, and `scheduled`
- * for the nightly proof purge. Keeping `app` as the fetch handler means every
- * route and the 404/500 pages above are unchanged.
+ * The worker has two entry points: `fetch` for requests, and `scheduled` for
+ * the nightly sweeps. Keeping `app` as the fetch handler means every route and
+ * the 404/500 pages above are unchanged.
  */
 export default {
   fetch: app.fetch,
   async scheduled(_event: ScheduledController, env: Bindings, ctx: ExecutionContext) {
-    ctx.waitUntil(purgeExpiredProofs(env));
+    // Each sweep reports its own failure. Nothing is watching a cron run, so
+    // without this a job that stopped working would stay stopped — silently,
+    // which for the proof purge means third-party banking details quietly
+    // outliving their retention window.
+    const sweep = (name: string, run: Promise<unknown>) =>
+      ctx.waitUntil(
+        run.catch((err) => reportError(env, { kind: "scheduled", error: err, path: name })),
+      );
+
+    sweep("purge-proofs", purgeExpiredProofs(env));
+    sweep("purge-errors", purgeOldErrors(env));
   },
 };

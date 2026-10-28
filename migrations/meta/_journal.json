@@ -43,6 +43,13 @@
       "when": 1792448707243,
       "tag": "0005_proof_purged_at",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793146130096,
+      "tag": "0006_error_log",
+      "breakpoints": true
     }
   ]
 }

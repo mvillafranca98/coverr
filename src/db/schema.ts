@@ -349,3 +349,61 @@ export const eventUnlocks = sqliteTable("event_unlocks", {
   method: text("method"),
   reference: text("reference"),
 });
+
+/**
+ * Unhandled failures, kept so they can be counted and chased.
+ *
+ * Cloudflare already retains the console output, but a dashboard is somewhere
+ * you have to go and look. This table is what makes an alert possible: it
+ * gives something to rate-limit against, so one failing request cannot send a
+ * hundred emails, and it outlives the log retention window.
+ *
+ * Belongs to nobody — it is the platform's own record, not a band's. No
+ * request body is ever stored: a crash in the buy flow would otherwise carry
+ * a name, an email and a bank screenshot into a table that nothing purges.
+ */
+export const errorLog = sqliteTable(
+  "error_log",
+  {
+    id: text("id").primaryKey(),
+    at: text("at").notNull(),
+    /** request | scheduled */
+    kind: text("kind").notNull(),
+    /**
+     * The same bug seen twice produces the same value here, so a crash loop
+     * collapses into one alert instead of one per request. Built by
+     * `errorFingerprint` in jobs/report-error.ts.
+     */
+    fingerprint: text("fingerprint").notNull(),
+    message: text("message").notNull(),
+    stack: text("stack"),
+    /**
+     * The matched route pattern — `/t/:token`, never `/t/abc123.png`. A real
+     * pathname would put a live QR token, which is all it takes to walk in,
+     * into a row that also goes out by email. The pattern already says which
+     * handler broke, which is the part worth knowing.
+     */
+    path: text("path"),
+    method: text("method"),
+    /**
+     * The lock that makes "one email per bug per hour" exact rather than
+     * hopeful: `<hour>|<fingerprint>`, unique, null on every row that did not
+     * try to alert.
+     *
+     * A crash loop is concurrent by nature. Counting rows and then deciding
+     * would let fifty simultaneous requests all read zero and all send, which
+     * is the worst moment to spend the day's email quota — it is shared with
+     * ticket delivery. Claiming the window with a unique insert cannot race:
+     * exactly one request wins, the rest are refused by the database.
+     */
+    alertClaim: text("alert_claim"),
+    /** 1 only once the alert was actually accepted for delivery. */
+    notified: integer("notified").notNull().default(0),
+  },
+  (t) => [
+    index("idx_error_log_at").on(t.at),
+    uniqueIndex("idx_error_log_alert_claim").on(t.alertClaim),
+    // The hourly cap counts claims inside a time window.
+    index("idx_error_log_fingerprint_at").on(t.fingerprint, t.at),
+  ],
+);

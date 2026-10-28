@@ -340,3 +340,71 @@ export function refundAlertEmailText(i: RefundAlertInput): string {
 export function refundAlertEmailSubject(i: RefundAlertInput): string {
   return `Solicitud de reembolso — ${i.order.shortCode}`;
 }
+
+type ErrorAlertInput = {
+  at: string;
+  /** request | scheduled */
+  kind: string;
+  /** The matched route pattern, never a real path. See the error_log schema. */
+  path: string | null;
+  method: string | null;
+  message: string;
+  stack: string | null;
+  /** How long the same error can stay quiet after this one, in minutes. */
+  quietMinutes: number;
+};
+
+/**
+ * Tells the operator the worker crashed. The only mail in here not addressed
+ * to a band or a buyer, so it is the only one in English and the only one that
+ * prints a stack trace: nobody but whoever maintains this receives it.
+ *
+ * It carries no band, order or buyer data on purpose — a crash in the buy flow
+ * would otherwise mail out a name, an email and a bank screenshot.
+ */
+export function errorAlertEmailHtml(i: ErrorAlertInput): string {
+  const where = [i.method, i.path].filter(Boolean).join(" ") || i.kind;
+
+  return `<!doctype html><html lang="en"><body style="margin:0;background:#f3f1ea;padding:26px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:560px;text-align:left">
+<tr><td style="font:700 20px/1.25 inherit;color:#191713;padding-bottom:12px">Coverr crashed</td></tr>
+<tr><td style="font:400 15px/1.7 inherit;color:#57534b;padding-bottom:16px">
+<b style="color:#191713">When:</b> ${escapeHtml(i.at)}<br>
+<b style="color:#191713">Where:</b> ${escapeHtml(where)}<br>
+<b style="color:#191713">Kind:</b> ${escapeHtml(i.kind)}
+</td></tr>
+<tr><td style="background:#fff;border:1px solid #ddd8cf;border-radius:10px;padding:14px 16px;font:400 15px/1.6 inherit;color:#57534b">
+${escapeHtml(i.message)}
+</td></tr>
+${
+  i.stack
+    ? `<tr><td style="height:10px"></td></tr>
+<tr><td style="background:#191713;border-radius:10px;padding:14px 16px;font:400 12px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#d6d0c5;white-space:pre-wrap;word-break:break-word">${escapeHtml(i.stack)}</td></tr>`
+    : ""
+}
+<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:20px">The same error stays quiet for up to the next ${i.quietMinutes} minutes so a crash loop cannot fill this mailbox. Every occurrence is still in the error_log table and in the Cloudflare logs.</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export function errorAlertEmailText(i: ErrorAlertInput): string {
+  const where = [i.method, i.path].filter(Boolean).join(" ") || i.kind;
+  return `Coverr crashed
+
+When:  ${i.at}
+Where: ${where}
+Kind:  ${i.kind}
+
+${i.message}
+
+${i.stack ?? "(no stack)"}
+
+The same error stays quiet for up to the next ${i.quietMinutes} minutes. Every occurrence is still in the error_log table and in the Cloudflare logs.`;
+}
+
+export function errorAlertEmailSubject(i: ErrorAlertInput): string {
+  // One line, and short enough that a phone notification shows the message
+  // rather than the word "error" four times.
+  const [firstLine = ""] = i.message.split("\n");
+  const first = firstLine.slice(0, 80);
+  return `Coverr error — ${first}`;
+}

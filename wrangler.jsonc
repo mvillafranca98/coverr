@@ -6,6 +6,11 @@
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+
+  // Without this, every stack trace in a crash alert points into the bundled
+  // worker — one enormous line, which tells you nothing. With it, the frames
+  // name the .ts file and line that actually threw.
+  "upload_source_maps": true,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
@@ -49,7 +54,16 @@
     }
   ],
   "vars": {
-    "APP_ORIGIN": "https://coverr.a-mencias99.workers.dev"
+    "APP_ORIGIN": "https://coverr.a-mencias99.workers.dev",
+
+    // Who hears about a crash. The operator, not a band: a band can do nothing
+    // about a stack trace. Not a secret — an address, in the open on purpose so
+    // `wrangler deploy --dry-run` shows whether alerting is wired up at all.
+    //
+    // It has to be the address this Resend account is registered under for as
+    // long as EMAIL_FROM is unset (see below), because the test sender
+    // delivers nowhere else.
+    "ALERT_EMAIL": "a.mencias99@gmail.com"
 
     // EMAIL_FROM is deliberately absent, and this is TEMPORARY.
     //
