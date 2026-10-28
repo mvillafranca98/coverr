@@ -11,7 +11,7 @@ Status values:
 - **N/A:** doesn't apply, or the thing it governs doesn't exist yet (say which)
 
 ## Profile
-Last audit: 2026-10-19, scope `all` (8 checklists, one subagent each). SEC-03, LCH-04, LCH-05, LCH-06, LCH-13, MKT-03, LCH-11, LEG-04, SEC-11, MKT-02, PERF-03 re-checked 2026-10-28.
+Last audit: 2026-10-19, scope `all` (8 checklists, one subagent each). SEC-03, LCH-04, LCH-05, LCH-06, LCH-13, MKT-03, LCH-11, LEG-04, SEC-11, MKT-02, PERF-03, SEC-08 re-checked 2026-10-28.
 Countries served: Honduras
 
 | Flag | On | Meaning | Note |
