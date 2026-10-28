@@ -207,6 +207,9 @@ out(
     "  refund_policy, created_at) VALUES",
 );
 out(`${orderRows.join(",\n")};`);
+// Revenue is summed from unit_amount (db/queries/event-totals.ts). Same
+// backfill as migration 0008, so the demo cannot drift from real data.
+out("UPDATE orders SET unit_amount = expected_amount / quantity WHERE quantity > 0;");
 out("");
 out(
   "INSERT INTO attendees (id, order_id, name, note, qr_token, checked_in_at, checked_in_by, checked_in_device) VALUES",

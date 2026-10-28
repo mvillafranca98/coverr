@@ -497,3 +497,6 @@ UPDATE orders SET
     (SELECT refund_policy FROM events WHERE events.id = orders.event_id), 'none'),
   refund_policy_text =
     (SELECT refund_policy_text FROM events WHERE events.id = orders.event_id);
+
+-- Revenue is summed from unit_amount; same backfill as migration 0008.
+UPDATE orders SET unit_amount = expected_amount / quantity WHERE quantity > 0;

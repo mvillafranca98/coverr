@@ -126,6 +126,7 @@ INSERT INTO orders (id, event_id, short_code, payer_name, payer_email, payer_pho
   ('ord_demo_087', 'evt_demo', '8CB6V0', 'Ramón Bustillo', 'ram.n.bustillo@ejemplo.com', '98559867', 1, NULL, 0, 'comp', 'confirmed', 'n/a', NULL, '24h', '2026-10-25T00:47:00Z'),
   ('ord_demo_088', 'evt_demo', 'TBKDSD', 'Katherine Nuila', 'katherine.nuila@ejemplo.com', '99518226', 1, NULL, 0, 'comp', 'confirmed', 'n/a', NULL, '24h', '2026-10-25T02:24:00Z'),
   ('ord_demo_089', 'evt_demo', 'TNZJQP', 'Johana Ordóñez', 'johana.ord..ez@ejemplo.com', '99789029', 1, NULL, 0, 'comp', 'confirmed', 'n/a', NULL, '24h', '2026-10-25T00:24:00Z');
+UPDATE orders SET unit_amount = expected_amount / quantity WHERE quantity > 0;
 
 INSERT INTO attendees (id, order_id, name, note, qr_token, checked_in_at, checked_in_by, checked_in_device) VALUES
   ('att_demo_001', 'ord_demo_001', 'Kevin Lagos', NULL, 'F06RRNA06TYVYY7NVZ0DB9', '2026-10-25T00:21:00Z', 'Puerta', 'demo'),
