@@ -7,6 +7,8 @@
  * never interpreted. The alert email escapes it again on the way out.
  */
 
+import { isRecord, parseJsonObject } from "./json";
+
 /** Far beyond any honest batch. Refused before it is parsed. */
 export const MAX_CLIENT_ERROR_BODY_CHARS = 20_000;
 
@@ -76,8 +78,8 @@ export function readClientErrorReports(input: {
   knownTokens: string[];
   userAgent: string | null;
 }): { page: unknown; reports: ClientErrorReport[] } {
-  const body = parseJson(input.rawBody);
-  if (!isRecord(body)) return { page: null, reports: [] };
+  const body = parseJsonObject(input.rawBody);
+  if (!body) return { page: null, reports: [] };
   const entries = Array.isArray(body.reports) ? body.reports : [];
 
   const reports = entries.slice(0, MAX_REPORTS_PER_BATCH).flatMap((entry): ClientErrorReport[] => {
@@ -106,16 +108,4 @@ export function readClientErrorReports(input: {
   });
 
   return { page: body.page, reports };
-}
-
-function parseJson(raw: string): unknown {
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

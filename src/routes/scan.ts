@@ -1,8 +1,10 @@
 import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { Hono } from "hono";
+import { Hono, type HonoRequest } from "hono";
 import * as s from "../db/schema";
 import { newId, newQrToken, newShortCode, nowIso } from "../lib/core";
+import { parseJsonObject } from "../lib/json";
+import { MAX_SCANNER_BODY_CHARS, readCashSale, readCheckinBatch } from "../lib/scan-request";
 
 type Bindings = {
   DB: D1Database;
@@ -14,6 +16,28 @@ type Bindings = {
 };
 
 export const scanApi = new Hono<{ Bindings: Bindings }>();
+
+type ScannerBody =
+  | { ok: true; value: Record<string, unknown> }
+  | { ok: false; status: 400 | 413; error: "bad_request" | "too_large" };
+
+/**
+ * The JSON object a scanner posted, or the reason it cannot be read.
+ *
+ * A body that is not JSON, or is JSON but not an object, is refused with a
+ * 400 instead of throwing. The real scanner never sends one, so it is a
+ * broken client or someone poking at the staff link — not a crash worth an
+ * alert. The size is capped before the body is read.
+ */
+async function readScannerBody(req: HonoRequest): Promise<ScannerBody> {
+  if (Number(req.header("Content-Length") ?? 0) > MAX_SCANNER_BODY_CHARS) {
+    return { ok: false, status: 413, error: "too_large" };
+  }
+  const raw = await req.text();
+  if (raw.length > MAX_SCANNER_BODY_CHARS) return { ok: false, status: 413, error: "too_large" };
+  const value = parseJsonObject(raw);
+  return value ? { ok: true, value } : { ok: false, status: 400, error: "bad_request" };
+}
 
 async function eventForToken(db: ReturnType<typeof drizzle>, token: string) {
   const rows = await db
@@ -128,10 +152,9 @@ scanApi.post("/:token/checkin", async (c) => {
   const found = await eventForToken(db, c.req.param("token"));
   if (!found) return c.json({ error: "not_found" }, 404);
 
-  const body = (await c.req.json()) as {
-    scans?: { t: string; at: string; device?: string }[];
-  };
-  const scans = Array.isArray(body.scans) ? body.scans.slice(0, 500) : [];
+  const body = await readScannerBody(c.req);
+  if (!body.ok) return c.json({ error: body.error }, body.status);
+  const scans = readCheckinBatch(body.value, nowIso());
   const results: {
     t: string;
     status: "ok" | "already" | "unknown" | "voided";
@@ -140,7 +163,6 @@ scanApi.post("/:token/checkin", async (c) => {
   }[] = [];
 
   for (const scan of scans) {
-    if (typeof scan?.t !== "string") continue;
     const hit = await db
       .select({
         id: s.attendees.id,
@@ -178,8 +200,8 @@ scanApi.post("/:token/checkin", async (c) => {
     await db
       .update(s.attendees)
       .set({
-        checkedInAt: scan.at ?? nowIso(),
-        checkedInDevice: scan.device ?? null,
+        checkedInAt: scan.at,
+        checkedInDevice: scan.device,
       })
       .where(eq(s.attendees.id, row.id));
     results.push({ t: scan.t, status: "ok" });
@@ -218,9 +240,9 @@ scanApi.post("/:token/cash", async (c) => {
   if (!found) return c.json({ error: "not_found" }, 404);
   const { event, band } = found;
 
-  const body = (await c.req.json()) as { quantity?: number; device?: string; comp?: boolean };
-  const quantity = Math.min(20, Math.max(1, Math.floor(Number(body.quantity) || 1)));
-  const isComp = body.comp === true;
+  const body = await readScannerBody(c.req);
+  if (!body.ok) return c.json({ error: body.error }, body.status);
+  const { quantity, comp: isComp, device } = readCashSale(body.value);
 
   const doorRule = await db
     .select()
@@ -247,7 +269,7 @@ scanApi.post("/:token/cash", async (c) => {
     status: "confirmed",
     verificationStatus: "manual_ok",
     bankSelected: null,
-    soldBy: body.device ?? null,
+    soldBy: device,
     createdAt: ts,
   });
 
@@ -262,7 +284,7 @@ scanApi.post("/:token/cash", async (c) => {
       qrToken: newQrToken(),
       checkedInAt: ts,
       checkedInBy: null,
-      checkedInDevice: body.device ?? null,
+      checkedInDevice: device,
     })),
   );
 
