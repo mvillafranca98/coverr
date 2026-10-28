@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { deleteProofsForEvents, proofObjectKey, proofPrefix } from "../src/lib/proof-storage";
+import {
+  deleteProofsForEvents,
+  proofObjectKey,
+  proofPrefix,
+  removeProofIfWriteFails,
+} from "../src/lib/proof-storage";
 
 /**
  * Deleting an account has to find every proof image the band has, including
@@ -68,5 +73,49 @@ describe("deleting an account's proofs", () => {
     const { bucket, deleteCalls } = fakeBucket([], 1000);
     expect(await deleteProofsForEvents(bucket, ["evt_empty"])).toBe(0);
     expect(deleteCalls).toEqual([]);
+  });
+});
+
+// A proof is stored before its order is written. If the order never gets
+// written, the proof must not stay behind with nothing pointing at it.
+describe("a purchase whose order fails to save", () => {
+  function recordingBucket(deleteFails = false) {
+    const deleted: string[] = [];
+    const bucket = {
+      async delete(key: string) {
+        if (deleteFails) throw new Error("R2 unavailable");
+        deleted.push(key);
+      },
+    };
+    return { bucket: bucket as unknown as R2Bucket, deleted };
+  }
+
+  it("keeps the proof when the writes succeed", async () => {
+    const { bucket, deleted } = recordingBucket();
+    const result = await removeProofIfWriteFails(bucket, "proofs/evt_1/ord_1", async () => "saved");
+    expect(result).toBe("saved");
+    expect(deleted).toEqual([]);
+  });
+
+  it("deletes the proof and still fails the request when a write fails", async () => {
+    const { bucket, deleted } = recordingBucket();
+    const failure = new Error("D1_ERROR: table orders has no column named unit_amount");
+    await expect(
+      removeProofIfWriteFails(bucket, "proofs/evt_1/ord_1", async () => {
+        throw failure;
+      }),
+    ).rejects.toBe(failure);
+    expect(deleted).toEqual(["proofs/evt_1/ord_1"]);
+  });
+
+  // The crash alert has to describe what actually broke, not the cleanup.
+  it("reports the original failure even when the delete fails too", async () => {
+    const { bucket } = recordingBucket(true);
+    const failure = new Error("D1_ERROR: network connection lost");
+    await expect(
+      removeProofIfWriteFails(bucket, "proofs/evt_1/ord_1", async () => {
+        throw failure;
+      }),
+    ).rejects.toBe(failure);
   });
 });

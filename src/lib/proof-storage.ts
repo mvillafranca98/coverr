@@ -15,6 +15,40 @@ export function proofObjectKey(eventId: string, orderId: string): string {
   return `${proofPrefix(eventId)}${orderId}`;
 }
 
+/**
+ * Runs the writes that make a stored proof belong to an order, and deletes
+ * the proof if they fail.
+ *
+ * A proof is stored before its order is written, so a failure in between —
+ * a database error, a deploy that went out ahead of its migration — would
+ * otherwise leave an image of somebody's bank transfer with no row pointing
+ * at it, and nothing would ever delete it.
+ *
+ * The write's own error is always rethrown, so the request still fails
+ * loudly and still alerts. A failure to delete is logged but never replaces
+ * that error; the nightly sweep (`jobs/sweep-proof-files.ts`) removes
+ * whatever is left once the event's retention ends.
+ */
+export async function removeProofIfWriteFails<T>(
+  bucket: R2Bucket,
+  key: string,
+  write: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await write();
+  } catch (writeError) {
+    try {
+      await bucket.delete(key);
+    } catch (deleteError) {
+      console.error(
+        "[proofs] could not remove a proof after its order failed to save; the nightly sweep will:",
+        deleteError,
+      );
+    }
+    throw writeError;
+  }
+}
+
 /** R2's ceiling for one list page and for one bulk delete. */
 const R2_BATCH = 1000;
 

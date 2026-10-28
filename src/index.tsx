@@ -3,6 +3,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { purgeOldErrors } from "./jobs/purge-errors";
 import { purgeExpiredProofs } from "./jobs/purge-proofs";
 import { reportError } from "./jobs/report-error";
+import { sweepExpiredProofFiles } from "./jobs/sweep-proof-files";
 import { isCanonicalHost } from "./lib/crawl";
 import { admin } from "./routes/admin";
 import { buyRoutes } from "./routes/public/buy";
@@ -174,6 +175,7 @@ export default {
       );
 
     sweep("purge-proofs", purgeExpiredProofs(env));
+    sweep("sweep-proof-files", sweepExpiredProofFiles(env));
     sweep("purge-errors", purgeOldErrors(env));
   },
 };

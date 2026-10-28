@@ -4,6 +4,16 @@ import { slugify } from "../../lib/core";
 import * as s from "../schema";
 
 /**
+ * Every event's id and start time, for the nightly proof-file sweep. Small by
+ * nature — a band runs a few gigs a month — and read once a night.
+ */
+export async function listEventStarts(
+  db: DrizzleD1Database<typeof s>,
+): Promise<{ id: string; startsAt: string }[]> {
+  return db.select({ id: s.events.id, startsAt: s.events.startsAt }).from(s.events);
+}
+
+/**
  * The event behind a public `/e/:slug` link, with the band that runs it.
  *
  * Deliberately not band-scoped: the buyer has no session, and the slug is the

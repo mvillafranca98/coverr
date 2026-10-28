@@ -100,6 +100,20 @@ export function purgeAfter(eventStartsAt: string): string {
   return d.toISOString();
 }
 
+/**
+ * True once every proof for this event is past its retention window — the
+ * same instant `purgeAfter` stamps on each proof row, worked out from the
+ * event itself so it also covers files that never got a row.
+ *
+ * An unreadable start date is never due. Event dates are validated when the
+ * event is saved, so this cannot happen in practice, and deleting a band's
+ * proofs early is not a guess worth making.
+ */
+export function proofsExpired(eventStartsAt: string, now: Date): boolean {
+  if (Number.isNaN(Date.parse(eventStartsAt))) return false;
+  return Date.parse(purgeAfter(eventStartsAt)) <= now.getTime();
+}
+
 export async function sha256Hex(buf: ArrayBuffer): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", buf);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");

@@ -9,6 +9,7 @@ import {
   normalizeEmail,
   normalizePhone,
   PROOF_RETENTION_DAYS,
+  proofsExpired,
   purgeAfter,
   slugify,
 } from "../src/lib/core";
@@ -142,6 +143,31 @@ describe("purgeAfter", () => {
   // The privacy notice states this number to the people whose data it is.
   it("is the 30 days the privacy notice promises", () => {
     expect(PROOF_RETENTION_DAYS).toBe(30);
+  });
+});
+
+// The nightly file sweep decides from this, so it has to agree with the
+// instant stamped on every proof row by purgeAfter.
+describe("proofsExpired", () => {
+  const event = "2026-10-24T21:00:00-06:00";
+  const due = new Date(purgeAfter(event));
+
+  it("is false the moment before the stamped deletion time", () => {
+    expect(proofsExpired(event, new Date(due.getTime() - 1))).toBe(false);
+  });
+
+  it("is true from the stamped deletion time on", () => {
+    expect(proofsExpired(event, due)).toBe(true);
+    expect(proofsExpired(event, new Date(due.getTime() + 86400000))).toBe(true);
+  });
+
+  it("is false for an event that has not happened yet", () => {
+    expect(proofsExpired(event, new Date("2026-10-20T00:00:00Z"))).toBe(false);
+  });
+
+  // Deleting a band's proofs early is not a guess worth making.
+  it("never treats an unreadable date as expired", () => {
+    expect(proofsExpired("pronto", new Date("2030-01-01T00:00:00Z"))).toBe(false);
   });
 });
 

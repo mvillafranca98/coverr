@@ -24,7 +24,7 @@ import {
   purgeAfter,
   sha256Hex,
 } from "../../lib/core";
-import { proofObjectKey } from "../../lib/proof-storage";
+import { proofObjectKey, removeProofIfWriteFails } from "../../lib/proof-storage";
 import { checkProofBytes, readPurchaseForm } from "../../lib/purchase-form";
 import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
 import type { PublicEnv } from "./context";
@@ -134,56 +134,60 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
     customMetadata: { orderId, eventId: event.id, sha256 },
   });
 
-  const shortCode = await uniqueShortCode(
-    db,
-    band.slug,
-    preferredShortCode ?? newShortCode(band.slug),
-  );
   const proofId = newId("prf");
 
-  await db.insert(s.orders).values({
-    id: orderId,
-    eventId: event.id,
-    shortCode,
-    payerName,
-    payerEmail: normalizeEmail(payerEmail),
-    payerPhone: normalizePhone(payerPhone),
-    quantity,
-    priceRuleId: rule.id,
-    unitAmount: rule.amount,
-    expectedAmount,
-    channel: "online",
-    status: "confirmed",
-    verificationStatus: "unmatched",
-    bankSelected,
-    soldBy: null,
-    // Frozen at purchase: the buyer consented to this exact wording, so editing
-    // the event later must not move the window under them.
-    refundPolicy: event.refundPolicy,
-    refundPolicyText: event.refundPolicyText,
-    createdAt: ts,
-  });
-  await db.insert(s.attendees).values(
-    attendees.map((attendee) => ({
-      id: newId("att"),
+  // From here to the proof row, a failure must not strand the file above.
+  await removeProofIfWriteFails(c.env.PROOFS, fileKey, async () => {
+    const shortCode = await uniqueShortCode(
+      db,
+      band.slug,
+      preferredShortCode ?? newShortCode(band.slug),
+    );
+
+    await db.insert(s.orders).values({
+      id: orderId,
+      eventId: event.id,
+      shortCode,
+      payerName,
+      payerEmail: normalizeEmail(payerEmail),
+      payerPhone: normalizePhone(payerPhone),
+      quantity,
+      priceRuleId: rule.id,
+      unitAmount: rule.amount,
+      expectedAmount,
+      channel: "online",
+      status: "confirmed",
+      verificationStatus: "unmatched",
+      bankSelected,
+      soldBy: null,
+      // Frozen at purchase: the buyer consented to this exact wording, so editing
+      // the event later must not move the window under them.
+      refundPolicy: event.refundPolicy,
+      refundPolicyText: event.refundPolicyText,
+      createdAt: ts,
+    });
+    await db.insert(s.attendees).values(
+      attendees.map((attendee) => ({
+        id: newId("att"),
+        orderId,
+        name: attendee.name,
+        note: attendee.note,
+        qrToken: newQrToken(),
+        checkedInAt: null,
+        checkedInBy: null,
+        checkedInDevice: null,
+      })),
+    );
+    await insertUnreadProof(db, {
+      id: proofId,
       orderId,
-      name: attendee.name,
-      note: attendee.note,
-      qrToken: newQrToken(),
-      checkedInAt: null,
-      checkedInBy: null,
-      checkedInDevice: null,
-    })),
-  );
-  await insertUnreadProof(db, {
-    id: proofId,
-    orderId,
-    fileKey,
-    contentType: checked.contentType,
-    fileSize: proof.size,
-    sha256,
-    uploadedAt: ts,
-    purgeAfter: purgeAfter(event.startsAt),
+      fileKey,
+      contentType: checked.contentType,
+      fileSize: proof.size,
+      sha256,
+      uploadedAt: ts,
+      purgeAfter: purgeAfter(event.startsAt),
+    });
   });
 
   // Deterministic check that needs no OCR. The QR is never withheld — a flag is
