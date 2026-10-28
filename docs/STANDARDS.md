@@ -11,7 +11,7 @@ Status values:
 - **N/A:** doesn't apply, or the thing it governs doesn't exist yet (say which)
 
 ## Profile
-Last audit: 2026-10-19, scope `all` (8 checklists, one subagent each). SEC-03, LCH-04, LCH-05, LCH-06, LCH-13, MKT-03 re-checked 2026-10-28.
+Last audit: 2026-10-19, scope `all` (8 checklists, one subagent each). SEC-03, LCH-04, LCH-05, LCH-06, LCH-13, MKT-03, LCH-11 re-checked 2026-10-28.
 Countries served: Honduras
 
 | Flag | On | Meaning | Note |
@@ -137,6 +137,6 @@ Every service that receives user data, including hosting, database and auth prov
 | LCH-08 | high | Signup works for a stranger. | FAIL | Blocked by LCH-07 and worse than untested: signup inserts the band row then relies entirely on the emailed link, and admin has no password path, so a stranger creates a band they can never reach and nobody can log into production admin | 2026-10-19 |
 | LCH-09 | high | Key flows pass an end-to-end run. | FAIL | No e2e tests and no runner. The one real production run passed transfer, upload, extraction and QR render, then failed at email - so the key flow is verified broken, not merely unverified | 2026-10-19 |
 | LCH-10 | medium | Real people have tried it. | FAIL | One real buyer. Production is the seeded baseline plus the single DAY-8FAT purchase, with no invite list or feedback log. The known-issues half is met in docs/SPEC.md | 2026-10-19 |
-| LCH-11 | medium | You can roll back in minutes. | PARTIAL | Migrations are additive and rollback-safe, and five deploy versions exist as rollback targets. Nothing documents the procedure, every deployment has an empty message so picking a target is guesswork, and no rollback has ever been performed | 2026-10-19 |
+| LCH-11 | medium | You can roll back in minutes. | MANUAL | docs/RUNBOOK.md, Rolling back: the commands, how to pick a version, how to undo a rollback, and when not to roll back. Corrects the earlier "rollback-safe": every migration is additive so old code still runs, but each one has a consequence while an older version is live - before 0009 refunded tickets scan ok at the door, before 0008 new orders are written with unit_amount 0 and need the repair statement in the runbook. `npm run deploy` now goes through scripts/deploy.mjs, which tags every version with its short commit hash and the commit subject; `wrangler deployments list` showed all ten recent versions with message and tag `-`. Dry run verified. **Remaining (you):** rehearse one rollback and roll-forward on a day with nothing on sale | 2026-10-28 |
 | LCH-12 | medium | Domain and HTTPS are solid. | FAIL | No custom domain - production is the workers.dev subdomain. HTTPS itself is solid. APP_ORIGIN builds QR and magic links, so already-issued URLs break at any cutover and need a redirect | 2026-10-19 |
 | LCH-13 | medium | Legal and support links are live. | PARTIAL | /privacidad and /terminos are live and linked from the footer of the buy, confirmation, recovery and refund pages, the admin layout, the landing page and the legal pages themselves (src/views/legal/links.tsx). Each event's refund policy is shown at checkout (ConsentStep, src/views/buy/steps.tsx:226). **Remaining:** the support contact, coverr@macawly.dev (src/views/legal/constants.ts:17), appears only inside the two legal pages, and nothing confirms that mailbox receives mail - send it a test message | 2026-10-28 |
