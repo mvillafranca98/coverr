@@ -4,6 +4,29 @@ import TOKENS_CSS from "../styles/tokens.css";
 import { BrandIcons } from "./brand";
 import { ErrorReporter } from "./error-reporter";
 
+/**
+ * The card a shared link shows in WhatsApp, Instagram and the rest.
+ *
+ * Every page that names its own URL gets the buyer card, `og-event.png`
+ * (made by scripts/brand.mjs). The event page is the link bands paste
+ * everywhere, so the card speaks to the person buying, and the link's own
+ * title and description name the actual gig. The landing page's `og.png`
+ * pitches Coverr to bands and would read as somebody else's ad here.
+ *
+ * Built from the page's own URL so it is absolute on whatever origin served it.
+ */
+const ShareCard: FC<{ pageUrl: string }> = ({ pageUrl }) => (
+  <>
+    <meta property="og:image" content={new URL("/og-event.png", pageUrl).toString()} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Coverr: comprá tu boleto pagando directo a la banda y recibí tu QR al instante."
+    />
+  </>
+);
+
 export const Layout: FC<
   PropsWithChildren<{
     title: string;
@@ -36,7 +59,10 @@ export const Layout: FC<
       {description ? <meta property="og:description" content={description} /> : null}
       <meta property="og:type" content="website" />
       {ogUrl ? <meta property="og:url" content={ogUrl} /> : null}
-      <meta name="twitter:card" content="summary_large_image" />
+      {ogUrl ? <ShareCard pageUrl={ogUrl} /> : null}
+      {/* A large card with no image renders as an empty frame, so a page
+          without one asks for the small card instead. */}
+      <meta name="twitter:card" content={ogUrl ? "summary_large_image" : "summary"} />
       <BrandIcons />
       {/* The display face sets every heading here. Preloaded so it usually
           lands before first paint; when it does not, font-display:swap shows

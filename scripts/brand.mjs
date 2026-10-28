@@ -10,7 +10,8 @@ import { readFileSync, writeFileSync } from "node:fs";
  *   public/icon-512.png           PWA icon, transparent
  *   public/icon-maskable-512.png  PWA icon with the safe zone Android crops to
  *   public/og.png                 1200x630 card for links shared in WhatsApp,
- *                                 Instagram and the rest
+ *                                 Instagram and the rest — the landing page's
+ *   public/og-event.png           the same, for event links, written for buyers
  *
  *   node scripts/brand.mjs
  *
@@ -56,13 +57,45 @@ const iconPage = (size, scale, bg) => `<!doctype html><html><body style="margin:
     ${markSvg(Math.round(size * scale))}
   </div></body></html>`;
 
-const ogPage = () => `<!doctype html><html><head><meta charset="utf-8"><style>
+/**
+ * The two share cards, same composition, different reader.
+ *
+ * `og.png` is for the landing page: it pitches Coverr to bands. Event links
+ * are opened by buyers, who would be confused by an ad addressed to someone
+ * else, so they get `og-event.png`, which says what buying through Coverr is
+ * like. The link's own title and description name the actual gig; the image
+ * never does, so one card serves every event.
+ */
+const SHARE_CARDS = [
+  {
+    file: "og.png",
+    headline: "Vendé tus boletos sin que el dinero pase por <em>nadie más</em>.",
+    facts: ["Preventa", "QR al instante", "Entrada sin señal"],
+    ticket: {
+      band: "Tu banda",
+      event: "Tu próximo toque",
+      meta: ["Sábado", "8:00 pm", "A tu cuenta"],
+    },
+    sticker: "¡QR al instante!",
+  },
+  {
+    file: "og-event.png",
+    headline: "Comprá tu boleto <em>sin vueltas</em>.",
+    sub: "Transferís a la cuenta de la banda, subís el comprobante y tu QR aparece en el momento.",
+    facts: ["Pagás directo a la banda", "QR al instante", "Sin crear cuenta"],
+    ticket: { band: "La banda", event: "El toque", meta: ["Sábado", "8:00 pm", "Preventa"] },
+    sticker: "¡Entrás con tu QR!",
+  },
+];
+
+const ogPage = (card) => `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:"Archivo Black";src:url(${font("archivo-black-latin-400-normal.woff2")}) format("woff2")}
 *{box-sizing:border-box}
 body{margin:0;width:1200px;height:630px;overflow:hidden;position:relative;background:#fff4de;color:#111;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
 .copy{position:absolute;left:68px;top:56px;width:650px}
 .mark{display:inline-flex;align-items:center;gap:12px;padding:8px 16px 8px 10px;border:3px solid #111;border-radius:14px;background:#ffd43b;box-shadow:5px 5px 0 #111;font-family:"Archivo Black";font-size:30px;letter-spacing:-.02em}
 h1{margin:44px 0 0;font-family:"Archivo Black";font-weight:400;font-size:64px;line-height:1.16;letter-spacing:-.035em}
+.sub{margin:26px 0 0;max-width:600px;font-size:26px;line-height:1.35;font-weight:700;text-wrap:balance}
 em{font-style:normal;white-space:nowrap;padding:0 .14em;border:3px solid #111;border-radius:.18em;background:#ffd43b;-webkit-box-decoration-break:clone}
 .facts{position:absolute;left:68px;bottom:52px;display:flex;gap:12px}
 .facts span{padding:7px 14px;border:3px solid #111;border-radius:999px;background:#fff;font-weight:800;font-size:18px}
@@ -85,16 +118,17 @@ em{font-style:normal;white-space:nowrap;padding:0 .14em;border:3px solid #111;bo
 </style></head><body>
 <div class="copy">
   <div class="mark">${markSvg(40)}<span>coverr</span></div>
-  <h1>Vendé tus boletos sin que el dinero pase por <em>nadie más</em>.</h1>
+  <h1>${card.headline}</h1>
+  ${card.sub ? `<p class="sub">${card.sub}</p>` : ""}
 </div>
-<div class="facts"><span>✓ Preventa</span><span>✓ QR al instante</span><span>✓ Entrada sin señal</span></div>
+<div class="facts">${card.facts.map((fact) => `<span>✓ ${fact}</span>`).join("")}</div>
 <div class="disc"></div>
 <div class="tix"><div class="card">
   <div class="head">Preventa · Admite 1</div>
   <div class="body">
-    <div class="band">Tu banda</div>
-    <div class="event">Tu próximo toque</div>
-    <div class="meta"><span>Sábado</span><span>8:00 pm</span><span>A tu cuenta</span></div>
+    <div class="band">${card.ticket.band}</div>
+    <div class="event">${card.ticket.event}</div>
+    <div class="meta">${card.ticket.meta.map((item) => `<span>${item}</span>`).join("")}</div>
   </div>
   <div class="perf"></div>
   <div class="stub">
@@ -102,7 +136,7 @@ em{font-style:normal;white-space:nowrap;padding:0 .14em;border:3px solid #111;bo
     <div><div class="code">COVERR</div><div class="small">Boleto 1 de 1</div></div>
   </div>
 </div></div>
-<div class="sticker">¡QR al instante!</div>
+<div class="sticker">${card.sticker}</div>
 </body></html>`;
 
 const browser = await chromium.launch({ channel: "chrome" });
@@ -126,11 +160,14 @@ try {
     console.log(`public/${s.file}`);
   }
 
-  const og = await browser.newPage({ viewport: { width: 1200, height: 630 } });
-  await og.setContent(ogPage(), { waitUntil: "load" });
-  await og.evaluate(() => document.fonts.ready);
-  await og.screenshot({ path: "public/og.png" });
-  console.log("public/og.png");
+  for (const card of SHARE_CARDS) {
+    const og = await browser.newPage({ viewport: { width: 1200, height: 630 } });
+    await og.setContent(ogPage(card), { waitUntil: "load" });
+    await og.evaluate(() => document.fonts.ready);
+    await og.screenshot({ path: `public/${card.file}` });
+    await og.close();
+    console.log(`public/${card.file}`);
+  }
 } finally {
   await browser.close();
 }
