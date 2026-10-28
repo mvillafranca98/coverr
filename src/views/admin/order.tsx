@@ -133,7 +133,15 @@ export const OrderPage: FC<{
       <dt>Banco</dt>
       <dd>{order.bankSelected ? bankLabel(order.bankSelected) : <span class="muted">—</span>}</dd>
       <dt>Monto</dt>
-      <dd>{formatLps(order.expectedAmount)}</dd>
+      <dd>
+        {formatLps(order.expectedAmount)}
+        {attendees.length > 1 ? (
+          <span class="muted">
+            {" "}
+            · {attendees.length} × {formatLps(order.unitAmount)}
+          </span>
+        ) : null}
+      </dd>
     </dl>
 
     <h2>Asistentes</h2>

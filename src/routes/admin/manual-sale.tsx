@@ -123,6 +123,7 @@ manualSaleRoutes.post("/e/:slug/venta", async (c) => {
     payerPhone: null,
     quantity,
     priceRuleId: null,
+    unitAmount: unitPrice,
     expectedAmount: unitPrice * quantity,
     channel,
     status: "confirmed",

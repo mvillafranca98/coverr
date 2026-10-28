@@ -231,6 +231,7 @@ scanApi.post("/:token/cash", async (c) => {
     payerPhone: null,
     quantity,
     priceRuleId: isComp ? null : (doorRule[0]?.id ?? null),
+    unitAmount: unit,
     expectedAmount: unit * quantity,
     channel: isComp ? "comp" : "door_cash",
     status: "confirmed",

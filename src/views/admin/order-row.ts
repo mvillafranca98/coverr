@@ -14,6 +14,7 @@ export type OrderRow = {
   payerEmail: string;
   payerPhone: string | null;
   quantity: number;
+  unitAmount: number;
   expectedAmount: number;
   channel: string;
   status: string;

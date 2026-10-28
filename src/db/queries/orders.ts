@@ -89,6 +89,8 @@ export type EventOrderRow = {
   payerEmail: string;
   payerPhone: string | null;
   quantity: number;
+  /** centavos per ticket as sold, so a total is never divided to find it. */
+  unitAmount: number;
   expectedAmount: number;
   channel: string;
   status: string;
@@ -150,6 +152,7 @@ export async function listOrdersForEvent(
       payerEmail: s.orders.payerEmail,
       payerPhone: s.orders.payerPhone,
       quantity: s.orders.quantity,
+      unitAmount: s.orders.unitAmount,
       expectedAmount: s.orders.expectedAmount,
       channel: s.orders.channel,
       status: s.orders.status,

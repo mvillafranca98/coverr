@@ -134,7 +134,17 @@ export const orders = sqliteTable(
     payerPhone: text("payer_phone"),
     quantity: integer("quantity").notNull(),
     priceRuleId: text("price_rule_id").references(() => priceRules.id),
-    /** centavos; quantity * rule amount at time of purchase */
+    /**
+     * centavos per ticket, frozen at the sale.
+     *
+     * Today this equals `expectedAmount / quantity` on every row, because both
+     * write paths multiply. It is stored anyway: a partial refund changes the
+     * total without changing what a ticket cost, and the moment that lands the
+     * division stops being true. Storing it now means the figure a band reads
+     * is the one it was sold at, not an arithmetic guess that used to work.
+     */
+    unitAmount: integer("unit_amount").notNull(),
+    /** centavos; the order total as quoted. Never recomputed from the rule. */
     expectedAmount: integer("expected_amount").notNull(),
     /** online | door_online | door_cash | manual | comp */
     channel: text("channel").notNull(),

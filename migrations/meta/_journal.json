@@ -57,6 +57,13 @@
       "when": 1793204323189,
       "tag": "0007_platform_flags",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793205432792,
+      "tag": "0008_order_unit_amount",
+      "breakpoints": true
     }
   ]
 }

@@ -606,6 +606,43 @@ now reads L2. The number is right; the label describing it is not.
 - Warn when editing a rule that already has sales against it: *"23 órdenes se vendieron con esta
   regla; sus montos no cambian."* Makes the freeze visible instead of surprising.
 
+### Partly fixed, partly withdrawn — 2026-10-28
+
+Two of the three parts above turned out not to be real. Checked before building, which is the
+only reason this is not a column nobody needed.
+
+**The label drift does not exist.** Nothing in the product joins a price rule's label onto an
+order — `priceRuleId` is written at purchase and never read for display. The word *Taquilla* on
+the orders list is the **channel** label (`views/admin/order-row.ts`, `door_online: "Taquilla"`),
+which is correct and never changes. Rule labels are hardcoded at event creation in
+`initialPriceRules` as *Preventa* and *Taquilla*, and the settings form edits only `amount`,
+`maxQty`, `startsAt` and `endsAt`. A label therefore cannot diverge from what an order was sold
+under, and snapshotting it would add a column incapable of differing from its source. Not built.
+Revisit the moment tiers become editable, which the comment on `initialPriceRules` already
+anticipates.
+
+**The warning already existed.** `views/setup/event-settings.tsx` has carried it since the event
+settings form was written: *"Ya se vendieron N boletos. Cambiar los precios sólo afecta compras
+nuevas — las órdenes existentes conservan el precio que pagaron."* Wired from `soldCount`. The
+wording says precisely what the finding asked for.
+
+**What was genuinely missing: the per-ticket price.** The order page showed a total and nothing
+else — `Monto: L500.00` for two tickets, with the quantity visible only by counting rows in the
+attendee table. To learn what a ticket was sold at you divided, and that division is about to
+stop being true: partial refunds (**F13**) change an order's total without changing what a ticket
+cost.
+
+So `orders.unit_amount` is now frozen at the sale by all three write paths — online purchase,
+door cash and comp, and the manual sale — and the order page reads `L500.00 · 2 × L250.00`.
+Migration `0008` backfills it from `expected_amount / quantity`, which is exact for every
+existing row because every path multiplies; verified against production first (10 rows, none
+indivisible, no quantity below 1).
+
+Verified by reproducing QA 7 locally: three orders sold at the L250 door price, then the rule
+changed to L2. The rule reads L2.00, all three orders keep `unit_amount` 25000 and their original
+totals, the comp stays at 0, and the order page still says `2 × L250.00`. The data was always
+right — now the page says what it was sold at instead of making the band work it out.
+
 
 ---
 

@@ -149,6 +149,7 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
     payerPhone: normalizePhone(payerPhone),
     quantity,
     priceRuleId: rule.id,
+    unitAmount: rule.amount,
     expectedAmount,
     channel: "online",
     status: "confirmed",
