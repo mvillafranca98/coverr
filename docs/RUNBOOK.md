@@ -56,6 +56,54 @@ Verified end to end locally on 2026-10-28 — sales off returns 503 on the buy p
 the POST, sales on sells normally, billing on rewrites `/terminos`. Not yet exercised against
 production, which needs the migration deployed first.
 
+## Health check
+
+`GET /health` answers 200 when everything a purchase needs is reachable, and 503 naming what
+is not. It exists for an external monitor; `/` cannot do this job, because the landing page
+renders without touching the database and stays green through a complete D1 outage.
+
+```bash
+curl -s https://coverr.a-mencias99.workers.dev/health
+```
+
+```json
+{"ok":true,"database":"ok","proofs":"ok"}
+```
+
+The body never carries error text. The detail is in the log as a `[health]` line — Workers
+Logs in the dashboard, or `npx wrangler tail` while it is happening.
+
+| Field | State | What it means | What to do |
+|---|---|---|---|
+| `database` | `behind` | D1 answers, but the migration this deploy was built against has not been applied. Pages load; **every purchase fails** on the missing column. | `npm run db:migrate:remote`. This is the deploy-before-migrate mistake, and running the migration is the fix. |
+| `database` | `down` | D1 refused the query. Nothing loads that reads data. | Check the Cloudflare status page and the `[health]` log line. Nothing in Coverr fixes a D1 outage. Scanners that already cached the list keep checking people in offline. |
+| `database` | `timeout` | D1 took longer than 5 seconds. | Same places as `down`. One slow answer can be noise; several in a row are not. |
+| `proofs` | `down` or `timeout` | R2 is unreachable. The proof is stored before the order is written, so a buyer gets the crash page and **no order exists**. The crash page tells anyone who already transferred to write in. | Check the Cloudflare status page. Expect messages from buyers who paid and have no ticket; their transfers will be in the band's bank, not in Coverr. |
+
+Email and proof extraction are deliberately not probed. Both run after the response, the QR
+issues without them, and their failures already reach you through the crash alerts. Probing
+the vision API here would also be a paid call every few minutes.
+
+### The monitor
+
+The worker cannot watch itself — if it is down, so is anything it would run — so this has to be
+an outside service. Any uptime monitor works. What it needs:
+
+- URL `https://coverr.a-mencias99.workers.dev/health` (update it when the custom domain lands, LCH-12)
+- Every 5 minutes or more often
+- Alert on any status other than 200
+- Alerts to your own inbox from the monitoring service itself — **not** through Coverr's Resend
+  account, which is one of the things that can be broken when the alert fires
+
+One monitor is enough. A 200 from `/health` already proves the worker is serving requests.
+
+### Not yet run against production
+
+Verified locally on 2026-10-28 in all three states: healthy (200), the 0009 migration row
+removed (503, `database: behind`) and the migrations table made unreadable (503,
+`database: down`), with the local database restored afterwards. `HEAD` answers like `GET`, for
+monitors that use it. Not yet deployed, and no monitor is set up.
+
 ## Backup and restore
 
 ### What protects the data today

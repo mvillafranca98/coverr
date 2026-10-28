@@ -7,6 +7,7 @@ import { admin } from "./routes/admin";
 import { buyRoutes } from "./routes/public/buy";
 import { confirmationRoutes } from "./routes/public/confirmation";
 import type { Bindings, PublicEnv } from "./routes/public/context";
+import { healthRoutes } from "./routes/public/health";
 import { landingRoutes } from "./routes/public/landing";
 import { legalRoutes } from "./routes/public/legal";
 import { purchaseRoutes } from "./routes/public/purchase";
@@ -93,6 +94,7 @@ app.route("/api/scan", scanApi);
 app.route("/", signupRoutes);
 app.route("/", legalRoutes);
 app.route("/", refundRoutes);
+app.route("/", healthRoutes);
 
 app.get("/admin/", (c) => c.redirect("/admin", 301));
 app.route("/admin", admin);
