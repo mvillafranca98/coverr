@@ -23,7 +23,7 @@ import {
   purgeAfter,
   sha256Hex,
 } from "../../lib/core";
-import { readPurchaseForm } from "../../lib/purchase-form";
+import { checkProofBytes, readPurchaseForm } from "../../lib/purchase-form";
 import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
 import type { PublicEnv } from "./context";
 
@@ -107,6 +107,13 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
   }
 
   const bytes = await proof.arrayBuffer();
+
+  // The type comes from the bytes, never from what the browser declared. A
+  // file that says image/png and holds HTML would otherwise be stored and
+  // later served back into an admin session as a page. See lib/file-type.ts.
+  const checked = checkProofBytes(bytes);
+  if (!checked.ok) return backToForm(checked.message, checked.field);
+
   const sha256 = await sha256Hex(bytes);
 
   const orderId = newId("ord");
@@ -114,7 +121,7 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
   const fileKey = `proofs/${event.id}/${orderId}`;
 
   await c.env.PROOFS.put(fileKey, bytes, {
-    httpMetadata: { contentType: proof.type || "application/octet-stream" },
+    httpMetadata: { contentType: checked.contentType },
     customMetadata: { orderId, eventId: event.id, sha256 },
   });
 
@@ -162,7 +169,7 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
     id: proofId,
     orderId,
     fileKey,
-    contentType: proof.type || "application/octet-stream",
+    contentType: checked.contentType,
     fileSize: proof.size,
     sha256,
     uploadedAt: ts,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readPurchaseForm } from "../src/lib/purchase-form";
+import { checkProofBytes, readPurchaseForm } from "../src/lib/purchase-form";
 
 /**
  * The checkout form, which is the most consequential validation in the
@@ -139,5 +139,39 @@ describe("money never comes from the client", () => {
       expect(Object.keys(r.values)).not.toContain("priceRuleId");
       expect(Object.keys(r.values)).not.toContain("expectedAmount");
     }
+  });
+});
+
+describe("checkProofBytes", () => {
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
+
+  it("accepts a real screenshot and reports its true type", () => {
+    const r = checkProofBytes(png);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.contentType).toBe("image/png");
+  });
+
+  it("refuses anything else, pointing at the upload", () => {
+    const r = checkProofBytes(new TextEncoder().encode("<script>alert(1)</script>"));
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.field).toBe("proof");
+      expect(r.message).toContain("imagen");
+    }
+  });
+
+  // The buyer did nothing wrong, so the message has to say what to do instead
+  // of just refusing them while they stand in a queue.
+  it("tells an iPhone buyer how to get a readable file", () => {
+    const heic = new Uint8Array([
+      0,
+      0,
+      0,
+      0x18,
+      ...[..."ftypheic    "].map((c) => c.charCodeAt(0)),
+    ]);
+    const r = checkProofBytes(heic);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.message).toMatch(/captura|JPG/);
   });
 });

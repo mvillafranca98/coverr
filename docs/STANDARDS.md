@@ -11,7 +11,7 @@ Status values:
 - **N/A:** doesn't apply, or the thing it governs doesn't exist yet (say which)
 
 ## Profile
-Last audit: 2026-10-19, scope `all` (8 checklists, one subagent each)
+Last audit: 2026-10-19, scope `all` (8 checklists, one subagent each). SEC-03, LCH-05 re-checked 2026-10-28.
 Countries served: Honduras
 
 | Flag | On | Meaning | Note |
@@ -56,7 +56,7 @@ Every service that receives user data, including hosting, database and auth prov
 |---|---|---|---|---|---|
 | SEC-01 | critical | No secrets in client code or the repo. | PASS | No key material tracked; only placeholders in .dev.vars.example:7; .gitignore:10-14; no NEXT_PUBLIC_/VITE_ vars | 2026-10-19 |
 | SEC-02 | critical | Every table or collection has access rules. | PASS | D1 reachable only from the Worker (wrangler.jsonc:14-20); no DB SDK in any client bundle | 2026-10-19 |
-| SEC-03 | critical | User files live in private storage. | PARTIAL | R2 private, admin-gated, no-store, 10MB cap. No server-side file-type check - purchase-form.ts:57-63 trusts the client Content-Type, so an uploaded text/html is stored XSS inside an admin session. Reject unless isReadableProof() passes; serve non-images nosniff + attachment | 2026-10-19 |
+| SEC-03 | critical | User files live in private storage. | PASS | R2 private, admin-gated, no-store, 10MB cap, and the type is now decided from the bytes. lib/file-type.ts sniffs magic numbers (PNG, JPEG, GIF, WebP, PDF) and the route stores that, never `proof.type` - purchase.tsx:109. HEIC/HEIF/AVIF are told apart from junk so an iPhone buyer gets an instruction rather than a refusal. Serving is clamped independently, which also covers rows written before the check existed: images inline, PDF as attachment, anything else octet-stream attachment. SVG is never inline. Verified live against a running worker: HTML bytes named comprobante.png and declared image/png are refused with no order and no object (orders 221 -> 221); a genuine PNG declared text/html is still stored as image/png, so the claim is ignored in both directions; a row forced to text/html serves as octet-stream attachment. 18 tests | 2026-10-28 |
 | SEC-04 | critical | Authorization is checked on the server for every request that touches user data. | PASS | Fixed 2026-10-19 in two passes. (1) findOrderInEvent scopes all four admin order mutations to the event; proved by exploit, a second band renamed another band's attendee before the fix and gets 404 after. (2) A sweep of every mutation and client-supplied foreign key found one more: POST /banda/adelanto accepted any member_id, leaking another band's member name onto the attacker's page — now validated via findBandMember/findBandEventById, with the render join band-constrained as well. All other mutations verified scoped: band-settings by session bandId, event-settings and money by a band-scoped event, scan.ts by the staff token's event, purchase.tsx by a locally generated id | 2026-10-19 |
 | SEC-05 | high | Auth endpoints are protected against abuse. | PARTIAL | EMAIL_LIMIT on login/registro/recuperar; identical responses; 15-min HMAC with exp enforced (auth.ts:66). Magic links are replayable within the window - mark a jti used on first redemption | 2026-10-19 |
 | SEC-06 | high | Anything that costs money per call is protected. | PARTIAL | PURCHASE_LIMIT covers purchase.tsx:46, but order.tsx:120 (admin re-read) calls the same paid extraction with no limit, in the request path. /reembolso has no limit and no idempotency. The limiter fails open by design | 2026-10-19 |

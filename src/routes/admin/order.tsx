@@ -7,6 +7,7 @@ import { findOrderInEvent, listOrdersForEvent } from "../../db/queries/orders";
 import * as s from "../../db/schema";
 import { runVerification } from "../../jobs/verify-proof";
 import { newId, nowIso } from "../../lib/core";
+import { safeProofDelivery } from "../../lib/file-type";
 import { OrderPage } from "../../views/admin/order";
 import type { AdminEnv } from "./context";
 
@@ -71,8 +72,13 @@ orderRoutes.get("/e/:slug/orden/:id/comprobante", async (c) => {
   const object = await c.env.PROOFS.get(proof.fileKey);
   if (!object) return c.notFound();
 
+  // Rows written before uploads were checked still hold whatever the uploader
+  // declared, so the type is clamped on the way out too.
+  const delivery = safeProofDelivery(proof.contentType);
+
   return c.body(object.body, 200, {
-    "Content-Type": proof.contentType,
+    "Content-Type": delivery.contentType,
+    "Content-Disposition": delivery.disposition,
     "Cache-Control": "private, no-store",
   });
 });

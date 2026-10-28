@@ -1,3 +1,5 @@
+import { type ProofMediaType, sniffProof } from "./file-type";
+
 const MAX_PROOF_BYTES = 10 * 1024 * 1024;
 const MAX_TICKETS = 10;
 
@@ -84,5 +86,39 @@ export function readPurchaseForm(body: Record<string, unknown>): PurchaseFormRes
       attendees,
       proof,
     },
+  };
+}
+
+/** The proof's real type, or why it cannot be accepted. */
+export type ProofCheckResult =
+  | { ok: true; contentType: ProofMediaType }
+  | { ok: false; message: string; field: "proof" };
+
+/**
+ * Decides whether the uploaded bytes are a proof at all.
+ *
+ * Split from `readPurchaseForm` because it needs the file's contents, which
+ * only the route can await — but the refusal copy belongs here with every
+ * other thing this form can say no to.
+ */
+export function checkProofBytes(bytes: ArrayBuffer | Uint8Array): ProofCheckResult {
+  const sniffed = sniffProof(bytes);
+
+  if (sniffed.kind === "ok") return { ok: true, contentType: sniffed.mediaType };
+
+  if (sniffed.kind === "phone-photo") {
+    return {
+      ok: false,
+      field: "proof",
+      message:
+        "Tu teléfono guardó la foto en un formato que no podemos leer. " +
+        "Tomale una captura de pantalla y subila, o compartila como JPG.",
+    };
+  }
+
+  return {
+    ok: false,
+    field: "proof",
+    message: "Ese archivo no es una imagen ni un PDF. Subí la captura de tu transferencia.",
   };
 }
