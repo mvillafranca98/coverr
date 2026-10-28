@@ -22,3 +22,7 @@ worker-configuration.d.ts
 
 # Subagent worktrees — live checkouts, never project content.
 .claude/worktrees/
+
+# Site reviews from the jury skill: screenshots and reports of the live site,
+# regenerated on every run. Megabytes per run, and never project source.
+.jury/
