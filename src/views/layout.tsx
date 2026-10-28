@@ -1,5 +1,7 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
 import BUYER_CSS from "../styles/buyer.css";
+import TOKENS_CSS from "../styles/tokens.css";
+import { BrandIcons } from "./brand";
 
 export const Layout: FC<
   PropsWithChildren<{
@@ -33,7 +35,18 @@ export const Layout: FC<
       <meta property="og:type" content="website" />
       {ogUrl ? <meta property="og:url" content={ogUrl} /> : null}
       <meta name="twitter:card" content="summary_large_image" />
-      <style dangerouslySetInnerHTML={{ __html: BUYER_CSS }} />
+      <BrandIcons />
+      {/* The display face sets every heading here. Preloaded so it usually
+          lands before first paint; when it does not, font-display:swap shows
+          the system sans meanwhile — a buyer never waits on it. */}
+      <link
+        rel="preload"
+        as="font"
+        type="font/woff2"
+        href="/vendor/fonts/archivo-black-latin-400-normal.woff2"
+        crossorigin="anonymous"
+      />
+      <style dangerouslySetInnerHTML={{ __html: TOKENS_CSS + BUYER_CSS }} />
     </head>
     <body>
       <div class="wrap">{children}</div>

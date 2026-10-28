@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { formatEventDate, formatEventTime, formatLpsShort } from "../../lib/core";
 import { qrDataUri } from "../../lib/qr";
+import { Wordmark } from "../brand";
 import { Layout } from "../layout";
 import { LegalLinks } from "../legal/links";
 import { ticketScript } from "./ticket-script";
@@ -59,16 +60,36 @@ export const ConfirmPage: FC<ConfirmProps> = ({ band, event, order, attendees })
         data-index={String(i + 1)}
         data-total={String(attendees.length)}
       >
+        <div class="tk-head">
+          <span>{band.name}</span>
+          <span>
+            Boleto {i + 1} de {attendees.length}
+          </span>
+        </div>
         <div class="tk-top">
+          <div class="tk-event">{event.name}</div>
           <div class="tk-name">{a.name}</div>
-          <div class="tk-meta">
-            Boleto {i + 1} de {attendees.length} · {event.name}
-          </div>
           {a.note ? <div class="tk-note">{a.note}</div> : null}
+          <dl class="tk-meta">
+            <div class="wide">
+              <dt>Fecha</dt>
+              <dd>{formatEventDate(event.startsAt)}</dd>
+            </div>
+            <div>
+              <dt>Lugar</dt>
+              <dd>{event.venue}</dd>
+            </div>
+            <div>
+              <dt>Hora</dt>
+              <dd>{formatEventTime(event.startsAt)}</dd>
+            </div>
+          </dl>
         </div>
         <div class="tk-perf" />
         <div class="tk-qr">
-          <img src={qrDataUri(a.qrToken, 520)} alt={`Código QR de ${a.name}`} />
+          <div class="tk-qr-frame">
+            <img src={qrDataUri(a.qrToken, 520)} alt={`Código QR de ${a.name}`} />
+          </div>
           <div class="tk-code">{order.shortCode}</div>
         </div>
         <div class="tk-actions">
@@ -123,21 +144,20 @@ export const ConfirmPage: FC<ConfirmProps> = ({ band, event, order, attendees })
     </div>
 
     {event.thankYouNote ? (
-      <div class="summary" style="margin-top:14px">
+      <div class="summary">
         <h3>{band.name}</h3>
-        <p style="margin:0;font-size:14.5px;color:var(--muted)">{event.thankYouNote}</p>
+        <p>{event.thankYouNote}</p>
       </div>
     ) : null}
 
     {order.refundPolicy === "none" ? null : (
-      <p class="hint" style="text-align:center;margin-top:20px">
-        <a href={`/reembolso/${order.id}`} style="color:var(--muted)">
-          Solicitar un reembolso
-        </a>
+      <p class="hint refund-link">
+        <a href={`/reembolso/${order.id}`}>Solicitar un reembolso</a>
       </p>
     )}
 
     <footer>
+      <Wordmark size={20} />
       <div>{band.name} · Coverr</div>
       <LegalLinks />
     </footer>

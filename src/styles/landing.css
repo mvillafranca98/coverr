@@ -1,261 +1,1324 @@
-/* The landing page's stylesheet.
+/* The landing page's stylesheet, layered on tokens.css.
+
+   Neo-brutalist: flat colour, heavy black outlines, hard shadows with no blur,
+   chunky display type, and everything drawn as a sticker you could peel off.
+   Loud on purpose — this page sells to bands — but never at the cost of
+   reading: every colour here carries black ink, and every pair is measured.
 
    Lives apart from the markup because it is the larger half of the page and
    the two change for different reasons — copy moves often, the visual system
    rarely.
 
-   The type system is lifted from the Comport/Comseid house style: a geometric
-   sans for display with an italic serif set inside the headline as the accent,
-   and monospace reserved for micro-labels, indices and data. That pairing is
-   the whole character. The first version of this page had none of it and read
-   like every other gradient-and-glass landing page.
+   This is the one page allowed motion. prefers-reduced-motion stops all of
+   it, not a gentler version of it. See DESIGN.md, "The landing page". */
 
-   Dark rather than that house style's warm paper, because DESIGN.md assigns
-   dark to everything a band sees, and this page is marketing to bands.
+:root {
+  --bg: #fff4de;
+  --ink: #111111;
+  --ink-2: #3b372f;
+  --white: #ffffff;
 
-   Two webfonts, ~43KB, loaded here and on no other route. Same carve-out as
-   GSAP and the same reason: a buyer on venue wifi mid-transfer waits for
-   nothing. See DESIGN.md, "Motion and the landing page". */
-
-/* Self-hosted so the CSP stays 'self' and no third party sees who reads this
-   page. swap, so text is never invisible while a font is in flight. */
-@font-face{
-  font-family:"Space Grotesk";
-  src:url("/vendor/fonts/space-grotesk-latin-wght-normal.woff2") format("woff2-variations");
-  font-weight:300 700;font-style:normal;font-display:swap;
-}
-@font-face{
-  font-family:"Instrument Serif";
-  src:url("/vendor/fonts/instrument-serif-latin-400-italic.woff2") format("woff2");
-  font-weight:400;font-style:italic;font-display:swap;
+  --line: 3px solid var(--ink);
+  --shadow: 5px 5px 0 var(--ink);
+  --shadow-lg: 9px 9px 0 var(--ink);
+  --radius: 14px;
+  --section: clamp(4rem, 2.6rem + 5.6vw, 7rem);
+  --container: 1200px;
 }
 
-:root{
-  --bg:#0C0B08;
-  --ink:#F5F1E8;
-  --ink-70:rgba(245,241,232,.74);
-  --ink-50:rgba(245,241,232,.58);
-  --ink-30:rgba(245,241,232,.42);
-  --line:rgba(245,241,232,.14);
-  --line-soft:rgba(245,241,232,.07);
-  --accent:#F0A03C;
-  --accent-hi:#FFC87A;
-  --accent-ink:#100C06;
-
-  --f-display:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-  --f-serif:"Instrument Serif",Georgia,"Times New Roman",serif;
-  --f-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --f-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-
-  /* Fluid scale, same shape as the house style's. */
-  --step--1:clamp(.78rem,.74rem + .2vw,.86rem);
-  --step-0:clamp(.95rem,.9rem + .25vw,1.05rem);
-  --step-1:clamp(1.08rem,1rem + .45vw,1.3rem);
-  --step-2:clamp(1.35rem,1.15rem + .95vw,1.9rem);
-  --step-3:clamp(1.8rem,1.45rem + 1.8vw,2.8rem);
-  --step-4:clamp(2.4rem,1.8rem + 3vw,4.2rem);
-
-  --section:clamp(3.6rem,2.6rem + 5.5vw,6.5rem);
-  --container:960px;
-  --ease-out:cubic-bezier(.16,1,.3,1);
-}
-
-/* Reveal start state. Scoped to .js-reveal, which only exists once the guard
+/* Reveal start states. Scoped to .js-reveal, which only exists once the guard
    script in <head> has armed it and started its deadman timer — so a page with
    no JavaScript, or one whose vendor scripts fail, renders complete. Never put
    these rules outside this class. */
 .js-reveal [data-reveal],
-.js-reveal [data-hero] > *{opacity:0;transform:translateY(18px)}
-
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{
-  margin:0;background:var(--bg);color:var(--ink);
-  font-family:var(--f-body);font-size:var(--step-0);line-height:1.6;
-  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+.js-reveal .hero [data-rise]:not(.stage) {
+  opacity: 0;
+  transform: translateY(26px);
 }
-a{color:var(--accent)}
-
-.skip{
-  position:absolute;left:-9999px;top:0;
-  background:var(--accent);color:var(--accent-ink);
-  padding:12px 18px;border-radius:0 0 8px 0;font-weight:700;text-decoration:none;
+.js-reveal .hero__title .w {
+  opacity: 0;
+  transform: translateY(0.5em) rotate(4deg);
 }
-.skip:focus{left:0;z-index:20}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
-
-.wrap{max-width:var(--container);margin:0 auto;padding:0 clamp(18px,4vw,28px)}
-
-/* ---------- utility strip ----------
-   The house style's hairline band. No pulsing "live" dot here: nothing on
-   this page is live, and a status light that reports nothing is decoration
-   dressed as information. */
-.strip{
-  border-bottom:1px solid var(--line-soft);
-  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--ink-50);
+.js-reveal .stage {
+  opacity: 0;
+  transform: translateY(60px) rotate(6deg) scale(0.9);
 }
-.strip .wrap{display:flex;justify-content:space-between;gap:16px;padding-block:12px}
-.strip b{color:var(--accent);font-weight:400}
-@media (max-width:560px){.strip .r{display:none}}
-
-/* ---------- masthead ---------- */
-header{padding:clamp(54px,11vw,104px) 0 clamp(40px,8vw,72px)}
-.eyebrow{
-  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--accent);margin:0 0 20px;
+.js-reveal .today__text {
+  background-size: 0% 5px;
 }
-h1{
-  font-family:var(--f-display);font-weight:500;
-  font-size:var(--step-4);line-height:.98;letter-spacing:-.035em;
-  margin:0;max-width:15ch;text-wrap:balance;
-}
-/* The accent. Italic serif inside the sans headline is the single device the
-   whole page hangs on — set larger than its neighbours because this serif
-   runs small, and given back its own tracking because the sans is tightened
-   hard and the serif should not be. */
-h1 em,h2 em{
-  font-family:var(--f-serif);font-style:italic;font-weight:400;
-  letter-spacing:-.005em;font-size:1.1em;
-}
-.lede{
-  margin:26px 0 0;max-width:44ch;
-  font-size:var(--step-1);color:var(--ink-70);text-wrap:pretty;
+.js-reveal .sv-bars i {
+  transform: scaleX(0);
 }
 
-.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
-.cta{
-  display:inline-flex;align-items:center;justify-content:center;gap:.6em;
-  min-height:50px;padding:14px 26px;border-radius:100px;
-  font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:-.01em;
-  background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent);
-  text-decoration:none;transition:background .3s var(--ease-out),transform .3s var(--ease-out);
+* {
+  box-sizing: border-box;
 }
-.cta:hover{background:var(--accent-hi);border-color:var(--accent-hi);transform:translateY(-1px)}
-.cta:active{transform:translateY(1px)}
-.cta.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
-.cta.ghost:hover{background:transparent;border-color:var(--accent);color:var(--accent-hi)}
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 90px;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a {
+  color: var(--ink);
+}
 
-/* ---------- marquee ----------
-   Carries the four things the product does, so it is content rather than
-   ornament. CSS-driven: it has to run with no JavaScript, and stop dead
-   under prefers-reduced-motion. */
-.marquee{border-block:1px solid var(--line-soft);overflow:hidden;padding-block:18px}
-.marquee__track{
-  display:flex;width:max-content;white-space:nowrap;
-  animation:slide 38s linear infinite;
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--yellow);
+  color: var(--ink);
+  border: var(--line);
+  padding: 12px 18px;
+  font-weight: 700;
+  text-decoration: none;
 }
-.marquee__track span{
-  display:inline-flex;align-items:center;gap:40px;padding-right:40px;
-  font-family:var(--f-display);font-weight:500;
-  font-size:clamp(1rem,2.4vw,1.45rem);letter-spacing:-.015em;color:var(--ink-50);
+.skip:focus {
+  left: 8px;
+  top: 8px;
+  z-index: 60;
 }
-.marquee__track span::after{content:"✳";color:var(--accent);font-size:.75em}
-@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.wrap {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 clamp(18px, 4vw, 32px);
+}
+
+/* ---------- the mark ---------- */
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/* ---------- nav ---------- */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--bg);
+  border-bottom: var(--line);
+}
+.nav__in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  height: 72px;
+}
+.nav__brand {
+  padding: 6px 12px 6px 8px;
+  border: var(--line);
+  border-radius: 12px;
+  background: var(--yellow);
+  box-shadow: 4px 4px 0 var(--ink);
+  text-decoration: none;
+}
+.nav__links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav__links a:not(.cta) {
+  padding: 7px 14px;
+  border: var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+}
+.nav__links a:not(.cta):hover {
+  background: var(--lime);
+}
+@media (max-width: 720px) {
+  .nav__links a[href^="#"] {
+    display: none;
+  }
+}
+@media (max-width: 420px) {
+  .nav__links a[href="/admin/acceso"] {
+    display: none;
+  }
+}
+
+/* ---------- buttons ----------
+   Lift on hover, press flat on click: the shadow is the button's depth, so a
+   click drives the button into it. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 34px;
+}
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 50px;
+  padding: 13px 24px;
+  border: var(--line);
+  border-radius: var(--radius);
+  background: var(--pink);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  font-family: var(--display);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition:
+    transform 0.15s var(--ease-out),
+    box-shadow 0.15s var(--ease-out);
+}
+.cta:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--ink);
+}
+.cta:active {
+  transform: translate(5px, 5px);
+  box-shadow: 0 0 0 var(--ink);
+}
+.cta.ghost {
+  background: var(--white);
+}
+.cta--sm {
+  min-height: 40px;
+  padding: 7px 14px;
+  font-size: 13.5px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.cta--lg {
+  min-height: 60px;
+  padding: 16px 28px;
+  font-size: 17px;
+}
+
+/* ---------- stickers ---------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 26px;
+}
+.chip {
+  display: inline-block;
+  padding: 5px 11px;
+  border: var(--line);
+  border-radius: 9px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.chip--lime {
+  background: var(--lime);
+  transform: rotate(-2deg);
+}
+.chip--blue {
+  background: var(--blue);
+  transform: rotate(2deg);
+}
+
+/* ---------- hero ---------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(36px, 6vw, 80px) 0 clamp(56px, 8vw, 96px);
+}
+.hero__grid {
+  display: grid;
+  gap: clamp(48px, 6vw, 72px);
+  align-items: center;
+}
+@media (min-width: 960px) {
+  .hero__grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  }
+}
+.hero__title {
+  margin: 0;
+  max-width: 13ch;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 1.3rem + 4.6vw, 5.4rem);
+  /* Loose enough that the boxed phrase clears the line above it. */
+  line-height: 1.16;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.hero__title .w {
+  display: inline-block;
+}
+/* The highlighter: a yellow sticker behind the phrase. clone, so a phrase
+   that wraps gets its box on every line rather than one box split in two. */
+.hero__title em,
+h2 em,
+.today__punch em {
+  font-style: normal;
+  white-space: nowrap;
+  padding: 0 0.16em;
+  border: var(--line);
+  border-radius: 0.18em;
+  background: var(--yellow);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.lede {
+  margin: 28px 0 0;
+  max-width: 34ch;
+  font-size: var(--step-1);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.facts li {
+  padding: 5px 11px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+}
+.facts li::before {
+  content: "✓ ";
+}
+
+/* ---------- the hero ticket ---------- */
+.stage {
+  position: relative;
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  perspective: 1100px;
+  padding: 34px 0 6px;
+}
+/* A flat disc behind the ticket: the sticker's backing paper. */
+.stage::before {
+  content: "";
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  z-index: -1;
+  width: min(420px, 92%);
+  aspect-ratio: 1;
+  transform: translateX(-46%);
+  border: var(--line);
+  border-radius: 50%;
+  background: var(--pink);
+}
+.tix-tilt {
+  will-change: transform;
+}
+.tix-float {
+  position: relative;
+  /* Hard shadow that follows the notches cut by the mask below. */
+  filter: drop-shadow(9px 9px 0 var(--ink));
+}
+/* The notches are real holes, cut with a mask, so whatever sits behind the
+   ticket shows through them. */
+.tix {
+  --stub: 136px;
+  --notch: radial-gradient(circle 13px at 0 calc(100% - var(--stub)), #0000 97%, #000);
+  --notch-r: radial-gradient(circle 13px at 100% calc(100% - var(--stub)), #0000 97%, #000);
+  position: relative;
+  width: min(340px, 84vw);
+  border: var(--line);
+  border-radius: 18px;
+  background: var(--lime);
+  color: var(--ink);
+  overflow: hidden;
+  transform: rotate(-3deg);
+  -webkit-mask:
+    var(--notch) left / 51% 100% no-repeat,
+    var(--notch-r) right / 51% 100% no-repeat;
+  mask:
+    var(--notch) left / 51% 100% no-repeat,
+    var(--notch-r) right / 51% 100% no-repeat;
+}
+.tix__head {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: var(--ink);
+  color: var(--lime);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.tix__body {
+  padding: 18px 18px 16px;
+}
+.tix__band {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.tix__event {
+  margin: 6px 0 14px;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 2.1rem;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.tix__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+.tix__meta div {
+  padding: 5px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--white);
+}
+.tix__meta dt {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.tix__meta dd {
+  margin: 1px 0 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.tix__perf {
+  border-top: 3px dashed var(--ink);
+}
+.tix__stub {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: var(--stub);
+  padding: 14px 18px;
+}
+.tix__stub img {
+  width: 100px;
+  height: 100px;
+  flex: none;
+  padding: 3px;
+  border: var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  image-rendering: pixelated;
+}
+.tix__stubtext {
+  display: grid;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.tix__code {
+  font-size: 21px;
+  letter-spacing: 0.12em;
+}
+.tix__sticker {
+  position: absolute;
+  top: -26px;
+  right: -22px;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  padding: 10px;
+  border: var(--line);
+  border-radius: 50%;
+  background: var(--blue);
+  font-family: var(--display);
+  font-size: 14px;
+  line-height: 1.05;
+  text-align: center;
+  transform: rotate(12deg);
+}
+@media (max-width: 480px) {
+  .tix__sticker {
+    top: -30px;
+    right: -6px;
+    width: 84px;
+    height: 84px;
+    font-size: 12.5px;
+  }
+}
+.stage figcaption {
+  margin-top: 30px;
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--white);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ---------- tape ----------
+   Two strips of tape crossed over the page, running opposite ways. CSS, so
+   they run with no JavaScript, and stop dead under reduced motion. */
+.tapes {
+  position: relative;
+  height: clamp(130px, 9vw + 70px, 190px);
+  overflow: hidden;
+}
+.tape {
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  top: 50%;
+  overflow: hidden;
+  border-block: var(--line);
+  padding-block: clamp(10px, 1.4vw, 16px);
+}
+.tape--yellow {
+  z-index: 1;
+  background: var(--yellow);
+  transform: translateY(-62%) rotate(-2.5deg);
+}
+.tape--pink {
+  background: var(--pink);
+  transform: translateY(-38%) rotate(2deg);
+}
+.tape__track {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  animation: slide 42s linear infinite;
+}
+.tape--pink .tape__track {
+  animation-direction: reverse;
+  animation-duration: 54s;
+}
+.tape__track span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  padding-right: 0.6em;
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 0.8rem + 2.6vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.tape__track span::after {
+  content: "✳";
+  font-size: 0.7em;
+}
+@keyframes slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
 
 /* ---------- sections ---------- */
-section{padding:var(--section) 0;border-bottom:1px solid var(--line-soft)}
-section:last-of-type{border-bottom:0}
-h2{
-  font-family:var(--f-display);font-weight:500;
-  font-size:var(--step-3);line-height:1.05;letter-spacing:-.03em;
-  margin:0 0 20px;max-width:18ch;text-wrap:balance;
+section {
+  padding: var(--section) 0;
 }
-p{color:var(--ink-70);margin:0 0 15px;max-width:60ch;text-wrap:pretty}
-p:last-child{margin-bottom:0}
-b{color:var(--ink);font-weight:600}
+.eyebrow {
+  display: inline-block;
+  margin: 0 0 20px;
+  padding: 5px 12px;
+  border: var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+h2 {
+  margin: 0 0 24px;
+  max-width: 17ch;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 1.3rem + 3.4vw, 4.4rem);
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+p {
+  margin: 0 0 15px;
+  max-width: 60ch;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+p:last-child {
+  margin-bottom: 0;
+}
+b {
+  color: var(--ink);
+  font-weight: 700;
+}
 
-/* ---------- hairline grid ----------
-   Cells sit on a line-coloured bed with 1px gaps, so every divider is exactly
-   one pixel and no border doubles where two cells meet. */
-.grid{
-  display:grid;gap:1px;background:var(--line-soft);
-  border:1px solid var(--line-soft);margin-top:34px;
-  /* It is an <ol> for the semantics; the step number is rendered as the
-     mono index inside each cell, so the list marker would be a second one. */
-  list-style:none;margin-block-end:0;padding:0;
+/* ---------- today: struck out, one habit at a time ----------
+   The strike is a background on the inline text rather than a separate line,
+   so it crosses every wrapped line of a long habit on a phone. */
+.today__list {
+  display: grid;
+  gap: 14px;
+  margin: 40px 0 0;
+  padding: 0;
+  list-style: none;
 }
-@media (min-width:640px){.grid{grid-template-columns:1fr 1fr}}
-.cell{background:var(--bg);padding:clamp(22px,3.4vw,34px)}
-.cell__ix{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;color:var(--accent)}
-.cell h3{
-  font-family:var(--f-display);font-weight:500;
-  font-size:var(--step-1);letter-spacing:-.02em;line-height:1.15;
-  margin:18px 0 8px;color:var(--ink);
+/* Block, not flex: the text must stay inline so its strike can follow every
+   wrapped line. The cross mark is placed absolutely instead. */
+.today__list li {
+  position: relative;
+  padding: clamp(14px, 2vw, 20px) clamp(16px, 2.4vw, 24px) clamp(14px, 2vw, 20px)
+    calc(clamp(16px, 2.4vw, 24px) + 56px);
+  border: var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow);
+  font-family: var(--display);
+  font-size: var(--step-1);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
 }
-.cell p{font-size:var(--step--1);color:var(--ink-50);margin:0;max-width:34ch}
+.today__list li::before {
+  content: "✕";
+  position: absolute;
+  top: 50%;
+  left: clamp(16px, 2.4vw, 24px);
+  margin-top: -19px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: var(--line);
+  border-radius: 50%;
+  background: var(--pink);
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 900;
+}
+.today__list li:nth-child(even) {
+  transform: rotate(0.6deg);
+}
+.today__list li:nth-child(odd) {
+  transform: rotate(-0.4deg);
+}
+.today__text {
+  background-image: linear-gradient(var(--ink), var(--ink));
+  background-repeat: no-repeat;
+  background-position: 0 56%;
+  background-size: 100% 5px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.today__punch {
+  display: inline-block;
+  margin: 48px 0 0;
+  max-width: none;
+  padding: clamp(18px, 2.6vw, 28px) clamp(20px, 3vw, 34px);
+  border: var(--line);
+  border-radius: 18px;
+  background: var(--lime);
+  box-shadow: var(--shadow-lg);
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 1rem + 2.6vw, 3.2rem);
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+  transform: rotate(-1.2deg);
+}
+.today__punch em {
+  background: var(--white);
+}
+
+/* ---------- money: the path the transfer takes ---------- */
+.flow {
+  position: relative;
+  display: grid;
+  align-items: center;
+  margin-top: 48px;
+}
+@media (min-width: 760px) {
+  .flow {
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 0.8fr) minmax(0, 1fr);
+  }
+}
+.flow__node {
+  padding: clamp(20px, 2.6vw, 28px);
+  border: var(--line);
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
+}
+.flow__node--band {
+  background: var(--lime);
+}
+.flow__k {
+  display: block;
+  font-family: var(--display);
+  font-size: var(--step-2);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+.flow__v {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.flow__node--band .flow__v {
+  color: var(--ink);
+}
+.flow__wire {
+  position: relative;
+  justify-self: center;
+  width: 5px;
+  height: 92px;
+  margin-bottom: 18px;
+  background: var(--ink);
+}
+.flow__wire::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  border: 11px solid transparent;
+  border-top: 15px solid var(--ink);
+  transform: translate(-50%, 100%);
+}
+.flow__amount {
+  position: absolute;
+  top: 50%;
+  left: 22px;
+  transform: translateY(-50%) rotate(-4deg);
+  padding: 4px 12px;
+  border: var(--line);
+  border-radius: 999px;
+  background: var(--pink);
+  font-family: var(--display);
+  font-size: 15px;
+  white-space: nowrap;
+}
+.flow__packet {
+  position: absolute;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  border: var(--line);
+  border-radius: 50%;
+  background: var(--yellow);
+  animation: packet-down 2.4s var(--ease-out) infinite;
+}
+@keyframes packet-down {
+  0% {
+    top: 0;
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    top: calc(100% - 18px);
+    opacity: 0;
+  }
+}
+@media (min-width: 760px) {
+  .flow__wire {
+    justify-self: stretch;
+    width: auto;
+    height: 5px;
+    margin: 0 22px 0 6px;
+  }
+  .flow__wire::after {
+    top: 50%;
+    bottom: auto;
+    left: auto;
+    right: 0;
+    border: 11px solid transparent;
+    border-left: 15px solid var(--ink);
+    transform: translate(100%, -50%);
+  }
+  .flow__amount {
+    top: -46px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-4deg);
+  }
+  .flow__packet {
+    top: 50%;
+    left: 0;
+    margin: -9px 0 0;
+    animation-name: packet-across;
+  }
+}
+@keyframes packet-across {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(100% - 18px);
+    opacity: 0;
+  }
+}
+.flow__side {
+  grid-column: 1 / -1;
+  justify-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 14px;
+  max-width: 620px;
+  margin-top: 40px;
+  padding: 16px 20px;
+  border: 3px dashed var(--ink);
+  border-radius: 18px;
+  background: var(--white);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+}
+.flow__never {
+  padding: 4px 12px;
+  border: var(--line);
+  border-radius: 999px;
+  background: var(--yellow);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(-3deg);
+}
+
+/* ---------- steps: one colour card each ---------- */
+.grid {
+  display: grid;
+  gap: 22px;
+  margin: 40px 0 0;
+  /* It is an <ol> for the semantics; the step number is drawn inside each
+     card, so the list marker would be a second one. */
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 680px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.cell {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(24px, 3.2vw, 36px);
+  border: var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow-lg);
+  transition:
+    transform 0.2s var(--ease-out),
+    box-shadow 0.2s var(--ease-out);
+}
+.cell:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 12px 12px 0 var(--ink);
+}
+.cell:nth-child(1) {
+  background: var(--yellow);
+}
+.cell:nth-child(2) {
+  background: var(--pink);
+}
+.cell:nth-child(3) {
+  background: var(--lime);
+}
+.cell:nth-child(4) {
+  background: var(--blue);
+}
+.cell__big {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border: var(--line);
+  border-radius: 50%;
+  background: var(--white);
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+.cell__ix {
+  display: none;
+}
+.cell h3 {
+  margin: 0 0 10px;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: var(--step-2);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+.cell p {
+  max-width: 40ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--step--1);
+  font-weight: 500;
+}
+
+/* ---------- step drawings ---------- */
+.sv {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 104px;
+  margin: 58px 0 24px;
+}
+.sv--row {
+  gap: 14px;
+}
+.sv-url {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 7px 7px 7px 14px;
+  border: var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  box-shadow: 4px 4px 0 var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.sv-url b {
+  font-weight: 700;
+}
+.sv-chip {
+  margin-left: 12px;
+  padding: 5px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--pink);
+  font-weight: 700;
+  font-size: 13px;
+}
+.sv-receipt {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 16px 12px 12px;
+  border: var(--line);
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: 4px 4px 0 var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  transform: rotate(-3deg);
+}
+.sv-receipt b {
+  display: block;
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 400;
+}
+.sv-ok {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--lime);
+  font-size: 15px;
+  font-weight: 900;
+}
+.sv-arrow {
+  font-size: 26px;
+  font-weight: 900;
+}
+.sv-qr {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.sv-qr i {
+  width: 60px;
+  height: 60px;
+  border: var(--line);
+  border-radius: 10px;
+  background: repeating-conic-gradient(var(--ink) 0 25%, var(--white) 0 50%) 0 0 / 12px 12px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+/* The scanner's own green and ink — see public/scanner.css. */
+.sv-verdict {
+  width: 100%;
+  max-width: 300px;
+  padding: 16px 20px;
+  border: var(--line);
+  border-radius: 16px;
+  background: #2ba35f;
+  color: #04120a;
+  box-shadow: var(--shadow);
+  transform: rotate(-2deg);
+}
+.sv-verdict b {
+  display: block;
+  color: inherit;
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.sv-verdict span {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.sv-bars {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 12px;
+}
+.sv-bars div {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.sv-bars span {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.sv-bars i {
+  height: 22px;
+  border: var(--line);
+  border-radius: 999px;
+  background: var(--yellow);
+  transform: scaleX(var(--w));
+  transform-origin: left;
+}
 
 /* ---------- product shots ----------
-   Same hairline bed as .grid. Each surface is shot at the device it is used
-   on, so the shapes differ on purpose: the dashboard is a laptop screen and
-   leads full width, the scanner and the ticket are phones and sit beneath it.
-   Every image carries its intrinsic size, so nothing shifts while they load. */
-.shots{
-  display:grid;gap:1px;background:var(--line-soft);
-  border:1px solid var(--line-soft);margin-top:30px;
-  list-style:none;padding:0;
+   Each surface is shown on the device it is used on, so the shapes differ on
+   purpose: the dashboard is a laptop and leads full width, the scanner and
+   the ticket are phones. Every image carries its intrinsic size, so nothing
+   shifts while they load. */
+.shots {
+  display: grid;
+  gap: clamp(44px, 6vw, 64px) 32px;
+  margin: 48px 0 0;
+  padding: 0;
+  list-style: none;
 }
-@media (min-width:720px){
-  .shots{grid-template-columns:1fr 1fr}
-  .shot--lead{grid-column:1 / -1}
+@media (min-width: 720px) {
+  .shots {
+    grid-template-columns: 1fr 1fr;
+  }
+  .shot--lead {
+    grid-column: 1 / -1;
+  }
 }
-.shot{background:var(--bg);padding:clamp(20px,3vw,26px)}
-/* The phones are shot at 390px wide; left to fill a half-column they tower
-   over the laptop shot above them. */
-.shot--phone img{max-width:300px;margin-inline:auto}
-.shot img{
-  display:block;width:100%;height:auto;
-  border:1px solid var(--line);border-radius:10px;
+.device {
+  position: relative;
+  border: var(--line);
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
 }
-.shot .cap{
-  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--accent);margin:18px 0 0;
+.device img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: var(--line);
 }
-.shot p{font-size:var(--step--1);color:var(--ink-50);margin:8px 0 0;max-width:36ch}
+.device--laptop {
+  margin: 0 3% 46px;
+  padding: 14px 14px 18px;
+  border-radius: 20px 20px 6px 6px;
+}
+.device--laptop img {
+  border-radius: 6px;
+}
+.device--laptop::after {
+  content: "";
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  bottom: -21px;
+  height: 18px;
+  border: var(--line);
+  border-radius: 2px 2px 16px 16px;
+  background: var(--yellow);
+}
+.device--phone {
+  max-width: 280px;
+  margin-inline: auto;
+  padding: 10px;
+  border-radius: 44px;
+}
+.device--phone img {
+  border-radius: 34px;
+}
+.shot .cap {
+  display: inline-block;
+  margin: 26px 0 0;
+  padding: 4px 11px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--yellow);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.shot--phone {
+  text-align: center;
+}
+.shot--phone p {
+  margin-inline: auto;
+}
+.shot p:not(.cap) {
+  margin-top: 10px;
+  max-width: 38ch;
+  font-size: var(--step--1);
+}
 
-/* ---------- pricing ---------- */
-.tiers{width:100%;border-collapse:collapse;margin-top:30px;font-size:var(--step-0)}
-.tiers caption{
-  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--ink-50);text-align:left;padding-bottom:12px;
+/* ---------- pricing: one stub per bracket ---------- */
+.tiers__cap {
+  margin: 40px 0 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
 }
-.tiers th{
-  font-family:var(--f-mono);font-weight:400;font-size:10.5px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--ink-50);text-align:left;
-  padding:0 0 12px;border-bottom:1px solid var(--line);
+.tiers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
 }
-.tiers th:last-child,.tiers td:last-child{text-align:right}
-.tiers td{padding:16px 0;border-bottom:1px solid var(--line-soft);color:var(--ink-70)}
-.tiers tr:last-child td{border-bottom:0}
-.tiers td:last-child{
-  font-family:var(--f-display);font-weight:600;color:var(--ink);
-  font-variant-numeric:tabular-nums;white-space:nowrap;
+.tier {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  min-height: 176px;
+  padding: 20px 22px;
+  border: var(--line);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  transition:
+    transform 0.2s var(--ease-out),
+    box-shadow 0.2s var(--ease-out);
 }
-.tiers tr.free td,.tiers tr.free td:last-child{color:var(--accent-hi)}
-.note{margin-top:20px;font-size:var(--step--1);color:var(--ink-50)}
+.tier::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 58%;
+  border-top: 3px dashed var(--ink);
+}
+.tier:hover {
+  transform: translate(-3px, -3px) rotate(-1deg);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+.tier__range {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tier__price {
+  font-family: var(--display);
+  font-size: clamp(2rem, 1.4rem + 1.6vw, 2.8rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+@media (max-width: 640px) {
+  .tier {
+    min-height: 150px;
+    gap: 28px;
+  }
+  .tier--free {
+    grid-column: 1 / -1;
+  }
+}
+.tier--free {
+  background: var(--pink);
+  transform: rotate(-1.5deg);
+}
+.note {
+  margin-top: 26px;
+  font-size: var(--step--1);
+}
+
+/* ---------- finale ---------- */
+.finale {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: var(--section) 0;
+  padding: clamp(40px, 6vw, 72px) clamp(20px, 4vw, 48px);
+  border: var(--line);
+  border-radius: 28px;
+  background: var(--yellow);
+  box-shadow: 12px 12px 0 var(--ink);
+  text-align: center;
+}
+.finale .monogram {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 22px;
+  transform: rotate(-8deg);
+}
+.finale h2 {
+  max-width: 14ch;
+  font-size: clamp(2.4rem, 1.3rem + 4.4vw, 5.2rem);
+}
+.finale h2 em {
+  background: var(--white);
+}
+.finale p {
+  margin-inline: auto;
+  color: var(--ink);
+  font-weight: 500;
+}
+.finale .actions {
+  justify-content: center;
+}
 
 /* ---------- footer ---------- */
-footer{padding-top:var(--section)}
-.footer__meta{
-  display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between;
-  font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;color:var(--ink-50);
-  padding-bottom:22px;
+footer {
+  overflow: hidden;
+  border-top: var(--line);
+  background: var(--ink);
+  color: var(--bg);
 }
-.footer__meta a{color:var(--ink-50)}
-.footer__meta a:hover{color:var(--accent-hi)}
-/* Outlined wordmark. The faint fill is the fallback: where text-stroke is
-   missing, transparent text would simply vanish. */
-.footer__giant{
-  font-family:var(--f-display);font-weight:700;letter-spacing:-.05em;line-height:.76;
-  font-size:clamp(3.6rem,20vw,13rem);text-align:center;
-  color:var(--line-soft);user-select:none;overflow:hidden;margin:0;
+.footer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  padding-top: 28px;
+  padding-bottom: 28px;
+  font-family: var(--mono);
+  font-size: 12px;
 }
-@supports (-webkit-text-stroke:1px currentColor){
-  .footer__giant{color:transparent;-webkit-text-stroke:1px var(--line)}
+.footer__meta .wordmark {
+  color: var(--bg);
+  font-size: 1.15rem;
+}
+.footer__meta a {
+  color: var(--bg);
+}
+.footer__meta a:hover {
+  color: var(--yellow);
+}
+/* The giant wordmark, cut off by the bottom of the page like a sticker
+   running off the edge of a laptop lid. */
+.footer__giant {
+  max-width: none;
+  margin: 0 0 -0.2em;
+  font-family: var(--display);
+  font-size: clamp(5rem, 26vw, 21rem);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  text-align: center;
+  color: var(--yellow);
+  user-select: none;
 }
 
-@media (prefers-reduced-motion:reduce){
-  *{transition:none!important;animation:none!important}
-  .cta:hover{transform:none}
-  .marquee__track{animation:none}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+  .cta:hover,
+  .cta:active,
+  .tier:hover,
+  .cell:hover {
+    transform: none;
+  }
+  .flow__packet {
+    display: none;
+  }
 }

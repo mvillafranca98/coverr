@@ -44,7 +44,7 @@ export const QuantityStep: FC<{ rule: { label: string; amount: number } }> = ({ 
         <span>total a transferir</span>
       </span>
     </div>
-    <p class="hint" id="qtyEcho" style="margin:12px 0 0">
+    <p class="hint qty-echo" id="qtyEcho">
       Vas a poner el nombre de 1 persona más abajo.
     </p>
   </section>
@@ -102,16 +102,14 @@ export const BankStep: FC<BankStepProps> = ({ defaultAccount, banksWithAccounts,
     </div>
 
     <button type="button" class="chipcopy" id="copyCode">
-      <div style="flex:1">
+      <div class="chipcopy-text">
         <code>{shortCode}</code>
         <small>
           Opcional: pegá esto en “Detalle” al hacer la transferencia. Nos ayuda a confirmarte más
           rápido.
         </small>
       </div>
-      <span class="chip-action" style="font-size:13px;font-weight:600;color:var(--accent-text)">
-        Copiar
-      </span>
+      <span class="chip-action">Copiar</span>
     </button>
   </section>
 );

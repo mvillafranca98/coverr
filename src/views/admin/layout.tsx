@@ -1,5 +1,7 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
 import ADMIN_CSS from "../../styles/admin.css";
+import TOKENS_CSS from "../../styles/tokens.css";
+import { BrandIcons, Monogram } from "../brand";
 import { LegalLinks } from "../legal/links";
 
 /**
@@ -65,7 +67,15 @@ export const AdminLayout: FC<
           where a second round trip is the difference between a page that
           paints and one that hangs. A page that needs a rule adds it to
           styles/admin.css, so there is one place to look. */}
-      <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
+      <BrandIcons />
+      <link
+        rel="preload"
+        as="font"
+        type="font/woff2"
+        href="/vendor/fonts/archivo-black-latin-400-normal.woff2"
+        crossorigin="anonymous"
+      />
+      <style dangerouslySetInnerHTML={{ __html: TOKENS_CSS + ADMIN_CSS }} />
     </head>
     <body>
       <div class="wrap">
@@ -76,7 +86,10 @@ export const AdminLayout: FC<
         {bandName ? (
           <header class="chrome">
             <nav class="band" aria-label="Banda">
-              <span class="brand">{bandName}</span>
+              <span class="brand">
+                <Monogram size={22} />
+                {bandName}
+              </span>
               <span class="band-links">
                 <a href="/admin" class={active === "events" ? "on" : ""}>
                   Eventos

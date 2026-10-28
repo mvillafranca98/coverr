@@ -4,6 +4,7 @@
     "includes": [
       "src/**/*.ts",
       "src/**/*.tsx",
+      "src/**/*.css",
       "scripts/**/*.mjs",
       "seed/**/*.mjs",
       "tests/**/*.ts"
@@ -38,14 +39,16 @@
       },
       "style": {
         "useConst": "error",
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "noDescendingSpecificity": "off"
       },
       "correctness": {
         "noUnusedVariables": "error",
         "noUnusedImports": "error"
       },
       "complexity": {
-        "useLiteralKeys": "off"
+        "useLiteralKeys": "off",
+        "noImportantStyles": "off"
       }
     }
   }

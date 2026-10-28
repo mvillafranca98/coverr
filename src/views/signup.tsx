@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { AuthShell } from "./admin/auth-shell";
 import { AdminLayout } from "./admin/layout";
 
 /**
@@ -16,11 +17,8 @@ export const SignupPage: FC<{ error?: string; name?: string; email?: string }> =
   email,
 }) => (
   <AdminLayout title="Crear tu banda — Coverr">
-    <div style="max-width:420px;margin:52px auto 0">
-      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)">
-        Coverr
-      </div>
-      <h1 style="margin-top:8px">Crear tu banda</h1>
+    <AuthShell>
+      <h1>Crear tu banda</h1>
       <p class="sub">Sin contraseña. Te mandamos un enlace para entrar cada vez.</p>
       {error ? <div class="note crit">{error}</div> : null}
       <form method="post" action="/registro">
@@ -47,33 +45,30 @@ export const SignupPage: FC<{ error?: string; name?: string; email?: string }> =
           autocomplete="email"
           value={email ?? ""}
         />
-        <p class="sub" style="margin:6px 0 0">
+        <p class="auth__hint">
           Con este correo entrás al panel, y es el que ven tus compradores para escribirte.
         </p>
 
-        <button class="btn" type="submit" style="margin-top:18px;width:100%">
+        <button class="btn" type="submit">
           Crear
         </button>
       </form>
-      <p class="sub" style="margin-top:20px">
+      <p class="auth__alt">
         ¿Ya tenés banda? <a href="/admin/acceso">Entrar</a>
       </p>
-    </div>
+    </AuthShell>
   </AdminLayout>
 );
 
 export const SignupSentPage: FC<{ email: string }> = ({ email }) => (
   <AdminLayout title="Revisá tu correo — Coverr">
-    <div style="max-width:420px;margin:52px auto 0">
-      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)">
-        Coverr
-      </div>
-      <h1 style="margin-top:8px">Revisá tu correo</h1>
+    <AuthShell>
+      <h1>Revisá tu correo</h1>
       <div class="note ok">
         Te mandamos un enlace a <b>{email}</b>. Tocalo para entrar — vence en 15 minutos.
       </div>
       <p class="sub">Si no llega en un par de minutos, revisá la carpeta de spam.</p>
-    </div>
+    </AuthShell>
   </AdminLayout>
 );
 

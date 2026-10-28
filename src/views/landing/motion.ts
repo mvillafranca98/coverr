@@ -67,19 +67,81 @@ document.addEventListener('DOMContentLoaded', function(){
   // No clearProps anywhere below: stripping the inline styles would hand the
   // element back to the .js-reveal rule that hides it, and it would vanish on
   // completion. The inline opacity/transform is what keeps it visible.
-  gsap.to('[data-hero] > *', {
-    y: 0, opacity: 1, duration: .75, stagger: .085, ease: 'power2.out'
+
+  // The hero, in order: the headline pops up word by word, the rest of the
+  // copy follows, and the ticket is slapped onto the stage, unwinding its
+  // tilt as it lands. back.out overshoots a little: stickers bounce.
+  gsap.timeline({ defaults: { ease: 'back.out(1.6)' } })
+    .to('.hero__title .w', { y: 0, rotation: 0, opacity: 1, duration: .7, stagger: .04 })
+    .to('.hero [data-rise]:not(.stage)', { y: 0, opacity: 1, duration: .6, stagger: .07 }, '-=.5')
+    .to('.stage', { y: 0, rotation: 0, scale: 1, opacity: 1, duration: .9, ease: 'back.out(1.4)' }, '-=.8');
+
+  // The ticket bobs and its sticker wobbles. Float and tilt live on
+  // different elements so the pointer never fights the idle motion.
+  gsap.to('[data-float]', {
+    y: -10, rotation: 1.5, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1
+  });
+  gsap.to('.tix__sticker', {
+    rotation: 4, duration: 1.8, ease: 'sine.inOut', yoyo: true, repeat: -1
   });
 
-  // Everything below: reveal as it arrives, once. Batched so a screen holding
-  // four cards animates them together instead of four separate triggers
-  // firing a frame apart.
+  // Tilt toward the pointer — only where there is a real pointer.
+  var tilt = document.querySelector('[data-tilt]');
+  var hero = document.querySelector('.hero');
+  if (tilt && hero && window.matchMedia('(pointer: fine)').matches) {
+    var turnX = gsap.quickTo(tilt, 'rotationX', { duration: .7, ease: 'power3' });
+    var turnY = gsap.quickTo(tilt, 'rotationY', { duration: .7, ease: 'power3' });
+    hero.addEventListener('pointermove', function(e){
+      var box = hero.getBoundingClientRect();
+      var px = (e.clientX - box.left) / box.width - .5;
+      var py = (e.clientY - box.top) / box.height - .5;
+      turnY(px * 18);
+      turnX(-py * 14);
+    });
+    hero.addEventListener('pointerleave', function(){
+      turnX(0);
+      turnY(0);
+    });
+  }
+
+  // Everything below the hero: reveal as it arrives, once. Batched so a
+  // screen holding four cards animates them together instead of four
+  // separate triggers firing a frame apart.
   ScrollTrigger.batch('[data-reveal]', {
     start: 'top 88%',
     once: true,
     onEnter: function(batch){
-      gsap.to(batch, { y: 0, opacity: 1, duration: .7, stagger: .06, ease: 'power2.out' });
+      gsap.to(batch, { y: 0, opacity: 1, duration: .7, stagger: .07, ease: 'back.out(1.4)' });
     }
+  });
+
+  // Each of today's habits is struck out as it scrolls into the middle.
+  gsap.utils.toArray('.today__text').forEach(function(line){
+    gsap.to(line, {
+      backgroundSize: '100% 5px', duration: .7, ease: 'power2.inOut',
+      scrollTrigger: { trigger: line, start: 'top 72%', once: true }
+    });
+  });
+
+  // The accounts drawing fills each bar to its share.
+  gsap.utils.toArray('.sv-bars i').forEach(function(bar, i){
+    var share = parseFloat(getComputedStyle(bar).getPropertyValue('--w')) || 1;
+    gsap.to(bar, {
+      scaleX: share, duration: 1.2, delay: i * .12, ease: 'power3.out',
+      scrollTrigger: { trigger: bar, start: 'top 92%', once: true }
+    });
+  });
+
+  // Device frames drift at their own speed against the scroll. Wide screens
+  // only: on a phone the frames stack and parallax just reads as jitter.
+  gsap.matchMedia().add('(min-width: 900px)', function(){
+    gsap.utils.toArray('[data-drift]').forEach(function(frame){
+      var by = Number(frame.getAttribute('data-drift')) || 0;
+      gsap.fromTo(frame, { y: by }, {
+        y: -by, ease: 'none',
+        scrollTrigger: { trigger: frame, start: 'top bottom', end: 'bottom top', scrub: true }
+      });
+    });
   });
 });`;
 }

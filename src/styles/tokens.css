@@ -1,0 +1,55 @@
+/* Tokens every surface shares: type, shape, motion.
+
+   Colour is not here. The buyer and band palettes use the same token names
+   with different values (DESIGN.md, "Two surfaces, one palette"), so each
+   surface sheet declares its own after this one.
+
+   The display face is the one webfont on every page but the door scanner:
+   Archivo Black, OFL, from @fontsource/archivo-black 5.3.0, Latin subset,
+   18.6KB. One heavy weight is the whole display system. Self-hosted so the
+   CSP stays 'self'; preloaded by each layout; font-display:swap, so text
+   paints at once in the system sans and swaps when the font lands. Nothing
+   ever waits on it. */
+@font-face {
+  font-family: "Archivo Black";
+  src: url("/vendor/fonts/archivo-black-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --display: "Archivo Black", "Arial Black", Impact, sans-serif;
+  --sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* One fluid scale for every surface, so a heading on the ticket and a
+     heading on the dashboard agree on what "large" means. */
+  --step--1: clamp(0.8rem, 0.76rem + 0.2vw, 0.875rem);
+  --step-0: clamp(0.95rem, 0.9rem + 0.25vw, 1.05rem);
+  --step-1: clamp(1.1rem, 1rem + 0.45vw, 1.3rem);
+  --step-2: clamp(1.35rem, 1.15rem + 0.95vw, 1.9rem);
+  --step-3: clamp(1.8rem, 1.45rem + 1.8vw, 2.8rem);
+  --step-4: clamp(2.3rem, 1.7rem + 3vw, 4.2rem);
+  --step-5: clamp(2.9rem, 1.6rem + 6vw, 7.2rem);
+
+  /* The sticker kit: one stroke weight, one corner set, hard shadows offset
+     down and to the right. Each surface colours its own shadows. */
+  --stroke: 3px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+  --lift: 5px;
+  --lift-lg: 9px;
+
+  /* The sticker colours, shared by both surfaces. Each one carries black
+     ink, never light text (DESIGN.md has the ratios). */
+  --pink: #ff6ec7;
+  --yellow: #ffd43b;
+  --lime: #b8f35a;
+  --blue: #4d7cfe;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}

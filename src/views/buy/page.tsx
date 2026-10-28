@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { bankLabel, formatEventDate, formatEventTime, formatLpsShort } from "../../lib/core";
+import { Wordmark } from "../brand";
 import { Layout } from "../layout";
 import { LegalLinks } from "../legal/links";
 import { buyFormScript } from "./form-script";
@@ -59,18 +60,44 @@ export const BuyPage: FC<BuyProps> = ({
 
   return (
     <Layout title={title} description={description} ogUrl={`${origin}/e/${event.slug}`}>
-      <header class="hero">
-        <div class="band">{band.name}</div>
-        <h1>{event.name}</h1>
-        <div class="when">
-          <div>
-            <b>{formatEventDate(event.startsAt)}</b> · {formatEventTime(event.startsAt)}
-            {event.doorsAt ? ` · puertas ${formatEventTime(event.doorsAt)}` : ""}
-          </div>
-          <div>{event.venue}</div>
-          {event.musicType ? <div>{event.musicType}</div> : null}
+      {/* Drawn as the ticket the buyer is about to get, price in the band. */}
+      <header class="flyer">
+        <div class="flyer__band">
+          <span>{band.name}</span>
+          <span>
+            {rule.label} · {formatLpsShort(rule.amount)}
+          </span>
         </div>
-        {event.description ? <p class="blurb">{event.description}</p> : null}
+        <div class="flyer__body">
+          <h1>{event.name}</h1>
+          <dl class="flyer__facts">
+            <div class="wide">
+              <dt>Fecha</dt>
+              <dd>{formatEventDate(event.startsAt)}</dd>
+            </div>
+            <div class={event.doorsAt ? "" : "wide"}>
+              <dt>Hora</dt>
+              <dd>{formatEventTime(event.startsAt)}</dd>
+            </div>
+            {event.doorsAt ? (
+              <div>
+                <dt>Puertas</dt>
+                <dd>{formatEventTime(event.doorsAt)}</dd>
+              </div>
+            ) : null}
+            <div class="wide">
+              <dt>Lugar</dt>
+              <dd>{event.venue}</dd>
+            </div>
+            {event.musicType ? (
+              <div class="wide">
+                <dt>Música</dt>
+                <dd>{event.musicType}</dd>
+              </div>
+            ) : null}
+          </dl>
+          {event.description ? <p class="blurb">{event.description}</p> : null}
+        </div>
       </header>
 
       {error ? <div class="err">{error}</div> : null}
@@ -97,6 +124,7 @@ export const BuyPage: FC<BuyProps> = ({
       </form>
 
       <footer>
+        <Wordmark size={20} />
         <div>{band.name} · Coverr</div>
         <LegalLinks />
       </footer>

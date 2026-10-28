@@ -40,13 +40,23 @@ export function ticketScript(i: {
   var VENUE = ${JSON.stringify(i.venue)};
   var CODE  = ${JSON.stringify(i.shortCode)};
 
-  // DESIGN.md light surface. A ticket gets held up in a bright doorway and
+  // Drawn the way the page draws it (DESIGN.md, light surface): the lime
+  // ticket with a black outline and a hard shadow, the QR below the
+  // perforation on pure white. A ticket gets held up in a bright doorway and
   // sometimes printed, and a dark QR on white scans more reliably than the
-  // inverse, so the buyer surface is light.
-  var PAPER='#FBF8F2', CARD='#FFFFFF', INK='#1A1714', MUTED='#5C554C',
-      DIM='#675F52', ACCENT='#A8540E', RULE='#E0D8C9';
+  // inverse.
+  var CREAM='#FFF4DE', LIME='#B8F35A', WHITE='#FFFFFF', YELLOW='#FFD43B',
+      INK='#111111', MUTED='#3B372F';
+  var DISPLAY='"Archivo Black","Arial Black",Impact,sans-serif';
   var SANS='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif';
   var MONO='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+
+  // The name is set in the display face, which the page loads with swap. A
+  // canvas draws with whatever is loaded at that moment, so wait for it, or
+  // the saved ticket keeps the fallback face forever.
+  var fontReady = (document.fonts && document.fonts.load)
+    ? document.fonts.load('68px "Archivo Black"').catch(function(){})
+    : Promise.resolve();
 
   // 4:5. Instagram and WhatsApp both prefer it, and it is tall enough for the
   // QR to dominate without the stub turning into a poster.
@@ -81,86 +91,134 @@ export function ticketScript(i: {
     });
   }
 
+  function roundRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  // A sticker chip: filled, outlined in ink, text set inside. Returns its width.
+  function chip(ctx, text, x, y, fill, size, family){
+    ctx.font = font(700, size, family);
+    var w = ctx.measureText(text).width + 44;
+    roundRect(ctx, x, y, w, size + 32, 14);
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.stroke();
+    ctx.fillStyle = INK;
+    ctx.fillText(text, x + 22, y + 17);
+    return w;
+  }
+
   function compose(token, name, note, index, total){
-    return loadImage('/t/'+token+'.png').then(function(qr){
+    return fontReady.then(function(){ return loadImage('/t/'+token+'.png'); }).then(function(qr){
       var c = document.createElement('canvas');
       c.width = W; c.height = H;
       var ctx = c.getContext('2d');
-
-      ctx.fillStyle = PAPER; ctx.fillRect(0,0,W,H);
-      ctx.fillStyle = CARD;
-      ctx.fillRect(48, 48, W-96, H-96);
-
       ctx.textBaseline = 'top';
-      var x = 108, maxW = W - 216, y = 128;
 
-      ctx.fillStyle = ACCENT;
-      ctx.font = font(600, 26, MONO);
-      ctx.fillText(BAND.toUpperCase(), x, y);
-      y += 54;
+      ctx.fillStyle = CREAM; ctx.fillRect(0, 0, W, H);
 
+      // The card, its hard shadow first: offset, no blur — the page's own.
+      var cx = 56, cy = 56, cw = W - 130, ch = H - 130, R = 40, SHADOW = 18;
+      roundRect(ctx, cx + SHADOW, cy + SHADOW, cw, ch, R);
+      ctx.fillStyle = INK; ctx.fill();
+
+      // Measure the top half before painting it, so the perforation lands
+      // where the text ends rather than at a guessed height.
+      var x = cx + 44, maxW = cw - 88;
+      ctx.font = font(700, 26, MONO);
+      var eventLines = wrap(ctx, EVENT.toUpperCase(), maxW);
+      ctx.font = font(400, 68, DISPLAY);
+      var nameLines = wrap(ctx, name, maxW);
+      ctx.font = font(500, 28, SANS);
+      var noteLines = note ? wrap(ctx, note, maxW) : [];
+      ctx.font = font(700, 28, SANS);
+      var sideBySide = ctx.measureText(WHEN).width + ctx.measureText(VENUE).width + 44 * 2 + 14 <= maxW;
+      var chipsH = sideBySide ? 60 : 60 * 2 + 12;
+      var bodyTop = cy + 84 + 40;
+      var perfY = bodyTop + eventLines.length * 34 + 6 + nameLines.length * 76 + 14
+        + noteLines.length * 36 + (noteLines.length ? 12 : 0) + chipsH + 34;
+
+      // Everything inside the card is drawn clipped to it, so the head band
+      // and the white stub take its rounded corners for free.
+      ctx.save();
+      roundRect(ctx, cx, cy, cw, ch, R); ctx.clip();
+      ctx.fillStyle = LIME; ctx.fillRect(cx, cy, cw, perfY - cy);
+      ctx.fillStyle = WHITE; ctx.fillRect(cx, perfY, cw, cy + ch - perfY);
+
+      ctx.fillStyle = INK; ctx.fillRect(cx, cy, cw, 84);
+      ctx.fillStyle = LIME; ctx.font = font(700, 26, MONO);
+      ctx.fillText(BAND.toUpperCase(), cx + 44, cy + 29);
+      ctx.textAlign = 'right';
+      ctx.fillText(('Boleto '+index+' de '+total).toUpperCase(), cx + cw - 44, cy + 29);
+      ctx.textAlign = 'left';
+
+      var y = bodyTop;
       ctx.fillStyle = INK;
-      ctx.font = font(750, 62, SANS);
-      y = drawLines(ctx, wrap(ctx, EVENT, maxW), x, y, 72) + 14;
-
-      ctx.fillStyle = MUTED;
-      ctx.font = font(400, 30, SANS);
-      ctx.fillText(WHEN, x, y); y += 42;
-      y = drawLines(ctx, wrap(ctx, VENUE, maxW), x, y, 40) + 34;
+      ctx.font = font(700, 26, MONO);
+      y = drawLines(ctx, eventLines, x, y, 34) + 6;
+      ctx.font = font(400, 68, DISPLAY);
+      y = drawLines(ctx, nameLines, x, y, 76) + 14;
+      if (noteLines.length){
+        ctx.fillStyle = MUTED; ctx.font = font(500, 28, SANS);
+        y = drawLines(ctx, noteLines, x, y, 36) + 12;
+      }
+      var w = chip(ctx, WHEN, x, y, WHITE, 28, SANS);
+      if (sideBySide) chip(ctx, VENUE, x + w + 14, y, WHITE, 28, SANS);
+      else chip(ctx, VENUE, x, y + 72, WHITE, 28, SANS);
 
       // Perforation, so it reads as a stub rather than a poster.
-      ctx.strokeStyle = RULE; ctx.lineWidth = 3; ctx.setLineDash([12,10]);
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(W-x, y); ctx.stroke();
+      ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.setLineDash([18, 14]);
+      ctx.beginPath(); ctx.moveTo(cx, perfY); ctx.lineTo(cx + cw, perfY); ctx.stroke();
       ctx.setLineDash([]);
-      y += 40;
+      ctx.restore();
 
-      ctx.fillStyle = INK;
-      ctx.font = font(700, 46, SANS);
-      y = drawLines(ctx, wrap(ctx, name, maxW), x, y, 56) + 8;
+      ctx.lineWidth = 8; ctx.strokeStyle = INK;
+      roundRect(ctx, cx, cy, cw, ch, R); ctx.stroke();
 
-      ctx.fillStyle = MUTED;
-      ctx.font = font(400, 28, SANS);
-      ctx.fillText('Boleto '+index+' de '+total, x, y);
-      y += 40;
-
-      if (note){
-        ctx.fillStyle = ACCENT;
-        ctx.font = font(400, 26, SANS);
-        y = drawLines(ctx, wrap(ctx, note, maxW), x, y, 34);
-      }
+      // The notches: page-coloured bites out of each edge, ringed in ink.
+      [cx, cx + cw].forEach(function(nx){
+        ctx.beginPath(); ctx.arc(nx, perfY, 30, 0, Math.PI * 2);
+        ctx.fillStyle = CREAM; ctx.fill();
+        ctx.lineWidth = 6; ctx.strokeStyle = INK; ctx.stroke();
+      });
 
       // Integer-scale the QR so every module stays a crisp square. Smoothing a
       // QR is what makes one hard to read under a venue's bad lighting.
-      // The QR may use more width than the text column — it is the thing being
-      // read, and the margins exist for text, not for it.
-      var FOOT = 150;                       // room kept for the code and the byline
-      var room = H - y - FOOT - 56;
-      var scale = Math.max(1, Math.floor(Math.min(W - 160, room) / qr.width));
+      var FOOT = 190;                       // room kept for the code chip and the byline
+      var room = cy + ch - perfY - 50 - FOOT;
+      var scale = Math.max(1, Math.floor(Math.min(maxW - 40, room) / qr.width));
       var size = qr.width * scale;
-      var qx = Math.round((W - size)/2);
-      // Sits a fixed gap below the name rather than floating in the leftover
-      // space; whatever is left over falls to the bottom, where a stub's
-      // margin belongs.
-      var qy = y + 44;
-
+      var qx = Math.round(cx + (cw - size) / 2);
+      var qy = perfY + 50;
       ctx.imageSmoothingEnabled = false;
-      ctx.fillStyle = CARD;
-      ctx.fillRect(qx-24, qy-24, size+48, size+48);
       ctx.drawImage(qr, qx, qy, size, size);
 
-      // Both lines hang off the QR rather than off the canvas bottom. Pinning
-      // the byline to H made it collide with the code whenever the QR scaled
-      // up; whatever space is left over now falls below, as a stub's margin.
+      // Crop marks, as on the page: outside the QR's own quiet zone.
+      ctx.strokeStyle = INK; ctx.lineWidth = 6;
+      var m = 18, L = 34;
+      [[qx - m, qy - m, 1, 1], [qx + size + m, qy - m, -1, 1],
+       [qx - m, qy + size + m, 1, -1], [qx + size + m, qy + size + m, -1, -1]].forEach(function(k){
+        ctx.beginPath();
+        ctx.moveTo(k[0] + k[2] * L, k[1]); ctx.lineTo(k[0], k[1]); ctx.lineTo(k[0], k[1] + k[3] * L);
+        ctx.stroke();
+      });
+
+      // The code on a yellow chip, and the byline, hang off the QR rather than
+      // off the canvas bottom, so a QR that scales up never collides with them.
+      ctx.font = font(700, 34, MONO);
+      var cwid = ctx.measureText(CODE).width + 44;
+      var below = qy + size + m + 36;
+      chip(ctx, CODE, Math.round(cx + (cw - cwid) / 2), below, YELLOW, 34, MONO);
+
       ctx.textAlign = 'center';
-      var below = qy + size + 44;
-
-      ctx.fillStyle = INK;
-      ctx.font = font(600, 30, MONO);
-      ctx.fillText(CODE, W/2, below);
-
-      ctx.fillStyle = DIM;
-      ctx.font = font(400, 22, MONO);
-      ctx.fillText('coverr · un producto de macawly.dev', W/2, below + 62);
+      ctx.fillStyle = MUTED;
+      ctx.font = font(500, 22, MONO);
+      ctx.fillText('coverr · un producto de macawly.dev', cx + cw / 2, below + 94);
       ctx.textAlign = 'left';
 
       return new Promise(function(resolve){ c.toBlob(resolve, 'image/png'); });

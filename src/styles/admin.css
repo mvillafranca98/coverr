@@ -1,111 +1,678 @@
-:root{
-  --bg:#0F0E0B;--surface:#181510;--surface-2:#221E17;--line:#2F2921;--line-2:#443C31;--line-control:#6E6454;
-  --text:#F4F0E8;--muted:#A69D8F;--dim:#8E8679;
-  --accent:#E9963A;--accent-ink:#120D06;
-  --ok:#5FBB88;--ok-bg:#12251A;--warn:#E0AC42;--warn-bg:#2A2110;--crit:#E2705F;--crit-bg:#2A1512;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+/* The band surface, dark, layered on tokens.css. Used at night, stage-side,
+   often for hours, so it stays dark and is big where it matters: the numbers
+   a band checks across a dark room are the largest thing on any screen.
+
+   The landing page's neo-brutalist kit, turned inside out: cream outlines
+   instead of black ones, and hard shadows in the sticker colours, since a
+   black shadow vanishes on a black page. Anything that fills with a sticker
+   colour carries black ink. Every pair is measured — see DESIGN.md. */
+:root {
+  --bg: #141414;
+  --surface: #1d1d1d;
+  --surface-2: #272727;
+  /* --line and --line-2 are dividers inside tables and bars. --line-control
+     outlines anything that is a control, and in this style that is the
+     cream edge itself. */
+  --line: #3a3a3a;
+  --line-2: #555555;
+  --line-control: #fff4de;
+  --text: #fff4de;
+  --muted: #cfc6b3;
+  --dim: #a8a091;
+  --accent: var(--yellow);
+  --accent-ink: #111111;
+  --ok: #b8f35a;
+  --ok-bg: var(--lime);
+  --warn: #ffd43b;
+  --warn-bg: var(--yellow);
+  --crit: #ff8fa3;
+  --crit-bg: #ff8fa3;
+  --edge: 2px solid var(--line-control);
 }
-*{box-sizing:border-box}[hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
-a{color:var(--accent)}
-.wrap{max-width:980px;margin:0 auto;padding:0 18px 80px}
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+a {
+  color: var(--accent);
+}
+:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 24px) 80px;
+}
+.mono {
+  font-family: var(--mono);
+}
 
 /* ---- chrome: two bars, two scopes ----
    The band bar leaves the event; the event bar acts on it. They used to be one
    flat row, which read as a single menu and wrapped to three lines on a phone. */
-.chrome{border-bottom:1px solid var(--line);margin-bottom:22px}
-
-nav.band{display:flex;align-items:center;gap:14px;padding:16px 0 0}
-nav.band .brand{
-  font-family:var(--mono);font-size:11px;letter-spacing:.2em;
-  text-transform:uppercase;color:var(--accent);white-space:nowrap;
+.chrome {
+  margin-bottom: 30px;
+  border-bottom: var(--edge);
 }
-.band-links{margin-left:auto;display:flex;align-items:center;gap:16px}
-.band-links a{color:var(--dim);text-decoration:none;font-size:13.5px;font-weight:550;white-space:nowrap}
-.band-links a:hover,.band-links a.on{color:var(--text)}
 
-nav.event{padding:14px 0 0}
-.ev-name{
-  display:block;font-size:15px;font-weight:650;color:var(--text);
-  letter-spacing:-.01em;margin-bottom:6px;
+nav.band {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0 0;
+}
+nav.band .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.band-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}
+.band-links a {
+  padding: 12px 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.band-links a:hover,
+.band-links a.on {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--yellow);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 6px;
+}
+
+nav.event {
+  padding: 14px 0 16px;
+}
+.ev-name {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 /* Scrolls rather than wraps. Five tabs do not fit a 375px screen, and a band
-   checking numbers mid-gig is on exactly that screen. */
-.ev-tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.ev-tabs::-webkit-scrollbar{display:none}
-.ev-tabs a{
-  flex:none;padding:7px 12px 9px;color:var(--muted);text-decoration:none;
-  font-size:14px;font-weight:550;white-space:nowrap;border-bottom:2px solid transparent;
+   checking numbers mid-gig is on exactly that screen. The padding leaves room
+   for the active tab's shadow inside the scroll box. */
+.ev-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 6px 6px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
-.ev-tabs a:hover{color:var(--text)}
-.ev-tabs a.on{color:var(--text);border-bottom-color:var(--accent)}
+.ev-tabs::-webkit-scrollbar {
+  display: none;
+}
+.ev-tabs a {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 2px solid transparent;
+  border-radius: var(--r-pill);
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ev-tabs a:hover {
+  border-color: var(--line-2);
+  color: var(--text);
+}
+.ev-tabs a.on {
+  border-color: var(--line-control);
+  background: var(--yellow);
+  box-shadow: 3px 3px 0 var(--line-control);
+  color: var(--accent-ink);
+}
 
-@media (max-width:560px){
+@media (max-width: 560px) {
   /* The band links drop to their own scrollable row instead of squeezing the
      band name or wrapping mid-list. */
-  nav.band{flex-wrap:wrap;gap:8px}
-  .band-links{margin-left:0;width:100%;overflow-x:auto;scrollbar-width:none}
-  .band-links::-webkit-scrollbar{display:none}
+  nav.band {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .band-links {
+    width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .band-links::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-h1{font-size:1.75rem;font-weight:750;letter-spacing:-.022em;margin:0 0 4px;text-wrap:balance}
-.sub{color:var(--muted);font-size:14px;margin:0 0 22px}
-h2{font-size:1.05rem;font-weight:650;margin:30px 0 10px;letter-spacing:-.01em}
-h2:first-of-type{margin-top:0}
-
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:8px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:13px 15px}
-.card b{display:block;font-size:1.65rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;letter-spacing:-.02em}
-.card span{font-size:10.5px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
-.card small{display:block;font-size:12px;color:var(--muted);margin-top:3px}
-.card.warn{border-color:#4A3A16;background:var(--warn-bg)}
-.card.warn b{color:var(--warn)}
-
-.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:11px;background:var(--surface);margin-bottom:8px}
-table{border-collapse:collapse;width:100%;font-size:14px}
-th{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:left;padding:9px 13px;border-bottom:1px solid var(--line-2);white-space:nowrap}
-td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--muted)}
-td:first-child{color:var(--text)}
-tr:last-child td{border-bottom:none}
-td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
-tr.tot td{border-top:1px solid var(--line-2);font-weight:650;color:var(--text)}
-
-.chip{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:3px;white-space:nowrap}
-.chip.ok{background:var(--ok-bg);color:var(--ok)}
-.chip.warn{background:var(--warn-bg);color:var(--warn)}
-.chip.crit{background:var(--crit-bg);color:var(--crit)}
-.chip.info{background:var(--surface-2);color:var(--dim)}
-
-form.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
-label.fl{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
-input[type=text],input[type=email],input[type=number],select{padding:10px 11px;border:1px solid var(--line-control);border-radius:8px;background:var(--surface);color:var(--text);font-size:15px;font-family:var(--sans);width:100%}
-input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
-.btn{padding:10px 16px;border:none;border-radius:8px;background:var(--accent);color:var(--accent-ink);font:650 14px/1.2 var(--sans);cursor:pointer;white-space:nowrap}
-.btn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--line-control)}
-.btn.danger{background:var(--crit-bg);color:var(--crit);border:1px solid #4A211B}
-.btn:active{filter:brightness(.9)}
-.btn.sm{padding:6px 11px;font-size:12.5px}
-
-.note{background:var(--surface);border:1px solid var(--line);border-left:2px solid var(--line-2);border-radius:8px;padding:12px 15px;margin:0 0 16px;font-size:14px;color:var(--muted)}
-.note.warn{border-left-color:var(--warn);background:var(--warn-bg);color:#F0D89C}
-.note.ok{border-left-color:var(--ok);background:var(--ok-bg);color:#A8DDBF}
-.note.crit{border-left-color:var(--crit);background:var(--crit-bg);color:#F0B5AC}
-
-.proof{max-width:100%;border-radius:9px;border:1px solid var(--line-2);display:block}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 16px;font-size:13.5px;margin:0}
-.kv dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding-top:3px}
-.kv dd{margin:0;color:var(--text)}
-.muted{color:var(--muted)}
-.right{text-align:right}
-.copyline{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;
-  padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);
+h1 {
+  margin: 0 0 8px;
+  font-family: var(--display);
+  font-size: clamp(2rem, 1.5rem + 1.8vw, 2.7rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
 }
-.copyline code{
-  flex:1;min-width:0;font-family:var(--mono);font-size:12.5px;
-  word-break:break-all;color:var(--text);
+.sub {
+  margin: 0 0 26px;
+  color: var(--muted);
+  font-size: 14px;
 }
-footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--dim)}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+h2 {
+  margin: 38px 0 14px;
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+h2:first-of-type {
+  margin-top: 0;
+}
+
+/* ---- stat cards ----
+   One sticker colour per card, carried by its hard shadow — the same four
+   colours, in the same order, as the landing page's steps. */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 18px;
+  margin: 0 8px 12px 0;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px 18px;
+  border: var(--edge);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--lift) var(--lift) 0 var(--yellow);
+}
+.card:nth-child(4n + 2) {
+  box-shadow: var(--lift) var(--lift) 0 var(--pink);
+}
+.card:nth-child(4n + 3) {
+  box-shadow: var(--lift) var(--lift) 0 var(--lime);
+}
+.card:nth-child(4n + 4) {
+  box-shadow: var(--lift) var(--lift) 0 var(--blue);
+}
+.card b {
+  display: block;
+  order: 1;
+  margin-top: 10px;
+  font-family: var(--display);
+  font-size: clamp(2.1rem, 1.6rem + 1.6vw, 2.8rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.card span {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.card small {
+  display: block;
+  order: 2;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.card.warn {
+  border-color: var(--warn);
+}
+.card.warn b {
+  color: var(--warn);
+}
+/* A share of a whole, drawn under the number: adentro out of vendidos,
+   brazaletes left out of the starting count. Always from records. */
+.meter {
+  display: block;
+  order: 3;
+  height: 12px;
+  margin-top: 14px;
+  border: var(--edge);
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  overflow: hidden;
+}
+.meter i {
+  display: block;
+  width: calc(var(--p) * 100%);
+  height: 100%;
+  background: var(--yellow);
+}
+
+.scroll {
+  margin-bottom: 10px;
+  border: var(--edge);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+th {
+  padding: 12px 14px;
+  border-bottom: var(--edge);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  vertical-align: top;
+}
+td:first-child {
+  color: var(--text);
+  font-weight: 600;
+}
+tbody tr:hover td {
+  background: var(--surface-2);
+}
+tr:last-child td {
+  border-bottom: none;
+}
+td.n,
+th.n {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+tr.tot td {
+  border-top: var(--edge);
+  color: var(--text);
+  font-weight: 700;
+}
+tr.tot td:first-child {
+  font-family: var(--display);
+  font-weight: 400;
+}
+
+/* Status chips are solid stickers with black ink — they have to read at a
+   glance across a dark room, which a tinted chip does not. */
+.chip {
+  display: inline-block;
+  padding: 2px 9px;
+  border: 2px solid var(--line-control);
+  border-radius: var(--r-pill);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.chip.ok {
+  background: var(--ok-bg);
+  color: var(--accent-ink);
+}
+.chip.warn {
+  background: var(--warn-bg);
+  color: var(--accent-ink);
+}
+.chip.crit {
+  background: var(--crit-bg);
+  color: var(--accent-ink);
+}
+.chip.info {
+  border-color: var(--line-2);
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+form.inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+label.fl {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="datetime-local"],
+textarea,
+select {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: #0e0e0e;
+  color: var(--text);
+  font-family: var(--sans);
+  /* 16px, not 15: iOS zooms the whole page on focus below that. */
+  font-size: 16px;
+}
+textarea {
+  min-height: 84px;
+  line-height: 1.45;
+  resize: vertical;
+}
+/* The native picker icon is drawn dark; flip it so it shows on this surface. */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.9);
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 3px solid var(--yellow);
+  outline-offset: 1px;
+}
+
+/* Buttons lift on hover and press flat on click, like the landing page's:
+   the shadow is the depth, so a press drives the button into it. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--yellow);
+  box-shadow: 3px 3px 0 var(--line-control);
+  color: var(--accent-ink);
+  font-family: var(--display);
+  font-size: 14.5px;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 0.08s ease-out,
+    box-shadow 0.08s ease-out;
+}
+.btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--line-control);
+}
+.btn.ghost {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.btn.danger {
+  background: var(--crit-bg);
+  color: var(--accent-ink);
+}
+/* Small buttons sit in table rows; 36px keeps a row from ballooning while
+   staying well clear of the 27px they used to measure. */
+.btn.sm {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* Notes in solid sticker colour with black ink, except the neutral one. A
+   flag that needs a human should be the brightest thing on a dark screen. */
+.note {
+  margin: 0 0 18px;
+  padding: 13px 16px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+}
+.note.warn,
+.note.ok,
+.note.crit {
+  color: var(--accent-ink);
+}
+.note.warn {
+  background: var(--warn-bg);
+}
+.note.ok {
+  background: var(--ok-bg);
+}
+.note.crit {
+  background: var(--crit-bg);
+}
+.note.warn a,
+.note.ok a,
+.note.crit a,
+.note.warn b,
+.note.ok b,
+.note.crit b {
+  color: var(--accent-ink);
+}
+
+.proof {
+  display: block;
+  max-width: 100%;
+  border: var(--edge);
+  border-radius: var(--r-md);
+}
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 13.5px;
+}
+.kv dt {
+  padding-top: 3px;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.kv dd {
+  margin: 0;
+  color: var(--text);
+}
+.muted {
+  color: var(--muted);
+}
+.right {
+  text-align: right;
+}
+.copyline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 2px dashed var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+.copyline code {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  word-break: break-all;
+}
+footer {
+  margin-top: 52px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+footer a {
+  color: var(--dim);
+}
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* ---- sign-in and sign-up ----
+   The first band pages anyone sees, one click from the landing page, so they
+   keep its voice: the mark, its headline with the phrase on a yellow sticker,
+   and the form on a card with a hard pink shadow. */
+.auth {
+  display: grid;
+  gap: 32px;
+  align-items: center;
+  min-height: calc(100vh - 120px);
+  padding: 36px 0 12px;
+}
+@media (min-width: 860px) {
+  .auth {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 64px;
+  }
+}
+.auth__pitch {
+  max-width: 13ch;
+  margin: 34px 0 0;
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 1.4rem + 3.4vw, 3.8rem);
+  line-height: 1.24;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.auth__pitch em {
+  padding: 0 0.14em;
+  border: var(--stroke) solid var(--line-control);
+  border-radius: 0.18em;
+  background: var(--yellow);
+  color: var(--accent-ink);
+  font-style: normal;
+  white-space: nowrap;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.auth__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.auth__facts li {
+  padding: 4px 11px;
+  border: var(--edge);
+  border-radius: var(--r-pill);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+.auth__facts li::before {
+  content: "✓ ";
+  color: var(--lime);
+}
+@media (max-width: 859px) {
+  .auth__pitch {
+    margin-top: 22px;
+    font-size: 2rem;
+  }
+  .auth__facts {
+    display: none;
+  }
+}
+.auth__card {
+  padding: clamp(24px, 3vw, 34px);
+  border: var(--stroke) solid var(--line-control);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--lift-lg) var(--lift-lg) 0 var(--pink);
+}
+.auth__card h1 {
+  font-size: 2rem;
+}
+.auth__card .sub {
+  margin-bottom: 18px;
+}
+.auth__card form > label.fl {
+  margin-top: 14px;
+}
+.auth__card .btn {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 20px;
+  font-size: 16px;
+}
+.auth__hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.auth__alt {
+  margin: 22px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

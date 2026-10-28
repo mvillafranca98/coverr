@@ -31,6 +31,20 @@ export type DashProps = {
   scanUrl: string | null;
 };
 
+/**
+ * A share of a whole, drawn under a card's number. Decorative — the number and
+ * its caption above say the same thing — and clamped so a count that runs
+ * past its whole can never draw past the end of the track.
+ */
+const Meter: FC<{ part: number; whole: number }> = ({ part, whole }) => {
+  const share = whole > 0 ? Math.min(1, Math.max(0, part / whole)) : 0;
+  return (
+    <div class="meter" aria-hidden="true">
+      <i style={`--p:${share.toFixed(3)}`} />
+    </div>
+  );
+};
+
 export const DashboardPage: FC<DashProps> = (p) => {
   const outside = p.counts.sold - p.counts.inside;
   return (
@@ -72,6 +86,7 @@ export const DashboardPage: FC<DashProps> = (p) => {
           <span>Adentro</span>
           <b>{p.counts.inside}</b>
           <small>{outside} todavía afuera</small>
+          <Meter part={p.counts.inside} whole={p.counts.sold} />
         </div>
         <div class="card">
           <span>Vendidos</span>
@@ -84,6 +99,9 @@ export const DashboardPage: FC<DashProps> = (p) => {
           <small>
             {p.wristbands.start != null ? `de ${p.wristbands.start}` : "sin conteo inicial"}
           </small>
+          {p.wristbands.start != null && p.wristbands.left != null ? (
+            <Meter part={p.wristbands.left} whole={p.wristbands.start} />
+          ) : null}
         </div>
         <div class="card">
           <span>Bruto</span>

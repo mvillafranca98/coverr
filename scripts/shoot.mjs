@@ -34,7 +34,7 @@ const OUT = "public/img";
 const BAND = "bnd_demo";
 
 const PHONE = { width: 390, height: 844 };
-const LAPTOP = { width: 1360, height: 900 };
+const LAPTOP = { width: 1360, height: 960 };
 
 /**
  * `scroll` drops the page down before the shot — usually to take a wrapped
@@ -47,10 +47,10 @@ const SHOTS = [
     url: "/admin/e/noche-de-ruido",
     viewport: LAPTOP,
     auth: true,
-    // Measured, not guessed: the income table ends at 632 and the next
-    // heading starts at 688, so this lands in the gap. Cutting through a
+    // Measured, not guessed: the income table ends at 895 and the next
+    // heading starts at 933, so this lands in the gap. Cutting through a
     // table header reads as a broken screenshot rather than a cropped one.
-    height: 650,
+    height: 914,
   },
   {
     name: "shot-scanner",
@@ -63,8 +63,10 @@ const SHOTS = [
     name: "shot-ticket",
     url: "/boletos/ord_demo_002",
     viewport: PHONE,
-    scroll: 300,
-    height: 600,
+    // Measured: the first ticket starts at 406 and its hard shadow ends at
+    // 1130, so this frames exactly one whole ticket with a little paper round it.
+    scroll: 390,
+    height: 754,
   },
 ];
 
