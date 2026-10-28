@@ -1,5 +1,6 @@
 import { and, eq, ne, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
+import { readFlags } from "../db/queries/flags";
 import * as s from "../db/schema";
 import { isReadableProof, newId, nowIso } from "../lib/core";
 import { extractProof } from "../lib/extract";
@@ -39,6 +40,15 @@ export async function runVerification(env: Env, orderId: string): Promise<void> 
 
   if (!env.ANTHROPIC_API_KEY) {
     console.warn(`[verify] ANTHROPIC_API_KEY unset — skipping extraction for ${order.shortCode}`);
+    return;
+  }
+
+  // The switch for a runaway bill. The order keeps its QR and the proof is
+  // still in the bucket; only the paid call is skipped, so the band reads the
+  // screenshot itself until this is turned back on.
+  const switches = await readFlags(db);
+  if (!switches.proof_extraction) {
+    console.warn(`[verify] proof_extraction off — no vision call for ${order.shortCode}`);
     return;
   }
 

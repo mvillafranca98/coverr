@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findEventWithBand } from "../../db/queries/events";
+import { readFlags } from "../../db/queries/flags";
 import { resolveSellableRule } from "../../db/queries/price-rules";
 import * as s from "../../db/schema";
 import { newShortCode } from "../../lib/core";
@@ -9,6 +10,19 @@ import { BuyPage } from "../../views/buy/page";
 import type { PublicEnv } from "./context";
 
 export const buyRoutes = new Hono<PublicEnv>();
+
+/**
+ * Shown while the `sales` switch is off — a deliberate, platform-wide stop,
+ * not a fault. 503 rather than 404: the sale exists and is coming back.
+ *
+ * No price and no bank account on the page, because the reason for throwing
+ * that switch is usually that one of those two was wrong.
+ */
+const SALES_PAUSED = `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+   <body style="font-family:system-ui;background:#0C0B09;color:#F6F2EB;padding:40px;text-align:center">
+   <h1>La venta está pausada</h1>
+   <p style="color:#A79E90">Es temporal. Volvé a intentarlo en un rato, o escribile a la banda.</p>
+   <p style="color:#A79E90">Si ya transferiste, guardá tu comprobante — escribinos y lo resolvemos.</p></body>`;
 
 /**
  * The page a buyer lands on from the band's link: the price on sale right now,
@@ -19,6 +33,11 @@ buyRoutes.get("/e/:slug", async (c) => {
   const found = await findEventWithBand(db, c.req.param("slug"));
   if (!found) return c.notFound();
   const { event, band } = found;
+
+  // The platform-wide stop. Shown here as well as enforced on the POST, so a
+  // buyer is told before filling the form rather than after transferring.
+  const flags = await readFlags(db);
+  if (!flags.sales) return c.html(SALES_PAUSED, 503);
 
   if (event.status !== "live") {
     return c.html(

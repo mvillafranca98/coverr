@@ -3,6 +3,14 @@
   "name": "coverr",
   "account_id": "f1b142072a65e92e0f2913f67917d8e1",
   "main": "src/index.tsx",
+
+  // Stylesheets live in src/styles/*.css but still reach the browser inlined in
+  // the HTML, never as a second request: a buyer on venue wifi mid-transfer
+  // should not wait on one. Importing a .css file yields its text, bundled
+  // into the Worker. fallthrough keeps wrangler's default Text rule (.txt,
+  // .html, .sql) alive instead of silently shadowing it.
+  "rules": [{ "type": "Text", "globs": ["**/*.css"], "fallthrough": true }],
+
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },

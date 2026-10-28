@@ -4,9 +4,10 @@ import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { settlementFor } from "../../db/queries/event-totals";
 import { findEventBySlug } from "../../db/queries/events";
+import { readFlags } from "../../db/queries/flags";
 import * as s from "../../db/schema";
 import { newId, nowIso } from "../../lib/core";
-import { BILLING_ENABLED, priceBracket } from "../../lib/settlement";
+import { priceBracket } from "../../lib/settlement";
 import { MoneyPage } from "../../views/admin/money";
 import type { AdminEnv } from "./context";
 
@@ -39,6 +40,8 @@ moneyRoutes.get("/e/:slug/dinero", async (c) => {
     .where(eq(s.expenses.eventId, event.id))
     .orderBy(s.expenses.createdAt);
 
+  const flags = await readFlags(db);
+
   const unlock = await db
     .select()
     .from(s.eventUnlocks)
@@ -55,7 +58,7 @@ moneyRoutes.get("/e/:slug/dinero", async (c) => {
       expenses={expenses}
       settlement={settlement}
       advancesByMember={advancesByMember}
-      unlocked={!BILLING_ENABLED || !!unlock[0]}
+      unlocked={!flags.billing || !!unlock[0]}
       bracket={priceBracket(paidTickets)}
       isFirstEvent={await isFirstEventForBand(db, bandId)}
     />,
@@ -112,7 +115,7 @@ moneyRoutes.post("/e/:slug/dinero/desbloquear", async (c) => {
   if (!event) return c.notFound();
 
   // Nothing to unlock while billing is off; the report is already showing.
-  if (!BILLING_ENABLED) return c.redirect(moneyPath(event.slug), 303);
+  if (!(await readFlags(db)).billing) return c.redirect(moneyPath(event.slug), 303);
 
   const existing = await db
     .select()

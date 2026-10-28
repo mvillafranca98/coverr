@@ -50,6 +50,13 @@
       "when": 1793146130096,
       "tag": "0006_error_log",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793204323189,
+      "tag": "0007_platform_flags",
+      "breakpoints": true
     }
   ]
 }

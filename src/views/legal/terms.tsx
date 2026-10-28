@@ -17,9 +17,11 @@ import { LegalDoc } from "./doc";
  * The fee table is derived from `priceBracket` rather than typed out, so the
  * published price cannot drift from the charged one.
  *
- * NOTE: billing is switched off in `lib/settlement.ts#BILLING_ENABLED`. The
- * "hoy no se cobra" paragraph below says so. Whoever flips that constant must
- * update that paragraph and the date on this page in the same change.
+ * The "hoy no se cobra" paragraph is driven by the `billing` switch rather
+ * than written as fact. It used to be prose with a comment asking whoever
+ * flipped billing to remember to edit it — which nobody would, and the
+ * published terms would then be a lie. Throwing the switch now rewrites this
+ * page in the same instant.
  */
 const REPORT_TIERS: { range: string; amount: number }[] = [
   { range: "1 – 60 boletos vendidos", amount: priceBracket(60).amount },
@@ -28,7 +30,10 @@ const REPORT_TIERS: { range: string; amount: number }[] = [
   { range: "301 o más", amount: priceBracket(301).amount },
 ];
 
-export const TermsPage: FC<{ origin: string }> = ({ origin }) => (
+export const TermsPage: FC<{ origin: string; billingEnabled: boolean }> = ({
+  origin,
+  billingEnabled,
+}) => (
   <LegalDoc
     title="Términos del servicio — Coverr"
     description="Qué hace Coverr, qué no hace, quién responde por el dinero y qué pasa con un reembolso."
@@ -134,12 +139,19 @@ export const TermsPage: FC<{ origin: string }> = ({ origin }) => (
         </li>
       ))}
     </ul>
-    <p>
-      <b>Hoy el cobro está desactivado</b> y todas las bandas ven el reporte completo sin pagar,
-      mientras el producto se gana su lugar en la escena. Cuando eso cambie se avisa con antelación
-      y nunca de forma retroactiva: un evento ya desbloqueado queda desbloqueado. No hay suscripción
-      ni plan mensual.
-    </p>
+    {billingEnabled ? (
+      <p>
+        Se avisa con antelación y nunca de forma retroactiva: un evento ya desbloqueado queda
+        desbloqueado. No hay suscripción ni plan mensual.
+      </p>
+    ) : (
+      <p>
+        <b>Hoy el cobro está desactivado</b> y todas las bandas ven el reporte completo sin pagar,
+        mientras el producto se gana su lugar en la escena. Cuando eso cambie se avisa con
+        antelación y nunca de forma retroactiva: un evento ya desbloqueado queda desbloqueado. No
+        hay suscripción ni plan mensual.
+      </p>
+    )}
 
     <h2>Qué no prometemos</h2>
     <p>

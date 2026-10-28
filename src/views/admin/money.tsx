@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import { formatLps, formatLpsShort } from "../../lib/core";
-import { BILLING_ENABLED, type Settlement } from "../../lib/settlement";
+import type { Settlement } from "../../lib/settlement";
 import { AdminLayout } from "./layout";
 
 export const MoneyPage: FC<{
@@ -111,7 +111,7 @@ export const MoneyPage: FC<{
       </div>
     ) : null}
 
-    {unlocked || !BILLING_ENABLED ? (
+    {unlocked ? (
       <>
         <div class="cards">
           <div class="card">

@@ -3,6 +3,59 @@
 Operational procedures. Everything here has been run at least once against production —
 a procedure nobody has executed is a guess.
 
+## Kill switches
+
+Three switches live in the `platform_flags` table. They take effect on the **next request** —
+no deploy, no rebuild, no restart. An empty table is the normal state: every switch falls back
+to its default in `src/lib/flags.ts`.
+
+| Key | Default | Off means |
+|---|---|---|
+| `sales` | on | No new purchases anywhere. QR delivery, check-in, the scanner and the live dashboard are untouched. |
+| `proof_extraction` | on | No vision call. Orders still sell, proofs still stored, a human reads them. |
+| `billing` | **off** | The settlement report is free for everyone. Turning it on also rewrites the fee paragraph in `/terminos`. |
+
+### Stop sales right now
+
+```bash
+npx wrangler d1 execute coverr-db --remote --command "INSERT INTO platform_flags (key, enabled, note, changed_at) VALUES ('sales', 0, 'wrong bank account on the Daydrinking event', datetime('now')) ON CONFLICT(key) DO UPDATE SET enabled=0, note=excluded.note, changed_at=excluded.changed_at"
+```
+
+Buyers then get a 503 saying the sale is paused and to keep their receipt. Turn it back on with
+`enabled=1`, or delete the row.
+
+### Stop the vision spend
+
+Same statement with `'proof_extraction'`. Use this when the Anthropic bill is running away and
+you want presale to keep working — the proofs wait in the bucket and the band reads them from
+the order page.
+
+Deleting the `ANTHROPIC_API_KEY` secret also stops the spend, but it is a worse tool: it is a
+secret rotation, it affects nothing else you might want to keep, and putting it back means
+having the key to hand.
+
+### See what is set
+
+```bash
+npx wrangler d1 execute coverr-db --remote --command "SELECT * FROM platform_flags"
+```
+
+No rows means everything is at its default: sales on, extraction on, billing off.
+
+### What a kill switch must never touch
+
+The door. `sales` deliberately does not reach check-in, the scanner, the attendee list or the
+live dashboard, because taking those down mid-gig is a worse failure than almost anything it
+could be protecting against — a band standing at a door with 150 people outside and no list has
+no fallback. The same reasoning is why `readFlags` fails **open**: if the table cannot be read,
+sales keep running. Stopping has to be something somebody chose.
+
+### Not yet run against production
+
+Verified end to end locally on 2026-10-28 — sales off returns 503 on the buy page and refuses
+the POST, sales on sells normally, billing on rewrites `/terminos`. Not yet exercised against
+production, which needs the migration deployed first.
+
 ## Backup and restore
 
 ### What protects the data today

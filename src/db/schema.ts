@@ -351,6 +351,27 @@ export const eventUnlocks = sqliteTable("event_unlocks", {
 });
 
 /**
+ * The switches that can be thrown without a deploy.
+ *
+ * Everything here used to be a source constant, which meant turning something
+ * off was a rebuild — no use at all at nine on a gig night. A row in this
+ * table takes effect on the next request.
+ *
+ * An absent row means the default in `lib/flags.ts`, so an empty table is the
+ * normal, healthy state and nothing has to be seeded. `note` is for whoever
+ * reads this at 2am wondering why sales are off.
+ *
+ * Belongs to the platform, not a band: no band_id, and nothing in /admin
+ * writes here. It is flipped by hand — see docs/RUNBOOK.md.
+ */
+export const platformFlags = sqliteTable("platform_flags", {
+  key: text("key").primaryKey(),
+  enabled: integer("enabled").notNull(),
+  note: text("note"),
+  changedAt: text("changed_at").notNull(),
+});
+
+/**
  * Unhandled failures, kept so they can be counted and chased.
  *
  * Cloudflare already retains the console output, but a dashboard is somewhere

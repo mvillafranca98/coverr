@@ -92,17 +92,6 @@ export function perHead(s: Settlement): { gross: number; net: number; cost: numb
 }
 
 /**
- * Billing is off while the product is earning its reputation in the scene.
- * Every band sees the whole thing, settlement included, for as long as this
- * stays false.
- *
- * The machinery below and the event_unlocks table are deliberately kept: when
- * this flips to true, charging resumes as a config change rather than a
- * rebuild, and any event already unlocked stays unlocked.
- */
-export const BILLING_ENABLED = false;
-
-/**
  * Pricing bracket, resolved from tickets actually sold. Comps never count —
  * they are free tickets and charging for them would be indefensible.
  * The band's first event is free regardless of size.

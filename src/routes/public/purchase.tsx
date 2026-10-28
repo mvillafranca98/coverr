@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findEventWithBand } from "../../db/queries/events";
+import { readFlags } from "../../db/queries/flags";
 import {
   confirmedTicketCount,
   ticketsSoldUnderRule,
@@ -54,6 +55,13 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
   // Every upload costs a vision call. This is the ceiling on that bill.
   if (!(await withinLimit(c.env.PURCHASE_LIMIT, `buy:${clientIp(c)}`))) {
     return backToForm(TOO_MANY_REQUESTS);
+  }
+
+  // Checked on the server too: the buy page may have been loaded before the
+  // switch was thrown, and this is the request that takes somebody's money.
+  const flags = await readFlags(db);
+  if (!flags.sales) {
+    return backToForm("La venta está pausada ahora mismo. Volvé a intentarlo en un rato.");
   }
 
   const form = readPurchaseForm(await c.req.parseBody());
