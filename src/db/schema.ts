@@ -418,7 +418,7 @@ export const errorLog = sqliteTable(
   {
     id: text("id").primaryKey(),
     at: text("at").notNull(),
-    /** request | scheduled */
+    /** request | scheduled | client */
     kind: text("kind").notNull(),
     /**
      * The same bug seen twice produces the same value here, so a crash loop

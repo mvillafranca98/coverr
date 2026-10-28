@@ -19,6 +19,7 @@ import { refundRoutes } from "./routes/public/refunds";
 import { scannerShellRoutes } from "./routes/public/scanner-shell";
 import { signupRoutes } from "./routes/public/signup";
 import { scanApi } from "./routes/scan";
+import { scanErrorApi } from "./routes/scan-errors";
 
 /**
  * The worker's entry point: it assembles the app and owns the two responses
@@ -107,6 +108,7 @@ app.route("/", confirmationRoutes);
 app.route("/", qrFileRoutes);
 app.route("/", recoveryRoutes);
 app.route("/api/scan", scanApi);
+app.route("/api/scan", scanErrorApi);
 app.route("/", signupRoutes);
 app.route("/", legalRoutes);
 app.route("/", refundRoutes);

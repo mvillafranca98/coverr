@@ -76,7 +76,8 @@ export function alertClaimKey(input: { nowMs: number; fingerprint: string }): st
 }
 
 export type ErrorReport = {
-  kind: "request" | "scheduled";
+  /** `client` is a browser reporting its own failure — see routes/scan-errors. */
+  kind: "request" | "scheduled" | "client";
   error: unknown;
   /**
    * The matched route pattern — `/t/:token`, never `/t/abc123.png`. A real
