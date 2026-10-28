@@ -35,7 +35,7 @@ export const LegalDoc: FC<
       <h1>{heading}</h1>
       <p class="legal-updated">Última actualización: {updated}</p>
     </header>
-    <main class="legal">{children}</main>
+    <article class="legal">{children}</article>
     <footer>
       <LegalLinks />
       <div>Coverr · un producto de macawly.dev</div>

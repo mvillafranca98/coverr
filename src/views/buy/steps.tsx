@@ -44,7 +44,7 @@ export const QuantityStep: FC<{ rule: { label: string; amount: number } }> = ({ 
         <span>total a transferir</span>
       </span>
     </div>
-    <p class="hint qty-echo" id="qtyEcho">
+    <p class="hint qty-echo" id="qtyEcho" aria-live="polite">
       Vas a poner el nombre de 1 persona más abajo.
     </p>
   </section>

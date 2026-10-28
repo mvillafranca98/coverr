@@ -166,17 +166,24 @@ export const BandSettingsPage: FC<{
                       style="display:flex;gap:6px"
                     >
                       <input type="hidden" name="id" value={m.id} />
-                      <input type="text" name="name" value={m.name} style="min-width:140px" />
+                      <input
+                        type="text"
+                        name="name"
+                        value={m.name}
+                        aria-label={`Nombre de ${m.name}`}
+                        style="min-width:140px"
+                      />
                       <input
                         type="number"
                         name="split_pct"
                         value={String(m.splitPct)}
+                        aria-label={`Porcentaje de ${m.name}`}
                         min="0"
                         max="100"
                         step="0.5"
                         style="width:80px"
                       />
-                      <button class="btn sm ghost" type="submit">
+                      <button class="btn sm ghost" type="submit" aria-label={`Guardar ${m.name}`}>
                         Guardar
                       </button>
                     </form>
@@ -185,7 +192,7 @@ export const BandSettingsPage: FC<{
                   <td class="right">
                     <form method="post" action="/admin/banda/integrante/borrar">
                       <input type="hidden" name="id" value={m.id} />
-                      <button class="btn sm ghost" type="submit">
+                      <button class="btn sm ghost" type="submit" aria-label={`Quitar a ${m.name}`}>
                         Quitar
                       </button>
                     </form>

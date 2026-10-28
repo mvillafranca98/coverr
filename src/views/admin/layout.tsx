@@ -80,6 +80,13 @@ export const AdminLayout: FC<
       <style dangerouslySetInnerHTML={{ __html: TOKENS_CSS + ADMIN_CSS }} />
     </head>
     <body>
+      {/* Two bars of links sit before every page's content; a keyboard user
+          should not have to tab through all of them on each page. */}
+      {bandName ? (
+        <a class="skip" href="#main">
+          Saltar al contenido
+        </a>
+      ) : null}
       <div class="wrap">
         {/* Two levels, because they are two scopes. Everything in the band bar
             leaves whatever event you are in; everything in the event bar acts
@@ -133,7 +140,7 @@ export const AdminLayout: FC<
             ) : null}
           </header>
         ) : null}
-        {children}
+        <main id="main">{children}</main>
         <footer>
           <div>Coverr</div>
           <LegalLinks />

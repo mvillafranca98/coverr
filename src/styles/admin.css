@@ -54,6 +54,21 @@ a {
   outline: 3px solid var(--yellow);
   outline-offset: 2px;
 }
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--yellow);
+  color: var(--accent-ink);
+  padding: 12px 18px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.skip:focus {
+  left: 8px;
+  top: 8px;
+  z-index: 60;
+}
 .wrap {
   max-width: 980px;
   margin: 0 auto;

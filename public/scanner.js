@@ -117,6 +117,7 @@
     video: document.getElementById("video"),
     canvas: document.getElementById("canvas"),
     result: document.getElementById("result"),
+    verdict: document.getElementById("verdict"),
     statInside: document.getElementById("statInside"),
     statTotal: document.getElementById("statTotal"),
     statBands: document.getElementById("statBands"),
@@ -171,7 +172,10 @@
   }
 
   function setNet(text, cls) {
-    el.net.textContent = text;
+    // The badge is a live region, and the sync timer reports "Sincronizado"
+    // again and again. Rewriting identical text would have a screen reader
+    // repeat it every time.
+    if (el.net.textContent !== text) el.net.textContent = text;
     el.net.className = "net " + (cls || "");
   }
 
@@ -302,6 +306,7 @@
     go.onclick = function () { state.pending = false; o.onGo(); };
     no.onclick = function () { state.pending = false; o.onNo(); };
     el.result.hidden = false;
+    announce(o.title, o.sub, o.detail);
     if (navigator.vibrate) navigator.vibrate([60, 50, 60]);
   }
 
@@ -314,7 +319,17 @@
     el.result.querySelector(".r-sub").textContent = sub || "";
     if (detail) el.result.querySelector(".r-detail").textContent = detail;
     el.result.hidden = false;
+    announce(title, sub, detail);
     if (navigator.vibrate) navigator.vibrate(kind === "green" ? 40 : [60, 50, 60]);
+  }
+
+  /**
+   * Says the verdict through the live region. The colour carries it for
+   * everyone else, so the words have to carry it here — which is why the
+   * title, the one line that names the verdict, always goes first.
+   */
+  function announce(title, sub, detail) {
+    el.verdict.textContent = [title, sub, detail].filter(Boolean).join(". ");
   }
 
   // ------------------------------------------------------------- check-in
@@ -574,15 +589,38 @@
 
   // ------------------------------------------------------------------ init
 
-  el.tabs.forEach(function (t) {
+  function selectTab(t) {
+    el.tabs.forEach(function (x) {
+      var on = x === t;
+      x.classList.toggle("on", on);
+      x.setAttribute("aria-selected", on ? "true" : "false");
+      // One tab stop for the whole row; the arrow keys move within it.
+      x.tabIndex = on ? 0 : -1;
+    });
+    el.panes.forEach(function (p) { p.hidden = p.dataset.pane !== t.dataset.tab; });
+    // Opening the tab shows the list, not an empty box over a cached list.
+    if (t.dataset.tab === "buscar") renderSearch();
+  }
+
+  el.tabs.forEach(function (t, i) {
     t.addEventListener("click", function () {
-      el.tabs.forEach(function (x) { x.classList.toggle("on", x === t); });
-      el.panes.forEach(function (p) { p.hidden = p.dataset.pane !== t.dataset.tab; });
-      if (t.dataset.tab === "buscar") {
-        el.searchInput.focus();
-        // Opening the tab shows the list, not an empty box over a cached list.
-        renderSearch();
-      }
+      selectTab(t);
+      // Only on a tap or Enter. Arrowing across the row must keep focus on
+      // the tabs, or the next arrow press would move the text cursor instead.
+      if (t.dataset.tab === "buscar") el.searchInput.focus();
+    });
+    t.addEventListener("keydown", function (e) {
+      var last = el.tabs.length - 1;
+      var next =
+        e.key === "ArrowRight" ? (i === last ? 0 : i + 1)
+        : e.key === "ArrowLeft" ? (i === 0 ? last : i - 1)
+        : e.key === "Home" ? 0
+        : e.key === "End" ? last
+        : -1;
+      if (next < 0) return;
+      e.preventDefault();
+      selectTab(el.tabs[next]);
+      el.tabs[next].focus();
     });
   });
 

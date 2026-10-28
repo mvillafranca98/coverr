@@ -77,7 +77,7 @@ export const Layout: FC<
       <style dangerouslySetInnerHTML={{ __html: TOKENS_CSS + BUYER_CSS }} />
     </head>
     <body>
-      <div class="wrap">{children}</div>
+      <main class="wrap">{children}</main>
     </body>
   </html>
 );

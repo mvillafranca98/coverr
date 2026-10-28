@@ -187,8 +187,14 @@ export const OrderPage: FC<{
                     style="display:flex;gap:6px"
                   >
                     <input type="hidden" name="attendee_id" value={a.id} />
-                    <input type="text" name="name" value={a.name} style="min-width:150px" />
-                    <button class="btn sm ghost" type="submit">
+                    <input
+                      type="text"
+                      name="name"
+                      value={a.name}
+                      aria-label={`Nombre de ${a.name}`}
+                      style="min-width:150px"
+                    />
+                    <button class="btn sm ghost" type="submit" aria-label={`Guardar ${a.name}`}>
                       Guardar
                     </button>
                   </form>

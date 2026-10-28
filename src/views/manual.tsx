@@ -64,11 +64,19 @@ export const ManualSalePage: FC<{
     ) : null}
 
     <form method="post" style="max-width:560px" id="manualForm">
-      <h2>¿Quiénes entran?</h2>
-      <p class="sub" style="margin-top:0">
+      <h2 id="namesHeading">¿Quiénes entran?</h2>
+      <p class="sub" id="namesHint" style="margin-top:0">
         Un nombre por línea. Cada uno recibe su propio código QR.
       </p>
-      <textarea name="names" id="names" rows={4} required placeholder={"Marvin Mora\nKeyla Discua"}>
+      <textarea
+        name="names"
+        id="names"
+        rows={4}
+        required
+        aria-labelledby="namesHeading"
+        aria-describedby="namesHint"
+        placeholder={"Marvin Mora\nKeyla Discua"}
+      >
         {values?.names ?? ""}
       </textarea>
 
