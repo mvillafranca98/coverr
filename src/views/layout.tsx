@@ -2,6 +2,7 @@ import type { FC, PropsWithChildren } from "hono/jsx";
 import BUYER_CSS from "../styles/buyer.css";
 import TOKENS_CSS from "../styles/tokens.css";
 import { BrandIcons } from "./brand";
+import { ErrorReporter } from "./error-reporter";
 
 export const Layout: FC<
   PropsWithChildren<{
@@ -15,6 +16,7 @@ export const Layout: FC<
   <html lang="es">
     <head>
       <meta charset="utf-8" />
+      <ErrorReporter />
       <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
       <meta name="theme-color" content="#FBF8F2" />
       {/* Almost every page on this layout shows something that belongs to one

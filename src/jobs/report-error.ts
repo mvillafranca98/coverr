@@ -1,4 +1,4 @@
-import { and, eq, gte, isNotNull, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import * as s from "../db/schema";
 import { newId, nowIso } from "../lib/core";
@@ -18,13 +18,34 @@ type Env = {
 export const ALERT_WINDOW_MINUTES = 60;
 
 /**
- * The most alerts one window may produce, across every distinct error.
+ * The most alerts one window may produce, across every distinct error from
+ * one source — see `alertPool`.
  *
  * The claim key below handles one bug failing repeatedly. This handles the
  * other shape: a deploy that breaks six routes at once, where six separate
  * emails say nothing the first one did not.
  */
 export const ALERT_CAP_PER_WINDOW = 5;
+
+/**
+ * Where a failure was seen. `request` and `scheduled` are the server's own;
+ * `scanner` and `page` are browsers reporting their own errors — see
+ * routes/scan-errors and routes/public/page-errors.
+ */
+export type ErrorKind = "request" | "scheduled" | "scanner" | "page";
+
+/**
+ * The kinds that share one alert budget with this one.
+ *
+ * The server's failures share a budget; each browser source has its own.
+ * Anyone can post a page error — the endpoint has no credential, because
+ * buyers have none — so a flood of invented ones must never be able to spend
+ * the alerts a real outage needs. The scanner gets its own for the same
+ * reason in the other direction: a public flood must not silence the door.
+ */
+export function alertPool(kind: ErrorKind): ErrorKind[] {
+  return kind === "request" || kind === "scheduled" ? ["request", "scheduled"] : [kind];
+}
 
 /** Long enough to find the bug, short enough to survive an email client. */
 const MAX_STACK_CHARS = 4000;
@@ -76,8 +97,7 @@ export function alertClaimKey(input: { nowMs: number; fingerprint: string }): st
 }
 
 export type ErrorReport = {
-  /** `client` is a browser reporting its own failure — see routes/scan-errors. */
-  kind: "request" | "scheduled" | "client";
+  kind: ErrorKind;
   error: unknown;
   /**
    * The matched route pattern — `/t/:token`, never `/t/abc123.png`. A real
@@ -123,7 +143,7 @@ export async function reportError(env: Env, report: ErrorReport): Promise<void> 
     method: report.method ?? null,
   };
 
-  const claim = (await withinWindowCap(db))
+  const claim = (await withinWindowCap(db, alertPool(report.kind)))
     ? alertClaimKey({ nowMs: Date.now(), fingerprint: row.fingerprint })
     : null;
 
@@ -167,13 +187,22 @@ type Row = {
  * burn the day's Resend quota — the same quota that delivers tickets. Tickets
  * outrank alerts, and a total outage is what the uptime check is for.
  */
-async function withinWindowCap(db: ReturnType<typeof drizzle>): Promise<boolean> {
+async function withinWindowCap(
+  db: ReturnType<typeof drizzle>,
+  pool: ErrorKind[],
+): Promise<boolean> {
   const windowStart = new Date(Date.now() - ALERT_WINDOW_MINUTES * 60_000).toISOString();
   try {
     const [counted] = await db
       .select({ n: sql<number>`count(*)` })
       .from(s.errorLog)
-      .where(and(isNotNull(s.errorLog.alertClaim), gte(s.errorLog.at, windowStart)));
+      .where(
+        and(
+          isNotNull(s.errorLog.alertClaim),
+          gte(s.errorLog.at, windowStart),
+          inArray(s.errorLog.kind, pool),
+        ),
+      );
     return Number(counted?.n ?? 0) < ALERT_CAP_PER_WINDOW;
   } catch (dbErr) {
     console.error(`[error] could not reach error_log, alert suppressed: ${String(dbErr)}`);

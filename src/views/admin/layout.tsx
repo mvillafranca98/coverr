@@ -2,6 +2,7 @@ import type { FC, PropsWithChildren } from "hono/jsx";
 import ADMIN_CSS from "../../styles/admin.css";
 import TOKENS_CSS from "../../styles/tokens.css";
 import { BrandIcons, Monogram } from "../brand";
+import { ErrorReporter } from "../error-reporter";
 import { LegalLinks } from "../legal/links";
 
 /**
@@ -58,6 +59,7 @@ export const AdminLayout: FC<
   <html lang="es">
     <head>
       <meta charset="utf-8" />
+      <ErrorReporter />
       <meta name="viewport" content="width=device-width,initial-scale=1" />
       <meta name="robots" content="noindex,nofollow" />
       <meta name="theme-color" content="#0F0E0B" />

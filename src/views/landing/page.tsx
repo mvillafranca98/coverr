@@ -2,6 +2,7 @@ import type { FC } from "hono/jsx";
 import LANDING_CSS from "../../styles/landing.css";
 import TOKENS_CSS from "../../styles/tokens.css";
 import { BrandIcons, Monogram, Wordmark } from "../brand";
+import { ErrorReporter } from "../error-reporter";
 import { LegalLinks } from "../legal/links";
 import { HeroTicket } from "./hero-ticket";
 import { MoneyFlow } from "./money-flow";
@@ -134,6 +135,7 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
   <html lang="es">
     <head>
       <meta charset="utf-8" />
+      <ErrorReporter />
       <meta name="viewport" content="width=device-width,initial-scale=1" />
       <meta name="theme-color" content="#FFF4DE" />
       <title>Coverr — Preventa y entrada para bandas en Honduras</title>

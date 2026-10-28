@@ -12,6 +12,7 @@ import { crawlRoutes } from "./routes/public/crawl";
 import { healthRoutes } from "./routes/public/health";
 import { landingRoutes } from "./routes/public/landing";
 import { legalRoutes } from "./routes/public/legal";
+import { pageErrorRoutes } from "./routes/public/page-errors";
 import { purchaseRoutes } from "./routes/public/purchase";
 import { qrFileRoutes } from "./routes/public/qr-files";
 import { recoveryRoutes } from "./routes/public/recovery";
@@ -114,6 +115,7 @@ app.route("/", legalRoutes);
 app.route("/", refundRoutes);
 app.route("/", healthRoutes);
 app.route("/", crawlRoutes);
+app.route("/", pageErrorRoutes);
 
 app.get("/admin/", (c) => c.redirect("/admin", 301));
 app.route("/admin", admin);

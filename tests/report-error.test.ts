@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ALERT_WINDOW_MINUTES, alertClaimKey, errorFingerprint } from "../src/jobs/report-error";
+import {
+  ALERT_WINDOW_MINUTES,
+  alertClaimKey,
+  alertPool,
+  errorFingerprint,
+} from "../src/jobs/report-error";
 
 /**
  * The two decisions that stand between a crash loop and a mailbox with three
@@ -87,5 +92,22 @@ describe("alertClaimKey", () => {
     expect(alertClaimKey({ nowMs: start, fingerprint: "request|/x|boom" })).toContain(
       "request|/x|boom",
     );
+  });
+});
+
+// The page error endpoint takes posts from anyone. Whatever arrives there must
+// never be able to spend the alerts a real outage or the door needs.
+describe("alertPool", () => {
+  it("puts the server's request and cron failures in one budget", () => {
+    expect(alertPool("request")).toEqual(["request", "scheduled"]);
+    expect(alertPool("scheduled")).toEqual(["request", "scheduled"]);
+  });
+
+  it("gives public page reports a budget nothing else draws on", () => {
+    expect(alertPool("page")).toEqual(["page"]);
+  });
+
+  it("gives the scanner its own, so a public flood cannot silence the door", () => {
+    expect(alertPool("scanner")).toEqual(["scanner"]);
   });
 });

@@ -1,6 +1,6 @@
 /**
- * Turns what the door scanner says went wrong into something safe to store
- * and to email.
+ * Turns what a browser says went wrong into something safe to store and to
+ * email.
  *
  * Everything in a client report was written by whatever holds the page, so it
  * is handled as untrusted text: capped, stripped of anything token-shaped, and
@@ -10,7 +10,7 @@
 /** Far beyond any honest batch. Refused before it is parsed. */
 export const MAX_CLIENT_ERROR_BODY_CHARS = 20_000;
 
-/** The scanner never queues more than this, so anything past it is not ours. */
+/** No reporter ever sends more than this, so anything past it is not ours. */
 export const MAX_REPORTS_PER_BATCH = 5;
 
 const MAX_MESSAGE_CHARS = 500;
@@ -20,47 +20,78 @@ const MAX_USER_AGENT_CHARS = 200;
 export type ClientErrorReport = { message: string; stack: string | null };
 
 /**
- * The staff link and every QR code are capabilities: whoever holds the string
- * can open the scanner or walk in. Either can surface in an error — a stack
- * frame names the page URL, a failed request names the API path — and these
- * reports end in an email.
+ * Removes capabilities from text bound for a stored row and an email.
  *
- * The exact staff token goes first. Then any long run of letters and digits
- * that contains a digit, which is what a random token looks like and what a
- * browser error name such as `OverconstrainedError` — the camera refusing a
- * resolution, precisely the error worth reading — does not.
+ * Several strings in this product are keys rather than names: the scanner's
+ * staff link opens the door app, a QR token gets somebody in, and an order id
+ * in `/boletos/…` shows that order's tickets. Any of them can surface in an
+ * error — a stack frame names the page URL, a failed request names its path.
+ *
+ * Tokens the caller already knows go first, exactly. Then any run of twelve
+ * or more letters and digits that contains a digit, which covers every id and
+ * token this product generates (an order id's random part is sixteen) and
+ * spares browser error names such as `OverconstrainedError` — the camera
+ * refusing a resolution, precisely the error worth reading.
  */
-export function redactTokens(text: string, staffToken: string): string {
-  const withoutStaffToken = staffToken ? text.split(staffToken).join(":token") : text;
-  return withoutStaffToken.replace(/[0-9A-Za-z]{18,}/g, (run) => (/\d/.test(run) ? "#" : run));
+export function redactTokens(text: string, knownTokens: string[]): string {
+  const withoutKnown = knownTokens
+    .filter((token) => token.length > 0)
+    .reduce((current, token) => current.split(token).join(":token"), text);
+  return withoutKnown.replace(/[0-9A-Za-z]{12,}/g, (run) => (/\d/.test(run) ? "#" : run));
 }
 
 /**
- * Reads the batch the scanner posted.
+ * A page's path with everything that identifies a person or an order taken
+ * out, so it can be stored, grouped and emailed: `/boletos/ord_m2h8x1q4b7z9kk`
+ * becomes `/boletos/:id`.
  *
- * Malformed entries are dropped rather than refused: a device reporting that
- * it is broken may be broken in how it reports, and one bad entry must not
- * lose the rest. The device's clock is kept as a line of the stack, because a
+ * Only plain lowercase words survive — route names, and event slugs, which
+ * are public. Anything else in a segment (digits, capitals, underscores,
+ * encoded characters) becomes `:id`. Null when the browser sent something
+ * that is not a path at all.
+ */
+export function pagePattern(pathname: unknown): string | null {
+  if (typeof pathname !== "string" || !pathname.startsWith("/") || pathname.length > 300) {
+    return null;
+  }
+  const segments = pathname
+    .split("/")
+    .filter(Boolean)
+    .slice(0, 6)
+    .map((segment) => (/^[a-z-]{1,40}$/.test(segment) ? segment : ":id"));
+  return `/${segments.join("/")}`;
+}
+
+/**
+ * Reads a batch a browser posted: the reports, and the page it says it was on
+ * (`page`, still raw — pass it through `pagePattern`).
+ *
+ * Malformed entries are dropped rather than refused: a page reporting that it
+ * is broken may be broken in how it reports, and one bad entry must not lose
+ * the rest. The device's clock is kept as a line of the stack, because a
  * report queued offline is recorded hours after it happened.
  */
 export function readClientErrorReports(input: {
   rawBody: string;
-  staffToken: string;
+  knownTokens: string[];
   userAgent: string | null;
-}): ClientErrorReport[] {
+}): { page: unknown; reports: ClientErrorReport[] } {
   const body = parseJson(input.rawBody);
-  const entries = isRecord(body) && Array.isArray(body.reports) ? body.reports : [];
+  if (!isRecord(body)) return { page: null, reports: [] };
+  const entries = Array.isArray(body.reports) ? body.reports : [];
 
-  return entries.slice(0, MAX_REPORTS_PER_BATCH).flatMap((entry): ClientErrorReport[] => {
-    if (!isRecord(entry) || typeof entry.message !== "string" || !entry.message.trim()) return [];
+  const reports = entries.slice(0, MAX_REPORTS_PER_BATCH).flatMap((entry): ClientErrorReport[] => {
+    if (!isRecord(entry) || typeof entry.message !== "string" || !entry.message.trim()) {
+      return [];
+    }
 
-    const message = redactTokens(entry.message.trim(), input.staffToken).slice(
+    const message = redactTokens(entry.message.trim(), input.knownTokens).slice(
       0,
       MAX_MESSAGE_CHARS,
     );
     const frames =
       typeof entry.stack === "string"
-        ? redactTokens(entry.stack, input.staffToken).slice(0, MAX_STACK_CHARS)
+        ? redactTokens(entry.stack, input.knownTokens).slice(0, MAX_STACK_CHARS)
         : "";
     const happenedAt =
       typeof entry.at === "string" && /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(entry.at)
@@ -73,6 +104,8 @@ export function readClientErrorReports(input: {
     const stack = [frames, happenedAt, device].filter(Boolean).join("\n\n");
     return [{ message, stack: stack || null }];
   });
+
+  return { page: body.page, reports };
 }
 
 function parseJson(raw: string): unknown {

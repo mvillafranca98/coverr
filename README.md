@@ -230,7 +230,8 @@ src/
                    expired proofs and old error rows
   routes/
     public/        buyer-facing flows: event page, purchase, confirmation,
-                   recovery, refunds, sign-up, legal pages, health, robots, sitemap
+                   recovery, refunds, sign-up, legal pages, health, robots,
+                   sitemap, and where pages report their own errors
     admin/         the band's side: sign-in, home, dashboard, orders, an order,
                    manual sales, money, event and band settings
     scan.ts        the scanner's API: attendee list, check-in, cash, stats
@@ -406,10 +407,12 @@ been run against production:
 - **Backup and restore** — D1 Time Travel, exports, and why an export cannot be re-imported
   unmodified.
 
-Crashes reach the operator on their own: unhandled errors in requests, in the nightly jobs and
-in the door scanner are written to the `error_log` table and emailed to `ALERT_EMAIL` — once
-per distinct error per hour, at most five an hour. Tokens and ticket codes are stripped from
-anything that leaves the server.
+Crashes reach the operator on their own. Unhandled errors in requests and the nightly jobs,
+and JavaScript errors in the browser — the door scanner and every other page — are written to
+the `error_log` table and emailed to `ALERT_EMAIL`, once per distinct error per hour. Each
+source has its own budget of five alerts an hour, so a flood from a public page can never
+silence a real outage. Tokens, ticket codes and order ids are stripped before anything is
+stored or sent.
 
 ## Known limitations
 
@@ -423,8 +426,6 @@ The live, itemised status of security, privacy, performance and launch readiness
   the steps.
 - **18+ is stated, not enforced.** The terms and the checkout say so; nothing checks it.
 - **The site runs on its `workers.dev` address.** No custom domain yet.
-- **Browser errors are reported from the scanner only.** The buy and ticket pages do not report
-  their own errors yet.
 
 ## Conventions
 
