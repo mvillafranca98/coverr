@@ -190,44 +190,64 @@
     }
   }
 
+  // The most scans one sync request carries — the server reads no more than
+  // this (MAX_SCANS_PER_SYNC in src/lib/scan-request.ts). A longer queue builds
+  // up when the venue loses signal for a big crowd. Sending it whole used to
+  // drop everything past this many while the device marked it all synced.
+  var SYNC_BATCH = 500;
+  var flushing = false;
+
   async function flush() {
     if (!state.queue.length) { renderStats(); return; }
     if (!online()) { setNet("Sin conexión · " + state.queue.length + " en cola", "off"); return; }
-    var batch = state.queue.slice();
+    // One sync at a time. The timer and the reconnect event can both call this,
+    // and two overlapping syncs would report this device's own scans back to
+    // it as conflicts.
+    if (flushing) return;
+    flushing = true;
+    // Counted across every batch, so a clean last batch cannot hide a warning
+    // raised by an earlier one.
+    var conflicts = 0;
+    var voided = 0;
     try {
-      var res = await fetch("/api/scan/" + TOKEN + "/checkin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scans: batch }),
-      });
-      if (!res.ok) throw new Error("http " + res.status);
-      var data = await res.json();
-
-      // A conflict here means another device already scanned this ticket while
-      // both were offline. Surfaced, not silently dropped.
-      var conflicts = (data.results || []).filter(function (r) { return r.status === "already"; });
-      var voided = (data.results || []).filter(function (r) { return r.status === "voided"; });
-      state.queue = state.queue.filter(function (q) {
-        return !batch.some(function (b) { return b.t === q.t && b.at === q.at; });
-      });
-      save();
-      if (state.manifest) {
-        state.manifest.attendees.forEach(function (a) {
-          var hit = (data.results || []).find(function (r) { return r.t === a.t; });
-          if (hit && (hit.status === "ok" || hit.status === "already")) a.c = hit.at || nowIso();
+      while (state.queue.length) {
+        var batch = state.queue.slice(0, SYNC_BATCH);
+        var res = await fetch("/api/scan/" + TOKEN + "/checkin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scans: batch }),
         });
-        indexManifest();
+        if (!res.ok) throw new Error("http " + res.status);
+        var data = await res.json();
+
+        // A conflict here means another device already scanned this ticket while
+        // both were offline. Surfaced, not silently dropped.
+        conflicts += (data.results || []).filter(function (r) { return r.status === "already"; }).length;
+        voided += (data.results || []).filter(function (r) { return r.status === "voided"; }).length;
+        state.queue = state.queue.filter(function (q) {
+          return !batch.some(function (b) { return b.t === q.t && b.at === q.at; });
+        });
+        save();
+        if (state.manifest) {
+          state.manifest.attendees.forEach(function (a) {
+            var hit = (data.results || []).find(function (r) { return r.t === a.t; });
+            if (hit && (hit.status === "ok" || hit.status === "already")) a.c = hit.at || nowIso();
+          });
+          indexManifest();
+        }
+        renderStats(data);
       }
-      renderStats(data);
-      if (voided.length) {
-        setNet(voided.length + " boleto(s) anulado(s) o reembolsado(s) — no deben entrar", "off");
-      } else if (conflicts.length) {
-        setNet(conflicts.length + " ya estaban adentro — revisá brazaletes", "warn");
+      if (voided) {
+        setNet(voided + " boleto(s) anulado(s) o reembolsado(s) — no deben entrar", "off");
+      } else if (conflicts) {
+        setNet(conflicts + " ya estaban adentro — revisá brazaletes", "warn");
       } else {
         setNet("Sincronizado", "ok");
       }
     } catch (e) {
       setNet("Sin conexión · " + state.queue.length + " en cola", "off");
+    } finally {
+      flushing = false;
     }
   }
 

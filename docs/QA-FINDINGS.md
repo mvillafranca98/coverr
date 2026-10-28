@@ -766,3 +766,38 @@ refused with the count, asking 3 fits exactly and sells.
 
 **Related.** The capacity message *"Ya no hay cupo suficiente"* never said how many **are** left.
 Fixed in the same pass as **F3** — it now reads *"Sólo quedan 3 boletos."*
+
+---
+
+## F16 · Offline scans past the 500th were dropped while the scanner said "Sincronizado"
+
+**Severity: high** — ✅ **FIXED 2026-10-28**
+
+Found while hardening the scanner API against malformed requests, not during the QA run.
+
+**What happened.** The check-in endpoint reads at most 500 scans per sync
+(`scans.slice(0, 500)`). `public/scanner.js` sent its *whole* queue in one request, then removed
+every scan it had sent from the queue, whether the server had read it or not. So a device that
+queued more than 500 scans offline lost everything past the 500th:
+
+- those people were never recorded as inside, so attendance came out short;
+- other devices never learned they were inside, so a second scan of their ticket would show green;
+- the device itself said *Sincronizado*, so nobody had a reason to look.
+
+It takes a venue losing signal for a large crowd, which is exactly what the offline scanner exists
+for.
+
+**Reproduced before fixing.** 600 scans queued on the demo scanner, two of them real unscanned
+tickets at positions 551 and 600. After reload: one request, queue emptied, *Sincronizado* — and
+neither ticket recorded on the server.
+
+**Fix.** The scanner now syncs in batches of at most 500 (`SYNC_BATCH`, matching the server's
+`MAX_SCANS_PER_SYNC` in `src/lib/scan-request.ts`), removes only what each batch carried, and
+keeps going until the queue is empty. Warnings about refunded tickets or tickets already inside
+are added up across batches, so a clean last batch cannot hide one. A sync no longer starts while
+another is running: the 15-second timer and the reconnect event could both start one, and two at
+once would report the device's own scans back to it as conflicts.
+
+**Verified after.** The same 600 scans went out as 500 then 100, both real tickets were recorded
+with their original offline scan times and the device name, and the queue emptied. The test
+check-ins were cleared afterwards.
