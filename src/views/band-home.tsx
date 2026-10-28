@@ -260,7 +260,7 @@ export const BandHomePage: FC<{
         </div>
         <div class="card">
           <span>Fieles</span>
-          <b>{fans.regulars.length}</b>
+          <b>{fans.regularPeople}</b>
           <small>3 eventos o más</small>
         </div>
       </div>

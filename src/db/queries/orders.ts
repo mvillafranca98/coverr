@@ -124,15 +124,6 @@ export type EventOrderRow = {
 };
 
 /**
- * Every order on an event, enriched with the three things the admin views
- * always need alongside it: who is on the tickets, how many walked in, and
- * whether anything is waiting on a human.
- *
- * Each join is on the event rather than on a list of order ids: an `inArray`
- * of every order blows D1's bound-parameter limit the moment an event sells
- * properly.
- */
-/**
  * One order, but only if it belongs to this event.
  *
  * The admin routes take an order id from the URL and an event slug from the
@@ -157,10 +148,46 @@ export async function findOrderInEvent(
   return rows[0] ?? null;
 }
 
+/**
+ * Every order on an event, enriched with the three things the admin views
+ * always need alongside it: who is on the tickets, how many walked in, and
+ * whether anything is waiting on a human.
+ *
+ * Each join is on the event rather than on a list of order ids: an `inArray`
+ * of every order blows D1's bound-parameter limit the moment an event sells
+ * properly.
+ */
 export async function listOrdersForEvent(
   db: DrizzleD1Database<typeof s>,
   eventId: string,
 ): Promise<EventOrderRow[]> {
+  return loadOrderRows(db, eventId);
+}
+
+/**
+ * One order with exactly the enrichment the list gives it, without loading
+ * the rest of the event to find it. Null when the order is not on this event,
+ * which is also how an order id from another band's event looks.
+ */
+export async function findOrderRowInEvent(
+  db: DrizzleD1Database<typeof s>,
+  eventId: string,
+  orderId: string,
+): Promise<EventOrderRow | null> {
+  const [row] = await loadOrderRows(db, eventId, orderId);
+  return row ?? null;
+}
+
+/** The list and the single order, from the same queries narrowed by `orderId`. */
+async function loadOrderRows(
+  db: DrizzleD1Database<typeof s>,
+  eventId: string,
+  orderId?: string,
+): Promise<EventOrderRow[]> {
+  const inScope = orderId
+    ? and(eq(s.orders.eventId, eventId), eq(s.orders.id, orderId))
+    : eq(s.orders.eventId, eventId);
+
   const orders = await db
     .select({
       id: s.orders.id,
@@ -179,7 +206,7 @@ export async function listOrdersForEvent(
       createdAt: s.orders.createdAt,
     })
     .from(s.orders)
-    .where(eq(s.orders.eventId, eventId))
+    .where(inScope)
     .orderBy(desc(s.orders.createdAt));
 
   const attendees = await db
@@ -191,19 +218,19 @@ export async function listOrdersForEvent(
     })
     .from(s.attendees)
     .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
-    .where(eq(s.orders.eventId, eventId));
+    .where(inScope);
 
   const openFlags = await db
     .select({ orderId: s.verificationFlags.orderId, detail: s.verificationFlags.detail })
     .from(s.verificationFlags)
     .innerJoin(s.orders, eq(s.verificationFlags.orderId, s.orders.id))
-    .where(and(eq(s.orders.eventId, eventId), isNull(s.verificationFlags.resolvedAt)));
+    .where(and(inScope, isNull(s.verificationFlags.resolvedAt)));
 
   const openRefunds = await db
     .select({ orderId: s.refundRequests.orderId })
     .from(s.refundRequests)
     .innerJoin(s.orders, eq(s.refundRequests.orderId, s.orders.id))
-    .where(and(eq(s.orders.eventId, eventId), eq(s.refundRequests.status, "open")));
+    .where(and(inScope, eq(s.refundRequests.status, "open")));
 
   const attendeesByOrder = new Map<
     string,

@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as s from "../schema";
 
@@ -71,4 +71,33 @@ export async function findDuplicateProof(
     .where(eq(s.orders.id, duplicates[0]!.orderId))
     .limit(1);
   return { orderShortCode: prior[0]?.shortCode ?? null };
+}
+
+/**
+ * Whether a transfer reference already appears on another of the band's
+ * orders, across every event it has run — a recycled confirmation is usually
+ * recycled from a previous gig.
+ *
+ * One indexed lookup (`idx_proofs_ref`) that stops at the first match. It
+ * used to load every reference the band had ever seen just to test one for
+ * membership, a list that grows with every gig.
+ */
+export async function referenceUsedOnOtherOrder(
+  db: DrizzleD1Database<typeof s>,
+  input: { bandId: string; reference: string; exceptOrderId: string },
+): Promise<boolean> {
+  const hit = await db
+    .select({ id: s.paymentProofs.id })
+    .from(s.paymentProofs)
+    .innerJoin(s.orders, eq(s.paymentProofs.orderId, s.orders.id))
+    .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+    .where(
+      and(
+        eq(s.paymentProofs.xReference, input.reference),
+        eq(s.events.bandId, input.bandId),
+        ne(s.paymentProofs.orderId, input.exceptOrderId),
+      ),
+    )
+    .limit(1);
+  return hit.length > 0;
 }

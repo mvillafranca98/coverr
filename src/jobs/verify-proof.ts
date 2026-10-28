@@ -1,6 +1,7 @@
 import { and, eq, ne, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { readFlags } from "../db/queries/flags";
+import { referenceUsedOnOtherOrder } from "../db/queries/proofs";
 import * as s from "../db/schema";
 import { isReadableProof, newId, nowIso } from "../lib/core";
 import { extractProof } from "../lib/extract";
@@ -96,6 +97,8 @@ export async function runVerification(env: Env, orderId: string): Promise<void> 
   }
 
   const f = result.fields;
+  // Digits only, the same normalisation the REF_DUPLICATE rule compares with.
+  const reference = f.reference ? f.reference.replace(/\D/g, "") : null;
 
   await db
     .update(s.paymentProofs)
@@ -110,26 +113,19 @@ export async function runVerification(env: Env, orderId: string): Promise<void> 
       xAmount: f.amount == null ? null : Math.round(f.amount * 100),
       xCurrency: f.currency,
       xDatetime: f.datetime,
-      xReference: f.reference ? f.reference.replace(/\D/g, "") : null,
+      xReference: reference,
       xDetail: f.detail,
       xBank: f.bank,
     })
     .where(eq(s.paymentProofs.id, proof.id));
 
-  // References seen on any other order, across every event this band has run —
-  // a recycled confirmation is usually recycled from a previous gig.
-  const priorRefs = await db
-    .select({ ref: s.paymentProofs.xReference })
-    .from(s.paymentProofs)
-    .innerJoin(s.orders, eq(s.paymentProofs.orderId, s.orders.id))
-    .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
-    .where(
-      and(
-        eq(s.events.bandId, event.bandId),
-        ne(s.paymentProofs.orderId, order.id),
-        sql`${s.paymentProofs.xReference} is not null`,
-      ),
-    );
+  const referenceReused = reference
+    ? await referenceUsedOnOtherOrder(db, {
+        bandId: event.bandId,
+        reference,
+        exceptOrderId: order.id,
+      })
+    : false;
 
   const accounts = await db
     .select({ n: s.bankAccounts.accountNumber })
@@ -142,7 +138,9 @@ export async function runVerification(env: Env, orderId: string): Promise<void> 
     payerName: order.payerName,
     bandAccounts: accounts.map((a) => a.n),
     eventCreatedAt: event.createdAt,
-    knownReferences: new Set(priorRefs.map((r) => r.ref!).filter(Boolean)),
+    // The rule only asks whether this proof's reference is known, so the one
+    // reference that matters is all it needs to be handed.
+    knownReferences: referenceReused && reference ? new Set([reference]) : new Set(),
   });
 
   await replaceMachineFlags(db, order.id, proof.id, ts, flags);

@@ -185,9 +185,32 @@ export async function costsByCategory(db: D1Database, bandId: string): Promise<C
 export type FanStats = {
   uniquePeople: number;
   repeatPeople: number;
+  /** Everyone who has come to three events or more — not just those listed. */
+  regularPeople: number;
+  /** The most loyal of them, at most `REGULARS_LISTED`. */
   regulars: { name: string; email: string; events: number; tickets: number }[];
   returningShareLatest: number | null;
 };
+
+/** How many regulars the band home lists by name. */
+const REGULARS_LISTED = 25;
+
+/**
+ * One row per person who has paid by transfer for a live ticket, across every
+ * event the band has run. `?1` is the band.
+ */
+const FANS = `fans AS (
+  SELECT o.payer_email AS email,
+         MIN(o.payer_name) AS name,
+         COUNT(DISTINCT o.event_id) AS events,
+         COUNT(*) AS tickets
+    FROM orders o JOIN events e ON e.id = o.event_id
+    JOIN attendees a ON a.order_id = o.id AND a.voided_at IS NULL
+   WHERE e.band_id = ?1
+     AND o.status = 'confirmed'
+     AND o.channel IN ('online','door_online')
+   GROUP BY o.payer_email
+)`;
 
 /**
  * The band's actual audience, matched across events on normalised payer email.
@@ -202,53 +225,58 @@ export async function fanStats(
   bandId: string,
   latestEventId: string | null,
 ): Promise<FanStats> {
-  const { results } = await db
-    .prepare(
-      `SELECT o.payer_email AS email,
-              MIN(o.payer_name) AS name,
-              COUNT(DISTINCT o.event_id) AS events,
-              COUNT(*) AS tickets
-         FROM orders o JOIN events e ON e.id = o.event_id
-         JOIN attendees a ON a.order_id = o.id AND a.voided_at IS NULL
-        WHERE e.band_id = ?1
-          AND o.status = 'confirmed'
-          AND o.channel IN ('online','door_online')
-        GROUP BY o.payer_email
-        ORDER BY events DESC, tickets DESC`,
-    )
-    .bind(bandId)
-    .all<{ email: string; name: string; events: number; tickets: number }>();
+  // Counted in SQL rather than by loading a row per person: a band's buyers
+  // pile up across every gig it ever plays, and only the regulars actually
+  // listed need to come back as rows.
+  const [counts, listed] = await Promise.all([
+    db
+      .prepare(
+        `WITH ${FANS},
+         latest AS (
+           SELECT DISTINCT o.payer_email AS email
+             FROM orders o
+            WHERE o.event_id = ?2 AND o.status = 'confirmed'
+              AND o.channel IN ('online','door_online')
+         )
+         SELECT (SELECT COUNT(*) FROM fans) AS unique_people,
+                (SELECT COUNT(*) FROM fans WHERE events > 1) AS repeat_people,
+                (SELECT COUNT(*) FROM fans WHERE events >= 3) AS regular_people,
+                (SELECT COUNT(*) FROM latest) AS latest_people,
+                (SELECT COUNT(*) FROM latest l JOIN fans f ON f.email = l.email
+                  WHERE f.events > 1) AS latest_returning`,
+      )
+      .bind(bandId, latestEventId ?? "")
+      .first<{
+        unique_people: number;
+        repeat_people: number;
+        regular_people: number;
+        latest_people: number;
+        latest_returning: number;
+      }>(),
+    db
+      .prepare(
+        `WITH ${FANS}
+         SELECT name, email, events, tickets FROM fans
+          WHERE events >= 3
+          ORDER BY events DESC, tickets DESC, email
+          LIMIT ?2`,
+      )
+      .bind(bandId, REGULARS_LISTED)
+      .all<{ email: string; name: string; events: number; tickets: number }>(),
+  ]);
 
-  const uniquePeople = results.length;
-  const repeatPeople = results.filter((r) => Number(r.events) > 1).length;
-  const regulars = results
-    .filter((r) => Number(r.events) >= 3)
-    .slice(0, 25)
-    .map((r) => ({
+  const latestPeople = Number(counts?.latest_people ?? 0);
+  return {
+    uniquePeople: Number(counts?.unique_people ?? 0),
+    repeatPeople: Number(counts?.repeat_people ?? 0),
+    regularPeople: Number(counts?.regular_people ?? 0),
+    regulars: listed.results.map((r) => ({
       name: r.name,
       email: r.email,
       events: Number(r.events),
       tickets: Number(r.tickets),
-    }));
-
-  let returningShareLatest: number | null = null;
-  if (latestEventId) {
-    const seen = new Map(results.map((r) => [r.email, Number(r.events)]));
-    const latest = await db
-      .prepare(
-        `SELECT DISTINCT o.payer_email AS email
-           FROM orders o
-          WHERE o.event_id = ?1 AND o.status='confirmed'
-            AND o.channel IN ('online','door_online')`,
-      )
-      .bind(latestEventId)
-      .all<{ email: string }>();
-    const n = latest.results.length;
-    if (n > 0) {
-      const returning = latest.results.filter((r) => (seen.get(r.email) ?? 0) > 1).length;
-      returningShareLatest = returning / n;
-    }
-  }
-
-  return { uniquePeople, repeatPeople, regulars, returningShareLatest };
+    })),
+    returningShareLatest:
+      latestPeople > 0 ? Number(counts?.latest_returning ?? 0) / latestPeople : null,
+  };
 }

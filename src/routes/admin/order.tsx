@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug } from "../../db/queries/events";
-import { findOrderInEvent, listOrdersForEvent } from "../../db/queries/orders";
+import { findOrderInEvent, findOrderRowInEvent } from "../../db/queries/orders";
 import * as s from "../../db/schema";
 import { runVerification } from "../../jobs/verify-proof";
 import { newId, nowIso } from "../../lib/core";
@@ -23,11 +23,9 @@ orderRoutes.get("/e/:slug/orden/:id", async (c) => {
   const event = await findEventBySlug(db, bandId, c.req.param("slug"));
   if (!band || !event) return c.notFound();
 
-  // Reuses the list query rather than a bespoke single-order one: the page
-  // needs the same enrichment (attendee names, check-in count, open flag), and
-  // an event tops out in the low hundreds of orders.
-  const orders = await listOrdersForEvent(db, event.id);
-  const order = orders.find((o) => o.id === c.req.param("id"));
+  // The same enrichment the orders list gives a row, narrowed to this one
+  // order rather than loading the whole event to find it.
+  const order = await findOrderRowInEvent(db, event.id, c.req.param("id"));
   if (!order) return c.notFound();
 
   const [attendees, proofs, flags, refunds] = await Promise.all([
