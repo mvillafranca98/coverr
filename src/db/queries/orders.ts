@@ -114,7 +114,10 @@ export type EventOrderRow = {
   createdAt: string;
   /** Attendee names joined for display and search. */
   attendees: string;
+  /** Live tickets already through the door. */
   checkedIn: number;
+  /** Tickets refunded off this order. `quantity` minus these can still get in. */
+  refundedTickets: number;
   /** The first unresolved flag's message, or null when the order is clean. */
   flag: string | null;
   hasOpenRefund: boolean;
@@ -184,6 +187,7 @@ export async function listOrdersForEvent(
       orderId: s.attendees.orderId,
       name: s.attendees.name,
       checkedInAt: s.attendees.checkedInAt,
+      voidedAt: s.attendees.voidedAt,
     })
     .from(s.attendees)
     .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
@@ -201,10 +205,13 @@ export async function listOrdersForEvent(
     .innerJoin(s.orders, eq(s.refundRequests.orderId, s.orders.id))
     .where(and(eq(s.orders.eventId, eventId), eq(s.refundRequests.status, "open")));
 
-  const attendeesByOrder = new Map<string, { name: string; checkedInAt: string | null }[]>();
+  const attendeesByOrder = new Map<
+    string,
+    { name: string; checkedInAt: string | null; voidedAt: string | null }[]
+  >();
   for (const a of attendees) {
     const list = attendeesByOrder.get(a.orderId) ?? [];
-    list.push({ name: a.name, checkedInAt: a.checkedInAt });
+    list.push({ name: a.name, checkedInAt: a.checkedInAt, voidedAt: a.voidedAt });
     attendeesByOrder.set(a.orderId, list);
   }
 
@@ -218,7 +225,8 @@ export async function listOrdersForEvent(
     return {
       ...order,
       attendees: list.map((a) => a.name).join(", "),
-      checkedIn: list.filter((a) => a.checkedInAt).length,
+      checkedIn: list.filter((a) => a.checkedInAt && !a.voidedAt).length,
+      refundedTickets: list.filter((a) => a.voidedAt).length,
       flag: flagByOrder.get(order.id) ?? null,
       hasOpenRefund: refundedOrderIds.has(order.id),
     };

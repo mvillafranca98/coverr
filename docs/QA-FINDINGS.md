@@ -620,6 +620,33 @@ Verified end to end locally against live totals. Baseline 170 tickets / L36,700:
 The refunded tokens scan `voided` and the live ones `ok`; the manifest carries all 174 with `v=1`
 on the two returned. Two refund rows, `ticket_count` 2 and 2. 12 tests on the plan itself.
 
+### Follow-up — 2026-10-28, five places the first pass missed
+
+The first pass moved the event dashboard, the capacity check and the purchase-time presale cap onto
+live tickets, and left five other readers of `orders.quantity` and `expected_amount` alone. Found
+while building LCH-06, before any of it was deployed. After a partial refund each would have
+disagreed with the dashboard:
+
+| Where | What it would have shown |
+|---|---|
+| `resolveSellableRule` | **Presale still sold out.** The buy page picks the price from this, and it summed `quantity` while the purchase-time cap counts live tickets — so a refund on a sold-out presale tier would have kept buyers on the door price. |
+| Dashboard, *Por cuenta* | The refunded tickets' money still expected in the buyer's bank. Fully refunded orders already dropped out of that table; partly refunded ones now drop the tickets they gave back. |
+| Band home | People, gross, net, the attendance figures and no-show all counting refunded tickets. |
+| Fan stats | Refunded tickets in a regular's ticket count. |
+| Event settings | "Ya se vendieron N" — an inline copy of `confirmedTicketCount`, now the function itself. |
+
+The order list and the CSV keep showing an order as it was bought, the way a fully refunded order
+already does, and now say what came off it: the list reads *"2/2 adentro · 1 reembolsado"* and the
+CSV has a `reembolsados` column.
+
+Verified against the running worker on the demo event, with presale temporarily reopened and
+capped at exactly what had sold under it (81 of 81). Refunding one L200 presale ticket off a
+three-ticket order moved every figure by exactly one ticket and L200 — dashboard 174 → 173 and
+L37,700 → L37,500, band home the same, *Por cuenta* down L200 with its order count unchanged,
+settings 173, CSV `reembolsados` 1 — and the buy page went from *Puerta · L250* back to
+*Preventa · L200*. The old count still read 81 at that moment, so presale would have stayed
+closed. The local data was restored afterwards and every page diffed identical to the baseline.
+
 ---
 
 ## F14 · Editing a price rule silently rewrites what past orders appear to have cost
