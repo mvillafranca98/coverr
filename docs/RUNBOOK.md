@@ -53,8 +53,9 @@ sales keep running. Stopping has to be something somebody chose.
 ### Not yet run against production
 
 Verified end to end locally on 2026-10-28 — sales off returns 503 on the buy page and refuses
-the POST, sales on sells normally, billing on rewrites `/terminos`. Not yet exercised against
-production, which needs the migration deployed first.
+the POST, sales on sells normally, billing on rewrites `/terminos`. The table and the code that
+reads it have been live in production since 2026-10-28, but no switch has been thrown there yet:
+`sales` off pauses real sales, so do it once in a quiet window and turn it straight back on.
 
 ## Health check
 
@@ -97,12 +98,19 @@ an outside service. Any uptime monitor works. What it needs:
 
 One monitor is enough. A 200 from `/health` already proves the worker is serving requests.
 
-### Not yet run against production
+### Run against production
 
 Verified locally on 2026-10-28 in all three states: healthy (200), the 0009 migration row
 removed (503, `database: behind`) and the migrations table made unreadable (503,
 `database: down`), with the local database restored afterwards. `HEAD` answers like `GET`, for
-monitors that use it. Not yet deployed, and no monitor is set up.
+monitors that use it.
+
+Live since 2026-10-28. Production answers `{"ok":true,"database":"ok","proofs":"ok"}`.
+**No monitor is set up yet** — until one is, nothing calls this endpoint and an outage is still
+noticed by whoever hits it first.
+
+In Windows PowerShell, `curl` is an alias for `Invoke-WebRequest` and prompts for parameters;
+use `curl.exe` for the command above.
 
 ## Rolling back
 
@@ -126,6 +134,19 @@ its commit: the tag is the short hash and the message is the commit subject, so 
 like `git log`. A message ending in *(+ uncommitted changes)* matches no commit. Versions from
 before that show `-` for both; match their *Created* time against
 `git log --format="%h %ci %s"`.
+
+**Which versions predate a migration.** The unlabelled versions from 2026-10-28, matched by
+creation time (UTC) against commit time. Inferred, not recorded — it assumes each was deployed
+from `main` as committed at that moment:
+
+| Version created | Code it runs | Rolling back to it |
+|---|---|---|
+| 18:22, 18:26 | `1b91269` | Neither migration problem below. Has `/health`; no sitemap or scanner error reporting. |
+| 16:55 | `dfcc16c`, F13 without its follow-up | Nothing at the door, but after a partial refund some totals overcount and a sold-out presale tier stays closed. No `/health`. |
+| 16:41 | `5bc95d5`, F14 but not F13 | The `0009` problem. |
+| 16:28 and earlier | before F14 | Both the `0009` and `0008` problems. |
+
+From `b91d16a` on every version is labelled, so this table does not need to grow.
 
 **Undoing a rollback** is another rollback, to the newer version's id — or `npm run deploy` from
 `main`.
