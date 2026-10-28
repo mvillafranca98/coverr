@@ -102,14 +102,18 @@ nav.band .brand {
   letter-spacing: -0.02em;
   white-space: nowrap;
 }
+/* The gap lives in the links' own padding, so "Salir" is a 44px target
+   rather than the 29px its word measures. Same spacing on screen, and the
+   negative margin keeps the last word flush with the edge as before. */
 .band-links {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 2px;
   margin-left: auto;
+  margin-right: -8px;
 }
 .band-links a {
-  padding: 12px 0;
+  padding: 12px 8px;
   color: var(--muted);
   font-size: 14px;
   font-weight: 700;
@@ -186,7 +190,7 @@ nav.event {
   }
   .band-links {
     width: 100%;
-    margin-left: 0;
+    margin-left: -8px;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -470,11 +474,44 @@ select:focus {
   color: var(--accent-ink);
 }
 /* Small buttons sit in table rows; 36px keeps a row from ballooning while
-   staying well clear of the 27px they used to measure. */
+   staying well clear of the 27px they used to measure. What a finger can hit
+   is still 44px: an invisible layer reaches past the top and bottom edges,
+   so the row keeps its look and the tap target meets the floor. */
 .btn.sm {
+  position: relative;
   min-height: 36px;
   padding: 6px 12px;
   font-size: 13px;
+}
+.btn.sm::after {
+  content: "";
+  position: absolute;
+  inset: -6px -2px;
+}
+/* For the rare label too long for a phone: wraps instead of pushing the page
+   sideways. Buttons stay on one line everywhere else. */
+.btn.wraps {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+
+/* A link that opens a table row's record fills its cell, so the target is
+   the cell rather than one 19px line of text. */
+.cell-link {
+  display: block;
+  min-height: 44px;
+  margin: -12px -14px;
+  padding: 12px 14px;
+}
+
+/* Two fields side by side, one above the other when they do not both fit.
+   A datetime-local field will not shrink below about 250px, so a fixed pair
+   of columns pushed the event form 180px past a 360px screen. */
+.field-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 12px;
 }
 
 /* Notes in solid sticker colour with black ink, except the neutral one. A
@@ -537,6 +574,18 @@ select:focus {
   margin: 0;
   color: var(--text);
 }
+/* A link in the list is the buyer's email or WhatsApp, tapped from a phone
+   to reach them, so it gets a 44px target. Its label drops by the same
+   padding to stay level with it. */
+.kv dd > a {
+  display: inline-block;
+  max-width: 100%;
+  padding: 13px 0;
+  overflow-wrap: anywhere;
+}
+.kv dt:has(+ dd > a) {
+  padding-top: 16px;
+}
 .muted {
   color: var(--muted);
 }
@@ -592,7 +641,9 @@ footer a {
   display: grid;
   gap: 32px;
   align-items: center;
-  min-height: calc(100vh - 120px);
+  /* The small viewport: on a phone, 100vh counts the space under the
+     browser's toolbar, so the card sat partly behind it. */
+  min-height: calc(100svh - 120px);
   padding: 36px 0 12px;
 }
 @media (min-width: 860px) {

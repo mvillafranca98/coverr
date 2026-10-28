@@ -24,11 +24,14 @@ export function scannerShellHtml(i: ScannerShellInput): string {
   return `<!doctype html>
 <html lang="es"><head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0C0B09">
 <meta name="robots" content="noindex,nofollow">
 <title>Entrada — ${escapeHtml(i.eventName)}</title>
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/scanner.css">
 </head>
 <body data-token="${escapeHtml(i.token)}">

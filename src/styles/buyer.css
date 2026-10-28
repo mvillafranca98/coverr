@@ -649,6 +649,7 @@ select.invalid {
   display: flex;
   align-items: flex-start;
   gap: 11px;
+  min-height: 44px;
   margin-top: 6px;
   color: var(--muted);
   font-size: 14px;
@@ -981,11 +982,15 @@ footer .wordmark {
   font-size: 14px;
   font-weight: 500;
 }
+/* The margin gives up what the link's padding adds, so the link sits where
+   it did with a 44px target instead of a 19px one. */
 .refund-link {
-  margin-top: 22px;
+  margin-top: 10px;
   text-align: center;
 }
 .refund-link a {
+  display: inline-block;
+  padding: 12px 4px;
   color: var(--muted);
 }
 

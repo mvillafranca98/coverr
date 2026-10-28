@@ -127,6 +127,9 @@ a {
   height: 72px;
 }
 .nav__brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   padding: 6px 12px 6px 8px;
   border: var(--line);
   border-radius: 12px;
@@ -203,8 +206,8 @@ a {
   background: var(--white);
 }
 .cta--sm {
-  min-height: 40px;
-  padding: 7px 14px;
+  min-height: 44px;
+  padding: 9px 14px;
   font-size: 13.5px;
   box-shadow: 4px 4px 0 var(--ink);
 }

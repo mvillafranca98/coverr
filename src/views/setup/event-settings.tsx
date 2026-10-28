@@ -67,7 +67,7 @@ export const EventSettingsPage: FC<{
         </div>
       )}
       <form method="post" action={`/admin/e/${event.slug}/ajustes/token`} style="margin-top:12px">
-        <button class="btn sm ghost" type="submit">
+        <button class="btn sm ghost wraps" type="submit">
           {event.staffToken ? "Generar uno nuevo (el anterior deja de servir)" : "Generar enlace"}
         </button>
       </form>

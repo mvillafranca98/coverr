@@ -92,7 +92,9 @@ export const OrdersPage: FC<{
             orders.map((o) => (
               <tr key={o.id}>
                 <td>
-                  <a href={`/admin/e/${event.slug}/orden/${o.id}`}>{o.shortCode}</a>
+                  <a class="cell-link" href={`/admin/e/${event.slug}/orden/${o.id}`}>
+                    {o.shortCode}
+                  </a>
                 </td>
                 <td>
                   {o.payerName}

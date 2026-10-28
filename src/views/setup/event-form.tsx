@@ -52,7 +52,7 @@ export const Fields: FC<{ v: Partial<EventFormValues> }> = ({ v }) => (
       placeholder="La Jungla"
     />
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="field-pair">
       <div>
         <label class="fl" for="starts_at">
           Empieza
@@ -101,7 +101,7 @@ export const Fields: FC<{ v: Partial<EventFormValues> }> = ({ v }) => (
     />
 
     <h2>Precios</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="field-pair">
       <div>
         <label class="fl" for="presale_amount">
           Preventa (L)
@@ -148,7 +148,7 @@ export const Fields: FC<{ v: Partial<EventFormValues> }> = ({ v }) => (
     </p>
 
     <h2>La entrada</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="field-pair">
       <div>
         <label class="fl" for="wristbands">
           Brazaletes que llevás <span style="font-weight:400;color:var(--dim)">(opcional)</span>
