@@ -52,6 +52,27 @@ const MAX_STACK_CHARS = 4000;
 const MAX_MESSAGE_CHARS = 1000;
 
 /**
+ * Takes the bound values out of a failed query's error text.
+ *
+ * Drizzle reports a failed query as `Failed query: <sql>` followed by
+ * `params: <every value>` — and on an order insert those values are a
+ * buyer's name, email and phone. They would otherwise be stored here for 90
+ * days and emailed through Resend. The SQL itself stays: it is parameterized,
+ * carries no values, and is what tells you which query broke.
+ *
+ * Everything from `params:` up to the first stack frame goes, not just that
+ * line, because a value can contain a line break of its own — an attendee
+ * note, say — and would otherwise leave its second half behind.
+ */
+export function withoutQueryValues(text: string): string {
+  const start = text.search(/^[ \t]*params:/m);
+  if (start === -1) return text;
+  const rest = text.slice(start);
+  const firstFrame = rest.search(/\n\s+at /);
+  return `${text.slice(0, start)}params: [removed]${firstFrame === -1 ? "" : rest.slice(firstFrame)}`;
+}
+
+/**
  * Collapses one bug into one string, so the same failure seen two hundred
  * times in a night is recognised as the same failure.
  *
@@ -121,8 +142,14 @@ export type ErrorReport = {
  */
 export async function reportError(env: Env, report: ErrorReport): Promise<void> {
   const err = report.error;
-  const message = (err instanceof Error ? err.message : String(err)).slice(0, MAX_MESSAGE_CHARS);
-  const stack = err instanceof Error && err.stack ? err.stack.slice(0, MAX_STACK_CHARS) : null;
+  const message = withoutQueryValues(err instanceof Error ? err.message : String(err)).slice(
+    0,
+    MAX_MESSAGE_CHARS,
+  );
+  const stack =
+    err instanceof Error && err.stack
+      ? withoutQueryValues(err.stack).slice(0, MAX_STACK_CHARS)
+      : null;
   const path = report.path ?? null;
 
   // Goes out whatever happens below, because it is the one thing that still

@@ -4,6 +4,7 @@ import {
   alertClaimKey,
   alertPool,
   errorFingerprint,
+  withoutQueryValues,
 } from "../src/jobs/report-error";
 
 /**
@@ -109,5 +110,43 @@ describe("alertPool", () => {
 
   it("gives the scanner its own, so a public flood cannot silence the door", () => {
     expect(alertPool("scanner")).toEqual(["scanner"]);
+  });
+});
+
+// A failed order insert reports every value it tried to write: the buyer's
+// name, email and phone. None of that may reach a stored row or an email.
+describe("withoutQueryValues", () => {
+  const sql =
+    'Failed query: insert into "orders" ("id", "payer_name", "payer_email") values (?, ?, ?)';
+  const values = "params: ord_mvsle65nh26ft2az,Ana López,ana@ejemplo.com,99990000";
+
+  it("removes the values from the message and keeps the SQL", () => {
+    const cleaned = withoutQueryValues(`${sql}\n${values}`);
+    expect(cleaned).toBe(`${sql}\nparams: [removed]`);
+  });
+
+  it("removes them from a stack and keeps every frame", () => {
+    const stack = `Error: ${sql}\n${values}\n    at D1PreparedQuery.run (session.ts:202:10)\n    at purchase (purchase.tsx:143:5)`;
+    const cleaned = withoutQueryValues(stack);
+    expect(cleaned).not.toContain("ana@ejemplo.com");
+    expect(cleaned).not.toContain("Ana López");
+    expect(cleaned).toContain("params: [removed]");
+    expect(cleaned).toContain("at D1PreparedQuery.run (session.ts:202:10)");
+    expect(cleaned).toContain("at purchase (purchase.tsx:143:5)");
+  });
+
+  // An attendee note can hold a line break, which splits the values across
+  // lines. Removing only the first line would leave the rest behind.
+  it("removes values that run onto a second line", () => {
+    const stack = `Error: ${sql}\nparams: ord_1,Ana,ana@ejemplo.com,traigo a mi\nprima Lucía,99990000\n    at run (session.ts:202:10)`;
+    const cleaned = withoutQueryValues(stack);
+    expect(cleaned).not.toContain("Lucía");
+    expect(cleaned).not.toContain("99990000");
+    expect(cleaned).toContain("at run (session.ts:202:10)");
+  });
+
+  it("leaves an error with no query values alone", () => {
+    const plain = "TypeError: Cannot read properties of undefined (reading 'startsAt')";
+    expect(withoutQueryValues(plain)).toBe(plain);
   });
 });

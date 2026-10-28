@@ -11,7 +11,7 @@ Status values:
 - **N/A:** doesn't apply, or the thing it governs doesn't exist yet (say which)
 
 ## Profile
-Last audit: 2026-10-19, scope `all` (8 checklists, one subagent each). SEC-03, LCH-04, LCH-05, LCH-06, LCH-13, MKT-03, LCH-11, LEG-04 re-checked 2026-10-28.
+Last audit: 2026-10-19, scope `all` (8 checklists, one subagent each). SEC-03, LCH-04, LCH-05, LCH-06, LCH-13, MKT-03, LCH-11, LEG-04, SEC-11 re-checked 2026-10-28.
 Countries served: Honduras
 
 | Flag | On | Meaning | Note |
@@ -63,7 +63,7 @@ Every service that receives user data, including hosting, database and auth prov
 | SEC-08 | high | Input is validated on the server and queries are parameterized. | PARTIAL | All bodies validated server-side; Drizzle parameterises; hono/jsx escapes. But band-controlled strings go into inline script tags via JSON.stringify alone (form-script.ts:36, ticket-script.ts:31), which does not escape a closing script tag - a venue name can break out on a buyer page. Escape < as \u003c and cap field lengths | 2026-10-19 |
 | SEC-09 | medium | No known high or critical vulnerabilities in dependencies. | PASS | hono bumped 4.13.5 -> 4.13.13, past GHSA-hxh3-vqpv-xpqv. `npm audit --omit=dev` now reports 0 vulnerabilities | 2026-10-19 |
 | SEC-10 | medium | Security headers and cookies are set. | PASS | hono secureHeaders mounted ahead of every route in index.tsx: CSP, HSTS, nosniff, X-Frame-Options DENY, Referrer-Policy, COOP/CORP - all seven verified in the served response. CSP allows inline style and script because every page inlines both deliberately for venue wifi; nonces are the stricter answer if those blocks ever stop being hand-written constants. Cookies were already correct | 2026-10-19 |
-| SEC-11 | medium | Errors and logs don't leak. | PASS | Fixed Spanish 404/500 with the stack going only to console.error (index.tsx:40-59); no secret or magic-link URL logged | 2026-10-19 |
+| SEC-11 | medium | Errors and logs don't leak. | PARTIAL | Fixed Spanish 404/500 with the stack going only to console.error; no secret or magic-link URL logged. Re-checked 2026-10-28 and found a leak in the crash reporter added for LCH-05: Drizzle's error text carries every bound value of a failed query, so a failed order insert put the buyer's name, email and phone into error_log (kept 90 days) and into the alert email sent through Resend. Fixed: jobs/report-error.ts `withoutQueryValues` removes everything from `params:` to the first stack frame before anything is stored, logged or sent, keeping the parameterized SQL; 4 tests, including a value that spans two lines. Verified locally by forcing an order insert to fail: the stored row ends `params: [removed]` and neither it nor the server log names the buyer. Production error_log had 0 rows, so nothing leaked. **Remaining:** deploy | 2026-10-28 |
 | SEC-12 | medium | Sessions end properly. | PARTIAL | exp written and enforced on both tokens; /salir clears the cookie. Stateless, so logout is client-side only and a copied cookie stays valid 30 days. Add a session_epoch on bands to allow revoke | 2026-10-19 |
 | SEC-13 | low | CORS allows only your own origins. | PASS | No CORS middleware and no Access-Control-* header anywhere | 2026-10-19 |
 | SEC-14 | high | Environments are separated. | PASS | Dev is local and keyless; prod secrets are Cloudflare secrets. Note: no preview_database_id, so wrangler dev --remote would read and write production | 2026-10-19 |
