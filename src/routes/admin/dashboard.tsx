@@ -26,17 +26,21 @@ dashboardRoutes.get("/e/:slug", async (c) => {
 
   // Which account each order says it paid into, so the band knows whose
   // statement to open. Buyers can ignore the picker, hence the not-null filter.
+  // Summed over live tickets: a refunded order already drops out of this
+  // table, so a partly refunded one has to drop the tickets it gave back.
   const byAccount = await db
     .select({
       bank: s.orders.bankSelected,
-      count: sql<number>`count(*)`,
-      amount: sql<number>`sum(${s.orders.expectedAmount})`,
+      count: sql<number>`count(distinct ${s.orders.id})`,
+      amount: sql<number>`sum(${s.orders.unitAmount})`,
     })
-    .from(s.orders)
+    .from(s.attendees)
+    .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
     .where(
       and(
         eq(s.orders.eventId, event.id),
         eq(s.orders.status, "confirmed"),
+        isNull(s.attendees.voidedAt),
         sql`${s.orders.bankSelected} is not null`,
       ),
     )

@@ -24,6 +24,7 @@ export type OrderRow = {
   note: string | null;
   attendees: string;
   checkedIn: number;
+  refundedTickets: number;
   flag: string | null;
 };
 

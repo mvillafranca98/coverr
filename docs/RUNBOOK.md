@@ -56,6 +56,122 @@ Verified end to end locally on 2026-10-28 — sales off returns 503 on the buy p
 the POST, sales on sells normally, billing on rewrites `/terminos`. Not yet exercised against
 production, which needs the migration deployed first.
 
+## Health check
+
+`GET /health` answers 200 when everything a purchase needs is reachable, and 503 naming what
+is not. It exists for an external monitor; `/` cannot do this job, because the landing page
+renders without touching the database and stays green through a complete D1 outage.
+
+```bash
+curl -s https://coverr.a-mencias99.workers.dev/health
+```
+
+```json
+{"ok":true,"database":"ok","proofs":"ok"}
+```
+
+The body never carries error text. The detail is in the log as a `[health]` line — Workers
+Logs in the dashboard, or `npx wrangler tail` while it is happening.
+
+| Field | State | What it means | What to do |
+|---|---|---|---|
+| `database` | `behind` | D1 answers, but the migration this deploy was built against has not been applied. Pages load; **every purchase fails** on the missing column. | `npm run db:migrate:remote`. This is the deploy-before-migrate mistake, and running the migration is the fix. |
+| `database` | `down` | D1 refused the query. Nothing loads that reads data. | Check the Cloudflare status page and the `[health]` log line. Nothing in Coverr fixes a D1 outage. Scanners that already cached the list keep checking people in offline. |
+| `database` | `timeout` | D1 took longer than 5 seconds. | Same places as `down`. One slow answer can be noise; several in a row are not. |
+| `proofs` | `down` or `timeout` | R2 is unreachable. The proof is stored before the order is written, so a buyer gets the crash page and **no order exists**. The crash page tells anyone who already transferred to write in. | Check the Cloudflare status page. Expect messages from buyers who paid and have no ticket; their transfers will be in the band's bank, not in Coverr. |
+
+Email and proof extraction are deliberately not probed. Both run after the response, the QR
+issues without them, and their failures already reach you through the crash alerts. Probing
+the vision API here would also be a paid call every few minutes.
+
+### The monitor
+
+The worker cannot watch itself — if it is down, so is anything it would run — so this has to be
+an outside service. Any uptime monitor works. What it needs:
+
+- URL `https://coverr.a-mencias99.workers.dev/health` (update it when the custom domain lands, LCH-12)
+- Every 5 minutes or more often
+- Alert on any status other than 200
+- Alerts to your own inbox from the monitoring service itself — **not** through Coverr's Resend
+  account, which is one of the things that can be broken when the alert fires
+
+One monitor is enough. A 200 from `/health` already proves the worker is serving requests.
+
+### Not yet run against production
+
+Verified locally on 2026-10-28 in all three states: healthy (200), the 0009 migration row
+removed (503, `database: behind`) and the migrations table made unreadable (503,
+`database: down`), with the local database restored afterwards. `HEAD` answers like `GET`, for
+monitors that use it. Not yet deployed, and no monitor is set up.
+
+## Rolling back
+
+A rollback puts an earlier version's **code** live in seconds. It does not touch the database:
+D1 keeps every migration and every row written since. So the question before a rollback is not
+only "which version was good" but "what does that version do with today's database" — see the
+table below before choosing.
+
+### Do it
+
+```bash
+npx wrangler deployments list
+npx wrangler rollback <version-id> --message "checkout broken since 21:10"
+```
+
+The dashboard does the same from the worker's **Deployments** tab. A rollback can reach any of the
+100 most recent versions.
+
+**Finding the right version.** Every deploy made with `npm run deploy` since 2026-10-28 carries
+its commit: the tag is the short hash and the message is the commit subject, so the list reads
+like `git log`. A message ending in *(+ uncommitted changes)* matches no commit. Versions from
+before that show `-` for both; match their *Created* time against
+`git log --format="%h %ci %s"`.
+
+**Undoing a rollback** is another rollback, to the newer version's id — or `npm run deploy` from
+`main`.
+
+**Checking it worked.** `curl -s https://coverr.a-mencias99.workers.dev/health`. A version from
+before LCH-06 has no `/health` and answers 404, so the uptime monitor goes red for as long as it
+is live. That is the rollback, not an outage.
+
+### What an older version does with today's database
+
+Every migration so far only adds, so old code still runs against the new schema. It simply
+ignores what it has never heard of, and each migration has one specific consequence while an
+older version is live:
+
+| Rolling back to before | While the old code is live | After rolling forward |
+|---|---|---|
+| `0009_partial_refunds` (F13) | Tickets refunded one at a time look live again: they **scan `ok` at the door** and count in the totals. Refunds go back to whole-order only. | Nothing to repair — the voids were never erased. |
+| `0008_order_unit_amount` (F14) | New orders are written with `unit_amount = 0`. | **Revenue undercounts those orders.** Run the repair below. |
+| `0007_platform_flags` (LCH-04) | The kill switches stop working; a switch you threw is ignored. | They take effect again. |
+| `0006_error_log` (LCH-05) | Crashes stop alerting. | Alerting resumes; nothing from the gap is recovered. |
+
+The repair after rolling forward past `0008`, safe to run whenever in doubt — it touches only rows
+old code wrote, and is a no-op otherwise:
+
+```bash
+npx wrangler d1 execute coverr-db --remote --command "UPDATE orders SET unit_amount = expected_amount / quantity WHERE unit_amount = 0 AND expected_amount > 0 AND quantity > 0"
+```
+
+Exact for the same reason as the migration's own backfill: every write path sets
+`expected_amount = unit_amount × quantity`. Comps stay at 0, which is right.
+
+### When not to roll back
+
+- **During a gig, to before `0009`**, if anyone has had part of an order refunded: their returned
+  tickets would scan at the door. If you have to, every partly refunded order marks its returned
+  tickets with a red *reembolsado* chip on the order page — tell the door who they are.
+- **To undo a migration.** A rollback cannot. Time Travel can (see *Backup and restore*), but it
+  rewinds every row: orders, check-ins and refunds made since that moment are gone, and on a sale
+  day those are tickets people paid for. Fix forward instead.
+
+### Not yet run against production
+
+No rollback has ever been performed. Rehearse it once on a day with nothing on sale: roll back to
+the previous version, check `/health` and a buy page, roll forward, then run the `0008` repair
+above in case anything sold in between. About two minutes.
+
 ## Backup and restore
 
 ### What protects the data today

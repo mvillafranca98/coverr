@@ -40,17 +40,26 @@ export type EventMetrics = {
 const div = (a: number, b: number): number | null => (b > 0 ? a / b : null);
 
 export async function eventMetrics(db: D1Database, bandId: string): Promise<EventMetrics[]> {
+  // One row per live ticket, not per order: a partially refunded order keeps
+  // its quantity and loses tickets. This is the counting `channelTotals` does,
+  // so the band home and the event dashboard show the same night.
   const { results } = await db
     .prepare(
       `SELECT e.id, e.slug, e.name, e.venue, e.starts_at, e.status,
-              COALESCE(SUM(CASE WHEN o.channel='online'      THEN o.quantity END),0) AS presale_people,
-              COALESCE(SUM(CASE WHEN o.channel='door_online' THEN o.quantity END),0) AS door_online_people,
-              COALESCE(SUM(CASE WHEN o.channel='door_cash'   THEN o.quantity END),0) AS door_cash_people,
-              COALESCE(SUM(CASE WHEN o.channel='manual'      THEN o.quantity END),0) AS manual_people,
-              COALESCE(SUM(CASE WHEN o.channel='comp'        THEN o.quantity END),0) AS comp_people,
-              COALESCE(SUM(o.expected_amount),0) AS gross
+              COALESCE(SUM(CASE WHEN t.channel='online'      THEN 1 END),0) AS presale_people,
+              COALESCE(SUM(CASE WHEN t.channel='door_online' THEN 1 END),0) AS door_online_people,
+              COALESCE(SUM(CASE WHEN t.channel='door_cash'   THEN 1 END),0) AS door_cash_people,
+              COALESCE(SUM(CASE WHEN t.channel='manual'      THEN 1 END),0) AS manual_people,
+              COALESCE(SUM(CASE WHEN t.channel='comp'        THEN 1 END),0) AS comp_people,
+              COALESCE(SUM(t.unit_amount),0) AS gross
          FROM events e
-         LEFT JOIN orders o ON o.event_id = e.id AND o.status = 'confirmed'
+         LEFT JOIN (
+              SELECT o.event_id, o.channel, o.unit_amount
+                FROM attendees a
+                JOIN orders o ON o.id = a.order_id AND o.status = 'confirmed'
+               WHERE a.voided_at IS NULL
+                 AND o.event_id IN (SELECT id FROM events WHERE band_id = ?1)
+         ) t ON t.event_id = e.id
         WHERE e.band_id = ?1
         GROUP BY e.id
         ORDER BY e.starts_at DESC`,
@@ -91,7 +100,7 @@ export async function eventMetrics(db: D1Database, bandId: string): Promise<Even
          FROM attendees a
          JOIN orders o ON o.id = a.order_id AND o.status='confirmed'
          JOIN events e ON e.id = o.event_id
-        WHERE e.band_id = ?1
+        WHERE e.band_id = ?1 AND a.voided_at IS NULL
         GROUP BY o.event_id`,
     )
     .bind(bandId)
@@ -198,8 +207,9 @@ export async function fanStats(
       `SELECT o.payer_email AS email,
               MIN(o.payer_name) AS name,
               COUNT(DISTINCT o.event_id) AS events,
-              SUM(o.quantity) AS tickets
+              COUNT(*) AS tickets
          FROM orders o JOIN events e ON e.id = o.event_id
+         JOIN attendees a ON a.order_id = o.id AND a.voided_at IS NULL
         WHERE e.band_id = ?1
           AND o.status = 'confirmed'
           AND o.channel IN ('online','door_online')

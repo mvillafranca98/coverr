@@ -103,7 +103,10 @@ export const OrdersPage: FC<{
                 <td style="max-width:220px">
                   {o.attendees}
                   <div class="muted" style="font-size:12px">
-                    {o.checkedIn}/{o.quantity} adentro
+                    {o.checkedIn}/{o.quantity - o.refundedTickets} adentro
+                    {o.refundedTickets > 0
+                      ? ` · ${o.refundedTickets} ${o.refundedTickets === 1 ? "reembolsado" : "reembolsados"}`
+                      : null}
                   </div>
                 </td>
                 <td>{CHANNEL_LABEL[o.channel] ?? o.channel}</td>

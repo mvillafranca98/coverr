@@ -1,8 +1,9 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug, uniqueEventSlug } from "../../db/queries/events";
+import { confirmedTicketCount } from "../../db/queries/orders";
 import * as s from "../../db/schema";
 import { newId, newStaffToken, nowIso } from "../../lib/core";
 import { type EventInput, REFUND_TEXT, readEventForm } from "../../lib/event-form";
@@ -28,17 +29,14 @@ async function renderSettings(c: AdminContext, opts: { error?: string; saved?: b
     .where(eq(s.priceRules.eventId, event.id))
     .orderBy(s.priceRules.sortOrder);
 
-  const [sold] = await db
-    .select({ n: sql<number>`coalesce(sum(${s.orders.quantity}), 0)` })
-    .from(s.orders)
-    .where(and(eq(s.orders.eventId, event.id), eq(s.orders.status, "confirmed")));
+  const soldCount = await confirmedTicketCount(db, event.id);
 
   return c.html(
     <EventSettingsPage
       bandName={band.name}
       event={event}
       origin={c.env.APP_ORIGIN}
-      soldCount={Number(sold?.n ?? 0)}
+      soldCount={soldCount}
       error={opts.error}
       saved={opts.saved}
       values={{

@@ -22,6 +22,88 @@
       return d;
     })();
 
+  // ---------------------------------------------------------------- errors
+  //
+  // A scanner that breaks mid-queue is invisible to everyone except the person
+  // holding it, and they are busy. Uncaught errors go to the server, which
+  // emails the operator. Set up first so a failure further down this file is
+  // caught too.
+  //
+  // Throttled hard on the device: the camera loop runs every frame, so one bug
+  // there would otherwise send sixty reports a second. Each distinct message
+  // goes once per page load, five at most, and at most five wait in storage
+  // while the venue has no signal. They go out with the next sync.
+
+  var ERRORS_KEY = KEY + ":errors";
+  var MAX_QUEUED_ERRORS = 5;
+  var seenErrors = {};
+  var errorBudget = 5;
+  var sendingErrors = false;
+  var pendingErrors = readPendingErrors();
+
+  function queueErrorReport(message, stack) {
+    // "Script error." is all a browser says about another origin's script.
+    if (!message || message === "Script error." || seenErrors[message]) return;
+    if (errorBudget <= 0 || pendingErrors.length >= MAX_QUEUED_ERRORS) return;
+    seenErrors[message] = true;
+    errorBudget -= 1;
+    pendingErrors.push({ message: String(message), stack: stack ? String(stack) : "", at: nowIso() });
+    writePendingErrors();
+    sendPendingErrors();
+  }
+
+  function readPendingErrors() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(ERRORS_KEY) || "[]");
+      return Array.isArray(saved) ? saved.slice(0, MAX_QUEUED_ERRORS) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function writePendingErrors() {
+    try {
+      localStorage.setItem(ERRORS_KEY, JSON.stringify(pendingErrors));
+    } catch (e) {
+      // Storage full or blocked. The queue still lives in memory, so the
+      // report goes out from this page load; it just will not survive a reload.
+    }
+  }
+
+  function sendPendingErrors() {
+    if (sendingErrors || !pendingErrors.length || !online()) return;
+    sendingErrors = true;
+    var batch = pendingErrors.slice();
+    fetch("/api/scan/" + TOKEN + "/error", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reports: batch }),
+      keepalive: true,
+    })
+      .then(function (res) {
+        // A 4xx other than a rate limit will never succeed, so it is dropped
+        // rather than retried forever. Anything else stays for the next sync.
+        if (res.ok || (res.status >= 400 && res.status < 500 && res.status !== 429)) {
+          pendingErrors = pendingErrors.slice(batch.length);
+          writePendingErrors();
+        }
+      })
+      .catch(function () {
+        // No signal. The batch stays queued and goes with the next sync.
+      })
+      .then(function () {
+        sendingErrors = false;
+      });
+  }
+
+  window.addEventListener("error", function (e) {
+    queueErrorReport(e.message, e.error && e.error.stack);
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    var reason = e.reason;
+    queueErrorReport(reason && reason.message ? reason.message : String(reason), reason && reason.stack);
+  });
+
   var state = {
     manifest: null,
     byToken: {},
@@ -495,7 +577,12 @@
     el.cashQty.value = Math.max(1, (parseInt(el.cashQty.value, 10) || 1) - 1);
   });
 
-  window.addEventListener("online", function () { setNet("Reconectado", "ok"); flush(); refreshManifest(); });
+  window.addEventListener("online", function () {
+    setNet("Reconectado", "ok");
+    flush();
+    refreshManifest();
+    sendPendingErrors();
+  });
   window.addEventListener("offline", function () { setNet("Sin conexión · escaneo local", "off"); });
 
   load();
@@ -505,7 +592,11 @@
     renderStats();
   });
   flush();
-  setInterval(function () { if (state.queue.length) flush(); }, 15000);
+  sendPendingErrors();
+  setInterval(function () {
+    if (state.queue.length) flush();
+    if (pendingErrors.length) sendPendingErrors();
+  }, 15000);
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(function () {});
