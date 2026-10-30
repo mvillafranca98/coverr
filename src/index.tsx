@@ -22,7 +22,7 @@ import { scannerShellRoutes } from "./routes/public/scanner-shell";
 import { signupRoutes } from "./routes/public/signup";
 import { scanApi } from "./routes/scan";
 import { scanErrorApi } from "./routes/scan-errors";
-import { StatusPage } from "./views/status-page";
+import { NotFoundPage, ServerErrorPage } from "./views/errors";
 
 /**
  * The worker's entry point: it assembles the app and owns the two responses
@@ -125,16 +125,7 @@ app.route("/admin", admin);
 app.route("/", scannerShellRoutes);
 app.route("/", landingRoutes);
 
-app.notFound((c) =>
-  c.html(
-    <StatusPage
-      title="Página no encontrada — Coverr"
-      heading="No encontramos esta página"
-      body="Revisá el enlace que te compartieron."
-    />,
-    404,
-  ),
-);
+app.notFound((c) => c.html(<NotFoundPage />, 404));
 
 /**
  * Crashes have to reach somebody. The report runs after the response so the
@@ -150,14 +141,7 @@ app.onError((err, c) => {
       method: c.req.method,
     }),
   );
-  return c.html(
-    <StatusPage
-      title="Algo salió mal — Coverr"
-      heading="Algo salió mal"
-      body="Volvé a intentarlo. Si ya transferiste, escribinos y lo resolvemos."
-    />,
-    500,
-  );
+  return c.html(<ServerErrorPage />, 500);
 });
 
 /**

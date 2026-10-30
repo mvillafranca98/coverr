@@ -1038,7 +1038,9 @@ footer .wordmark {
 
 /* ---- the way home: legal pages, not found, crash ----
    The mark on a yellow sticker, the same one the landing page's nav wears,
-   so it reads as "Coverr's front page" from any page that has no nav. */
+   so it reads as "Coverr's front page" from any page that has no nav. The
+   404 and crash pages add a pink button under their message, since there
+   the way home is the only thing left to do. */
 .home-mark {
   display: inline-flex;
   align-items: center;
@@ -1067,26 +1069,11 @@ footer .wordmark {
   transform: translate(4px, 4px);
   box-shadow: 0 0 0 var(--line);
 }
-.status {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding-top: 40px;
-}
-.status h1 {
-  margin: 40px 0 14px;
-  font-size: 2.6rem;
-}
-.status p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 17px;
-}
-.status__home {
+.go-home {
   display: inline-flex;
   align-items: center;
   min-height: 56px;
-  margin-top: 30px;
+  margin-top: 24px;
   padding: 14px 26px;
   border: var(--edge);
   border-radius: 14px;
@@ -1101,12 +1088,12 @@ footer .wordmark {
     box-shadow 0.08s ease-out;
 }
 @media (hover: hover) {
-  .status__home:hover {
+  .go-home:hover {
     transform: translate(-2px, -2px);
     box-shadow: calc(var(--lift) + 2px) calc(var(--lift) + 2px) 0 var(--line);
   }
 }
-.status__home:active {
+.go-home:active {
   transform: translate(var(--lift), var(--lift));
   box-shadow: 0 0 0 var(--line);
 }

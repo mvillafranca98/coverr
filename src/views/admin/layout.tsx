@@ -65,7 +65,7 @@ export const AdminLayout: FC<
       <ErrorReporter />
       <meta name="viewport" content="width=device-width,initial-scale=1" />
       <meta name="robots" content="noindex,nofollow" />
-      <meta name="theme-color" content="#0F0E0B" />
+      <meta name="theme-color" content="#141414" />
       <title>{title}</title>
       {description ? <meta name="description" content={description} /> : null}
       {/* The admin app's whole design system, inlined into every page rather
