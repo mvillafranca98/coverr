@@ -10,7 +10,7 @@
 }
 .legal-head h1 {
   font-size: 2rem;
-  margin: 4px 0 10px;
+  margin: 22px 0 10px;
 }
 .legal-updated {
   margin: 0;
@@ -67,7 +67,9 @@
 /* A two-part row — "who gets it" / "what they get" — stacked rather than
    tabled. A three-column table of six services is unreadable on a phone,
    which is the only screen most of these pages are opened on. */
-.rows {
+/* `.legal .rows`, not `.rows`: `.legal ul` above outranks a bare class, and
+   its list indent pushed these cards 20px in from the text column. */
+.legal .rows {
   list-style: none;
   margin: 0 0 14px;
   padding: 0;

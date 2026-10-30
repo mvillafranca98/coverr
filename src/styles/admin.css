@@ -50,6 +50,19 @@ body {
 a {
   color: var(--accent);
 }
+/* A plain text link gets the highlighter on hover: the sticker yellow behind
+   the word, black ink on it. Links with a class of their own (tabs, buttons,
+   row links) already have a hover state and are left alone. The spread
+   shadow widens the fill without moving any text. */
+@media (hover: hover) {
+  a:not([class]):hover {
+    border-radius: 3px;
+    background: var(--yellow);
+    box-shadow: 0 0 0 3px var(--yellow);
+    color: var(--accent-ink);
+    text-decoration: none;
+  }
+}
 :focus-visible {
   outline: 3px solid var(--yellow);
   outline-offset: 2px;
@@ -461,6 +474,14 @@ select:focus {
     transform 0.08s ease-out,
     box-shadow 0.08s ease-out;
 }
+/* Only where there is a real pointer: on a phone, :hover sticks after a tap
+   and would leave the button floating. */
+@media (hover: hover) {
+  .btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--line-control);
+  }
+}
 .btn:active {
   transform: translate(3px, 3px);
   box-shadow: 0 0 0 var(--line-control);
@@ -619,8 +640,18 @@ footer {
   font-family: var(--mono);
   font-size: 11px;
 }
+/* 11px text makes a 16px link; the padding brings what a finger can hit to
+   44px. The highlighter stays on the word rather than filling all of it. */
 footer a {
+  display: inline-block;
+  padding: 14px 2px;
   color: var(--dim);
+}
+@media (hover: hover) {
+  footer a:not([class]):hover {
+    background-clip: content-box;
+    box-shadow: none;
+  }
 }
 .wordmark {
   display: inline-flex;
@@ -651,6 +682,35 @@ footer a {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
     gap: 64px;
   }
+}
+/* The mark is the way back to the landing page. At rest it is the plain
+   wordmark; on hover it becomes a sticker and lifts, like every other thing
+   here that can be pressed. The negative margin keeps the mark on the column
+   edge despite the padding the sticker needs. */
+.auth__home {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  margin-left: -10px;
+  padding: 6px 12px 6px 10px;
+  border: var(--edge);
+  border-color: transparent;
+  border-radius: var(--r-md);
+  text-decoration: none;
+  transition:
+    transform 0.08s ease-out,
+    box-shadow 0.08s ease-out;
+}
+@media (hover: hover) {
+  .auth__home:hover {
+    border-color: var(--line-control);
+    box-shadow: 4px 4px 0 var(--yellow);
+    transform: translate(-2px, -2px);
+  }
+}
+.auth__home:active {
+  box-shadow: 0 0 0 var(--yellow);
+  transform: translate(2px, 2px);
 }
 .auth__pitch {
   max-width: 13ch;
@@ -734,6 +794,19 @@ footer a {
   border-top: 1px solid var(--line);
   color: var(--muted);
   font-size: 14px;
+}
+/* A 21px line of text is too small to aim at. The padding makes it 45px and
+   the negative margin gives the height back, so the line does not grow. */
+.auth__alt a {
+  display: inline-block;
+  margin: -12px 0;
+  padding: 12px 4px;
+}
+@media (hover: hover) {
+  .auth__alt a:not([class]):hover {
+    background-clip: content-box;
+    box-shadow: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

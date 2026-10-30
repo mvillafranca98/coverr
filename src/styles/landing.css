@@ -22,7 +22,7 @@
   --shadow: 5px 5px 0 var(--ink);
   --shadow-lg: 9px 9px 0 var(--ink);
   --radius: 14px;
-  --section: clamp(4rem, 2.6rem + 5.6vw, 7rem);
+  --section: clamp(2.5rem, 1.6rem + 2.8vw, 4rem);
   --container: 1200px;
 }
 
@@ -136,6 +136,17 @@ a {
   background: var(--yellow);
   box-shadow: 4px 4px 0 var(--ink);
   text-decoration: none;
+  transition:
+    transform 0.15s var(--ease-out),
+    box-shadow 0.15s var(--ease-out);
+}
+.nav__brand:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+.nav__brand:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--ink);
 }
 .nav__links {
   display: flex;
@@ -159,9 +170,26 @@ a {
     display: none;
   }
 }
+/* On a phone the section links go, but "Entrar" stays: a band that already
+   has an account needs a way in that is not "Crear mi banda". The mark alone
+   makes the room for it; the link keeps its "Coverr, inicio" label. */
 @media (max-width: 420px) {
-  .nav__links a[href="/admin/acceso"] {
-    display: none;
+  .nav__brand {
+    padding: 6px;
+  }
+  .nav__brand .wordmark > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .nav__links {
+    gap: 8px;
+  }
+  .nav__links a:not(.cta) {
+    padding: 7px 12px;
   }
 }
 
@@ -229,6 +257,9 @@ a {
   padding: 5px 11px;
   border: var(--line);
   border-radius: 9px;
+  /* Ink, never the inherited body grey: grey on the blue sticker measured
+     3.17:1, and DESIGN.md puts black ink on every sticker colour. */
+  color: var(--ink);
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 700;
@@ -248,7 +279,7 @@ a {
 .hero {
   position: relative;
   overflow: hidden;
-  padding: clamp(36px, 6vw, 80px) 0 clamp(56px, 8vw, 96px);
+  padding: clamp(28px, 3.6vw, 52px) 0 clamp(56px, 8vw, 96px);
 }
 .hero__grid {
   display: grid;
@@ -265,7 +296,10 @@ a {
   max-width: 13ch;
   font-family: var(--display);
   font-weight: 400;
-  font-size: clamp(2.6rem, 1.3rem + 4.6vw, 5.4rem);
+  /* Capped so the headline sets in four lines and the buttons under it stay
+     on screen down to a 1366x768 laptop. At the old 86px it took five lines
+     and pushed them below a 1440x900 fold. */
+  font-size: clamp(2.6rem, 1.3rem + 4.6vw, 4.25rem);
   /* Loose enough that the boxed phrase clears the line above it. */
   line-height: 1.16;
   letter-spacing: -0.035em;
@@ -290,7 +324,7 @@ h2 em,
 }
 .lede {
   margin: 28px 0 0;
-  max-width: 34ch;
+  max-width: 40ch;
   font-size: var(--step-1);
   font-weight: 500;
   line-height: 1.45;
@@ -648,8 +682,10 @@ b {
 .today__list li:nth-child(odd) {
   transform: rotate(-0.4deg);
 }
+/* Pink, not ink: a black bar through black heavy type merges with the
+   strokes, and on a phone the struck line could not be read at all. */
 .today__text {
-  background-image: linear-gradient(var(--ink), var(--ink));
+  background-image: linear-gradient(var(--pink), var(--pink));
   background-repeat: no-repeat;
   background-position: 0 56%;
   background-size: 100% 5px;
@@ -1091,19 +1127,36 @@ b {
   background: var(--white);
   box-shadow: var(--shadow-lg);
 }
+.device__screen {
+  overflow: hidden;
+  border: var(--line);
+}
 .device img {
   display: block;
   width: 100%;
   height: auto;
-  border: var(--line);
 }
 .device--laptop {
   margin: 0 3% 46px;
   padding: 14px 14px 18px;
   border-radius: 20px 20px 6px 6px;
 }
-.device--laptop img {
+.device--laptop .device__screen {
   border-radius: 6px;
+}
+/* On a phone the whole laptop screen shrinks to a third of its size and
+   nothing on it can be read. Show the dashboard's own column instead, from
+   its header to the live numbers: the shot is 1360px wide and the column is
+   the middle 980 of it (x 190 to 1170), and the cards end above y 540. */
+@media (max-width: 600px) {
+  .device--laptop .device__screen {
+    aspect-ratio: 980 / 540;
+  }
+  .device--laptop img {
+    width: 138.8%;
+    max-width: none;
+    margin-left: -19.4%;
+  }
 }
 .device--laptop::after {
   content: "";
@@ -1122,7 +1175,7 @@ b {
   padding: 10px;
   border-radius: 44px;
 }
-.device--phone img {
+.device--phone .device__screen {
   border-radius: 34px;
 }
 .shot .cap {
@@ -1227,6 +1280,18 @@ b {
   margin-top: 26px;
   font-size: var(--step--1);
 }
+/* Shown only while billing is switched off — the route reads the switch. */
+.billing-off {
+  display: inline-block;
+  margin: 30px 0 0;
+  padding: 14px 18px;
+  border: var(--line);
+  border-radius: var(--radius);
+  background: var(--lime);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font-weight: 500;
+}
 
 /* ---------- finale ---------- */
 .finale {
@@ -1275,9 +1340,9 @@ footer {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 14px 24px;
-  padding-top: 28px;
-  padding-bottom: 28px;
+  gap: 0 24px;
+  padding-top: 14px;
+  padding-bottom: 14px;
   font-family: var(--mono);
   font-size: 12px;
 }
@@ -1285,11 +1350,18 @@ footer {
   color: var(--bg);
   font-size: 1.15rem;
 }
+/* 12px text makes a 14px link; the padding brings what a finger can hit to
+   44px. On hover the word gets the highlighter, black ink on yellow. */
 .footer__meta a {
+  display: inline-block;
+  padding: 14px 3px;
+  background-clip: content-box;
   color: var(--bg);
 }
 .footer__meta a:hover {
-  color: var(--yellow);
+  background-color: var(--yellow);
+  color: var(--ink);
+  text-decoration: none;
 }
 /* The giant wordmark, cut off by the bottom of the page like a sticker
    running off the edge of a laptop lid. */
@@ -1317,6 +1389,8 @@ footer {
   }
   .cta:hover,
   .cta:active,
+  .nav__brand:hover,
+  .nav__brand:active,
   .tier:hover,
   .cell:hover {
     transform: none;

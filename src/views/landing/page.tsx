@@ -89,7 +89,7 @@ const SHOTS: {
     h: 1828,
     src: "/img/shot-dashboard.webp",
     cap: "El resumen en vivo",
-    alt: "Resumen del evento: 151 personas adentro, 157 vendidos, 49 brazaletes y L33,950 de bruto, con los ingresos desglosados por canal.",
+    alt: "Resumen del evento: 152 personas adentro, 157 vendidos, 48 brazaletes y L33,950 de bruto, con los ingresos desglosados por canal.",
     body: "Adentro, vendidos, brazaletes y bruto. Los ingresos por canal se actualizan mientras entra la gente.",
   },
   {
@@ -98,7 +98,7 @@ const SHOTS: {
     src: "/img/shot-scanner.webp",
     cap: "La puerta",
     alt: "El escáner de entrada en verde, mostrando «Adelante» con el nombre del asistente y su código.",
-    body: "Verde y el nombre de quien entra. Funciona sin señal: la lista queda guardada en el teléfono.",
+    body: "Verde y el nombre de quien entra. Si algo no cuadra, amarillo y el motivo en pantalla.",
   },
   {
     w: 780,
@@ -131,7 +131,10 @@ const Words: FC<{ text: string }> = ({ text }) => (
   </>
 );
 
-export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
+export const LandingPage: FC<{ origin: string; billingEnabled: boolean }> = ({
+  origin,
+  billingEnabled,
+}) => (
   <html lang="es">
     <head>
       <meta charset="utf-8" />
@@ -215,8 +218,8 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
               <span class="w">.</span>
             </h1>
             <p class="lede" data-rise>
-              Tus compradores transfieren directo a la cuenta de tu banda. Nosotros nunca tocamos el
-              dinero.
+              La preventa, la puerta y el reparto al final de la noche. Tus compradores transfieren
+              directo a la cuenta de tu banda; nosotros nunca tocamos el dinero.
             </p>
             {/* The primary action sits above the fold on purpose: a band that
                 already knows what this is should not have to scroll to start. */}
@@ -333,16 +336,19 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
                     class={`device ${shot.lead ? "device--laptop" : "device--phone"}`}
                     data-drift={shot.lead ? "18" : "44"}
                   >
-                    {/* Intrinsic size on every image: the row must not jump
-                        while they load, and these sit well below the fold. */}
-                    <img
-                      src={shot.src}
-                      alt={shot.alt}
-                      width={shot.w}
-                      height={shot.h}
-                      loading="lazy"
-                      decoding="async"
-                    />
+                    {/* The screen clips its image, so a phone can show part
+                        of the laptop screen larger. Intrinsic size on every
+                        image: the row must not jump while they load. */}
+                    <div class="device__screen">
+                      <img
+                        src={shot.src}
+                        alt={shot.alt}
+                        width={shot.w}
+                        height={shot.h}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
                   </div>
                   <p class="cap">{shot.cap}</p>
                   <p>{shot.body}</p>
@@ -374,6 +380,12 @@ export const LandingPage: FC<{ origin: string }> = ({ origin }) => (
                 </li>
               ))}
             </ol>
+            {billingEnabled ? null : (
+              <p class="billing-off" data-reveal>
+                <b>Hoy el cobro está desactivado:</b> todas las bandas ven el reporte completo sin
+                pagar. Antes de activarlo se avisa con tiempo.
+              </p>
+            )}
             <p class="note" data-reveal>
               Las cortesías no cuentan para el tramo. No hay suscripción ni plan mensual: una banda
               que toca dos veces al año paga dos veces al año y conserva su historial.

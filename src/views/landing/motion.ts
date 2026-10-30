@@ -107,12 +107,22 @@ document.addEventListener('DOMContentLoaded', function(){
   // Everything below the hero: reveal as it arrives, once. Batched so a
   // screen holding four cards animates them together instead of four
   // separate triggers firing a frame apart.
+  // Starts as the element's top edge comes onto the screen: on a slow phone
+  // a later start left whole headings blank for a moment after they arrived.
   ScrollTrigger.batch('[data-reveal]', {
-    start: 'top 88%',
+    start: 'top 96%',
     once: true,
     onEnter: function(batch){
       gsap.to(batch, { y: 0, opacity: 1, duration: .7, stagger: .07, ease: 'back.out(1.4)' });
     }
+  });
+
+  // Tabbing jumps straight to a link that may not have been revealed yet, and
+  // focus on something invisible is focus nobody can see. Whatever holds the
+  // focused element is shown at once, without the animation.
+  document.addEventListener('focusin', function(e){
+    var hidden = e.target.closest && e.target.closest('[data-reveal]');
+    if (hidden) gsap.set(hidden, { y: 0, opacity: 1 });
   });
 
   // Each of today's habits is struck out as it scrolls into the middle.

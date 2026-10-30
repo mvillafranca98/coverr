@@ -1,5 +1,6 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
 import PROSE_CSS from "../../styles/legal.css";
+import { Wordmark } from "../brand";
 import { Layout } from "../layout";
 import { LegalLinks } from "./links";
 
@@ -31,7 +32,11 @@ export const LegalDoc: FC<
   <Layout title={title} description={description} ogUrl={canonical} indexable>
     <style dangerouslySetInnerHTML={{ __html: PROSE_CSS }} />
     <header class="legal-head">
-      <div class="band">Coverr</div>
+      {/* Somebody arrives here from a checkout or a footer and needs a way
+          back that is not the browser's. */}
+      <a class="home-mark" href="/" aria-label="Coverr, inicio">
+        <Wordmark />
+      </a>
       <h1>{heading}</h1>
       <p class="legal-updated">Última actualización: {updated}</p>
     </header>

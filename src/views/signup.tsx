@@ -16,7 +16,10 @@ export const SignupPage: FC<{ error?: string; name?: string; email?: string }> =
   name,
   email,
 }) => (
-  <AdminLayout title="Crear tu banda — Coverr">
+  <AdminLayout
+    title="Crear tu banda — Coverr"
+    description="Creá tu banda en Coverr: preventa con el dinero directo a tu cuenta, códigos QR al instante, entrada sin señal y el reparto al final."
+  >
     <AuthShell>
       <h1>Crear tu banda</h1>
       <p class="sub">Sin contraseña. Te mandamos un enlace para entrar cada vez.</p>

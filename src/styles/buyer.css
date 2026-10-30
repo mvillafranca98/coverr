@@ -58,6 +58,17 @@ body {
 a {
   color: var(--text);
 }
+/* A plain text link gets the highlighter on hover: the sticker yellow behind
+   the word. Links with a class of their own have their own hover state. The
+   spread shadow widens the fill without moving any text. */
+@media (hover: hover) {
+  a:not([class]):hover {
+    border-radius: 3px;
+    background: var(--yellow);
+    box-shadow: 0 0 0 3px var(--yellow);
+    text-decoration: none;
+  }
+}
 :focus-visible {
   outline: 3px solid var(--blue);
   outline-offset: 2px;
@@ -253,6 +264,27 @@ h2 {
   transition:
     transform 0.08s ease-out,
     box-shadow 0.08s ease-out;
+}
+/* The lift only where there is a real pointer: on a phone, :hover sticks
+   after a tap and would leave the button floating. */
+@media (hover: hover) {
+  .qty-btn:hover,
+  .tk-save:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--line);
+  }
+  .submit:not(:disabled):hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--lift) + 2px) calc(var(--lift) + 2px) 0 var(--line);
+  }
+  /* These two have no shadow to lift: the copy bar darkens as it does when
+     pressed, and the dashed chip turns solid. */
+  .copy:hover {
+    background: #f2c21f;
+  }
+  .chipcopy:hover {
+    border-style: solid;
+  }
 }
 .qty-btn:active,
 .submit:active,
@@ -707,8 +739,18 @@ footer {
   font-size: 12px;
   text-align: center;
 }
+/* 12px text makes a 14px link; the padding brings what a finger can hit to
+   44px. The highlighter stays on the word rather than filling all of it. */
 footer a {
+  display: inline-block;
+  padding: 15px 2px;
   color: var(--dim);
+}
+@media (hover: hover) {
+  footer a:not([class]):hover {
+    background-clip: content-box;
+    box-shadow: none;
+  }
 }
 footer .wordmark {
   justify-content: center;
@@ -992,6 +1034,81 @@ footer .wordmark {
   display: inline-block;
   padding: 12px 4px;
   color: var(--muted);
+}
+
+/* ---- the way home: legal pages, not found, crash ----
+   The mark on a yellow sticker, the same one the landing page's nav wears,
+   so it reads as "Coverr's front page" from any page that has no nav. */
+.home-mark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 12px 6px 8px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--yellow);
+  box-shadow: 4px 4px 0 var(--line);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    transform 0.08s ease-out,
+    box-shadow 0.08s ease-out;
+}
+.home-mark .wordmark {
+  font-size: 18px;
+}
+@media (hover: hover) {
+  .home-mark:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--line);
+  }
+}
+.home-mark:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--line);
+}
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 40px;
+}
+.status h1 {
+  margin: 40px 0 14px;
+  font-size: 2.6rem;
+}
+.status p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 17px;
+}
+.status__home {
+  display: inline-flex;
+  align-items: center;
+  min-height: 56px;
+  margin-top: 30px;
+  padding: 14px 26px;
+  border: var(--edge);
+  border-radius: 14px;
+  background: var(--pink);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 18px;
+  text-decoration: none;
+  transition:
+    transform 0.08s ease-out,
+    box-shadow 0.08s ease-out;
+}
+@media (hover: hover) {
+  .status__home:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--lift) + 2px) calc(var(--lift) + 2px) 0 var(--line);
+  }
+}
+.status__home:active {
+  transform: translate(var(--lift), var(--lift));
+  box-shadow: 0 0 0 var(--line);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -3,7 +3,10 @@ import { AuthShell } from "./auth-shell";
 import { AdminLayout } from "./layout";
 
 export const LoginPage: FC<{ sent?: boolean; error?: string }> = ({ sent, error }) => (
-  <AdminLayout title="Coverr — Admin">
+  <AdminLayout
+    title="Coverr — Admin"
+    description="Entrá al panel de tu banda en Coverr con un enlace a tu correo. Sin contraseña."
+  >
     <AuthShell>
       <h1>Panel de la banda</h1>
       {sent ? (

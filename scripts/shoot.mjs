@@ -42,6 +42,15 @@ const LAPTOP = { width: 1360, height: 960 };
  * something tighter than the viewport.
  */
 const SHOTS = [
+  // First: it checks somebody in, and the dashboard after it has to count
+  // that person, or the two pictures on the landing page disagree by one.
+  {
+    name: "shot-scanner",
+    url: "/scan/demostaff00000000000000000000000",
+    viewport: PHONE,
+    height: 600,
+    prepare: checkSomebodyIn,
+  },
   {
     name: "shot-dashboard",
     url: "/admin/e/noche-de-ruido",
@@ -51,13 +60,6 @@ const SHOTS = [
     // heading starts at 933, so this lands in the gap. Cutting through a
     // table header reads as a broken screenshot rather than a cropped one.
     height: 914,
-  },
-  {
-    name: "shot-scanner",
-    url: "/scan/demostaff00000000000000000000000",
-    viewport: PHONE,
-    height: 600,
-    prepare: checkSomebodyIn,
   },
   {
     name: "shot-ticket",
@@ -73,12 +75,12 @@ const SHOTS = [
 /** The door flow, driven the way staff actually drive it. */
 async function checkSomebodyIn(page) {
   const who = notYetCheckedIn();
-  await page.getByRole("button", { name: "Buscar" }).click();
+  await page.getByRole("tab", { name: "Buscar" }).click();
   await page.getByPlaceholder("Nombre o código").fill(who);
   await page.getByRole("button", { name: "Marcar" }).first().click();
   await page.waitForTimeout(600);
   // The green result lives in the scan panel, not the search panel.
-  await page.getByRole("button", { name: "Escanear" }).click();
+  await page.getByRole("tab", { name: "Escanear" }).click();
   await page.waitForTimeout(400);
 }
 

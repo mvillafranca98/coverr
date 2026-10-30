@@ -22,6 +22,7 @@ import { scannerShellRoutes } from "./routes/public/scanner-shell";
 import { signupRoutes } from "./routes/public/signup";
 import { scanApi } from "./routes/scan";
 import { scanErrorApi } from "./routes/scan-errors";
+import { StatusPage } from "./views/status-page";
 
 /**
  * The worker's entry point: it assembles the app and owns the two responses
@@ -126,10 +127,11 @@ app.route("/", landingRoutes);
 
 app.notFound((c) =>
   c.html(
-    `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-     <body style="font-family:system-ui;background:#0C0B09;color:#F6F2EB;padding:48px 24px;text-align:center">
-     <h1>No encontramos esta página</h1>
-     <p style="color:#A79E90">Revisá el enlace que te compartieron.</p></body>`,
+    <StatusPage
+      title="Página no encontrada — Coverr"
+      heading="No encontramos esta página"
+      body="Revisá el enlace que te compartieron."
+    />,
     404,
   ),
 );
@@ -149,10 +151,11 @@ app.onError((err, c) => {
     }),
   );
   return c.html(
-    `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-     <body style="font-family:system-ui;background:#0C0B09;color:#F6F2EB;padding:48px 24px;text-align:center">
-     <h1>Algo salió mal</h1>
-     <p style="color:#A79E90">Volvé a intentarlo. Si ya transferiste, escribinos y lo resolvemos.</p></body>`,
+    <StatusPage
+      title="Algo salió mal — Coverr"
+      heading="Algo salió mal"
+      body="Volvé a intentarlo. Si ya transferiste, escribinos y lo resolvemos."
+    />,
     500,
   );
 });

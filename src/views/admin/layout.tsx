@@ -49,13 +49,16 @@ document.addEventListener('click', function (e) {
 export const AdminLayout: FC<
   PropsWithChildren<{
     title: string;
+    /** For the pages a stranger can reach: sign-up and sign-in. A link preview
+        shows it even though search engines are told to skip the page. */
+    description?: string;
     bandName?: string;
     active?: string;
     eventSlug?: string;
     /** Named in the event bar so the scope of those tabs is never in doubt. */
     eventName?: string;
   }>
-> = ({ title, bandName, active, eventSlug, eventName, children }) => (
+> = ({ title, description, bandName, active, eventSlug, eventName, children }) => (
   <html lang="es">
     <head>
       <meta charset="utf-8" />
@@ -64,6 +67,7 @@ export const AdminLayout: FC<
       <meta name="robots" content="noindex,nofollow" />
       <meta name="theme-color" content="#0F0E0B" />
       <title>{title}</title>
+      {description ? <meta name="description" content={description} /> : null}
       {/* The admin app's whole design system, inlined into every page rather
           than linked: the door and the dashboard both get used on venue wifi,
           where a second round trip is the difference between a page that

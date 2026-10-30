@@ -16,7 +16,7 @@ colors:
 typography:
   display:
     fontFamily: "Archivo Black"
-    fontSize: 5.4rem
+    fontSize: 4.25rem
     fontWeight: 400
     lineHeight: 1.16
   h1:
@@ -162,7 +162,7 @@ Breakpoints are incidental. The only one that matters is the table scroll contai
 ## Elevation & Depth
 Depth is a **hard shadow**: offset down and right (`--lift` 5px, `--lift-lg` 9px), no blur, in black on light and in a sticker colour on dark. No soft shadows, no blur, no glass, no gradients, no texture anywhere — the style is flat on purpose, and flat is also cheap to paint on an old phone.
 
-Things that can be pressed show it: a button lifts a couple of pixels on hover and, on click, moves into its own shadow until the shadow is gone.
+Things that can be pressed show it: a button lifts a couple of pixels on hover and, on click, moves into its own shadow until the shadow is gone. A plain text link gets the highlighter on hover instead: sticker yellow behind the word, black ink on it. Hover effects sit behind `@media (hover: hover)` on the buyer and band surfaces, because on a phone `:hover` sticks after a tap and leaves a button floating.
 
 ## Shapes
 `sm: 8px` for chips and tags, `md: 12px` for buttons and inputs, `lg: 18px` for cards and panels, `full` for pills and stickers. Outlines are 3px on light and 2px on dark (a 3px cream line on black reads heavier than a 3px black one on cream). No icon set is installed; the few glyphs are text characters (`−`, `+`, `✓`, `✕`, `↑`, `✳`, `→`). Keep it that way unless a real need appears.
@@ -205,12 +205,19 @@ Top to bottom: a sticky nav (the mark in a yellow sticker, pill links, a pink ca
 action); the hero — headline with *nadie más* on a yellow sticker, two rotated chips
 above it, the lime ticket on a pink disc with a blue "¡QR al instante!" sticker on its
 corner; two strips of tape crossed over the page, scrolling opposite ways; *Lo que
-estás haciendo hoy*, four habits on white cards, each struck out as it scrolls in;
+estás haciendo hoy*, four habits on white cards, each struck out in pink as it scrolls in
+(pink, not ink: a black bar through black heavy type made the line unreadable on a phone);
 *Directo a tu cuenta*, the transfer going from buyer to the band's account with
 Coverr beside the path, never on it; the four steps as yellow, pink, lime and blue
 cards, each with a small HTML drawing of its screen; the product shots in white device
-frames; the price brackets as ticket stubs; a closing yellow card; a black footer with
+frames; the price brackets as ticket stubs, with a lime note while billing is switched off
+(the route reads the switch, as the terms do); a closing yellow card; a black footer with
 a giant yellow wordmark running off the bottom.
+
+The headline is capped at 68px so it sets in four lines and the buttons under it stay on
+screen down to a 1366×768 laptop. The lede names all three jobs — presale, the door and
+the split at the end of the night — because a reader who only skims the hero should still
+know what Coverr does.
 
 The hero ticket shows the fabricated demo band and says so in its caption. Its QR is
 real and encodes the site's own address.
@@ -236,7 +243,12 @@ in another dependency.
 
 Each surface is shot at the device it is used on, which is why the shapes differ: the
 dashboard is a laptop (a band doing the accounts after the gig) and leads full width, the
-scanner and the ticket are phones and sit beneath it.
+scanner and the ticket are phones and sit beneath it. On a phone the laptop screen would
+shrink past reading, so below 600px its frame shows only the dashboard's own column, from
+the header to the live numbers, about 1.4 times larger.
+
+The scanner is shot first. It checks one person in, and the dashboard taken after it has
+to count that person, or the two pictures disagree by one.
 
 Two rules:
 
@@ -256,7 +268,8 @@ Two rules:
   After that the ticket bobs, its sticker wobbles, and on a real pointer it tilts toward
   the cursor. On scroll: batched reveals, the habits struck out, the accounts drawing's
   bars filled, and the device frames drifting at their own speed — wide screens only,
-  since on a phone parallax reads as jitter.
+  since on a phone parallax reads as jitter. Anything a keyboard user tabs to is shown at
+  once, without the animation: focus on something still hidden is focus nobody can see.
 - The tape strips, the money diagram's moving coin and the buttons' press are **CSS**,
   so they work with no JavaScript at all.
 
