@@ -316,7 +316,8 @@ not evidence of an old one.
 | `PROOFS` | R2 | The `coverr-proofs` bucket for payment screenshots |
 | `ASSETS` | Static assets | Everything in `public/` |
 | `PURCHASE_LIMIT` | Rate limiter | 20 purchases a minute per IP — loose on purpose, because walk-up buyers share the venue's wifi |
-| `EMAIL_LIMIT` | Rate limiter | 5 a minute for anything that sends email |
+| `EMAIL_LIMIT` | Rate limiter | 5 a minute per IP for anything that sends email: sign-in, sign-up, ticket recovery, refund requests |
+| `EXTRACT_LIMIT` | Rate limiter | 10 a minute per band for the order page's "read it again" button, a paid vision call per press |
 | `APP_ORIGIN` | Variable | The canonical URL. Links in email and QR codes are built from it, and any other hostname is marked `noindex` |
 | `ALERT_EMAIL` | Variable | Where crash alerts go |
 

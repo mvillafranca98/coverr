@@ -79,11 +79,25 @@ export type ExtractResult =
   | { ok: true; fields: ProofFields; model: string }
   | { ok: false; error: string };
 
+/**
+ * How long one read may take, and how many times it is tried.
+ *
+ * A purchase reads its proof inside waitUntil, which Cloudflare stops 30
+ * seconds after the response has gone. The SDK's own default is ten minutes a
+ * try, so a slow read used to be cut off by the platform mid-call, before it
+ * could record that it failed, and the order was left with no flag at all.
+ * Two tries of 12 seconds, with the SDK's short backoff between them, end
+ * inside that window; a read that runs out of time takes the same path as any
+ * other failure and is flagged for the band to check by hand.
+ */
+const ATTEMPT_TIMEOUT_MS = 12_000;
+const MAX_RETRIES = 1;
+
 export async function extractProof(
   apiKey: string,
   file: { bytes: ArrayBuffer; contentType: string },
 ): Promise<ExtractResult> {
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, timeout: ATTEMPT_TIMEOUT_MS, maxRetries: MAX_RETRIES });
 
   const b64 = bytesToBase64(new Uint8Array(file.bytes));
   const isPdf = file.contentType.includes("pdf");
@@ -132,6 +146,13 @@ export async function extractProof(
     }
     return { ok: true, fields: response.parsed_output, model: response.model };
   } catch (err) {
+    // Before APIError, which it extends: a timeout has no status to report.
+    if (err instanceof Anthropic.APIConnectionTimeoutError) {
+      return {
+        ok: false,
+        error: `timeout: no answer in ${MAX_RETRIES + 1} tries of ${ATTEMPT_TIMEOUT_MS / 1000}s`,
+      };
+    }
     if (err instanceof Anthropic.APIError) {
       return { ok: false, error: `anthropic ${err.status}: ${err.message}`.slice(0, 300) };
     }

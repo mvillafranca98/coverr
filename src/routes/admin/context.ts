@@ -13,6 +13,7 @@ export type Bindings = {
   /** Rate limiters. Optional: `unsafe` bindings may be absent in local dev. */
   PURCHASE_LIMIT?: Limiter;
   EMAIL_LIMIT?: Limiter;
+  EXTRACT_LIMIT?: Limiter;
 };
 
 /** Set by the session middleware; every handler below it can rely on it. */

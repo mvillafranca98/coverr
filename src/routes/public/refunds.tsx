@@ -2,9 +2,11 @@ import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findOrderWithEventAndBand } from "../../db/queries/orders";
+import { openRefundRequest } from "../../db/queries/refunds";
 import * as s from "../../db/schema";
 import { newId, nowIso } from "../../lib/core";
 import { makeTransport } from "../../lib/email";
+import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
 import { refundGate } from "../../lib/refund-policy";
 import {
   refundAlertEmailHtml,
@@ -54,6 +56,19 @@ refundRoutes.post("/reembolso/:orderId", async (c) => {
     return c.html(<RefundClosedPage {...common} headline={gate.headline} detail={gate.detail} />);
   }
 
+  // It emails the band, so it shares the per-IP budget of everything else
+  // that sends mail.
+  if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
+    return c.html(
+      <RefundRequestPage
+        {...common}
+        policyText={order.refundPolicyText}
+        error={TOO_MANY_REQUESTS}
+      />,
+      429,
+    );
+  }
+
   const reason = String((await c.req.parseBody())["reason"] ?? "")
     .trim()
     .slice(0, 2000);
@@ -68,15 +83,15 @@ refundRoutes.post("/reembolso/:orderId", async (c) => {
     );
   }
 
-  await db.insert(s.refundRequests).values({
+  const created = await openRefundRequest(db, {
     id: newId("ref"),
     orderId: order.id,
-    requestedAt: nowIso(),
     reason,
-    status: "open",
-    handledBy: null,
-    handledAt: null,
+    requestedAt: nowIso(),
   });
+  // Already asked: the buyer sees the same confirmation, and the band is not
+  // told twice about one request.
+  if (!created) return c.html(<RefundSentPage {...common} />);
 
   // The band decides and moves the money themselves; this just makes sure they
   // hear about it rather than finding it in the dashboard days later.

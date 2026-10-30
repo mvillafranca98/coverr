@@ -56,9 +56,18 @@
     {
       "name": "EMAIL_LIMIT",
       "namespace_id": "1002",
-      // Sign-in, sign-up and ticket recovery each send mail. A human needs one
-      // or two a minute; nothing legitimate needs five.
+      // Sign-in, sign-up, ticket recovery and refund requests each send mail.
+      // A human needs one or two a minute; nothing legitimate needs five.
       "simple": { "limit": 5, "period": 60 }
+    },
+    {
+      "name": "EXTRACT_LIMIT",
+      "namespace_id": "1003",
+      // The band's "read it again" button on an order, one paid vision call a
+      // press. Counted per band. Ten a minute lets a band clear a backlog of
+      // failed reads after an outage; the proof_extraction switch is the stop
+      // for a bill that runs away anyway.
+      "simple": { "limit": 10, "period": 60 }
     }
   ],
   "vars": {

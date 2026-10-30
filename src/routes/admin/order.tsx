@@ -8,6 +8,7 @@ import * as s from "../../db/schema";
 import { runVerification } from "../../jobs/verify-proof";
 import { newId, nowIso } from "../../lib/core";
 import { safeProofDelivery } from "../../lib/file-type";
+import { TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
 import { planTicketRefund } from "../../lib/refund-plan";
 import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { OrderPage } from "../../views/admin/order";
@@ -125,6 +126,13 @@ orderRoutes.post("/e/:slug/orden/:id/revisar", async (c) => {
 
   const order = await findOrderInEvent(db, event.id, c.req.param("id"));
   if (!order) return c.notFound();
+
+  // Every press is a paid vision call. Counted per band rather than per IP:
+  // this sits behind a session, and a band is one budget wherever it signs in.
+  if (!(await withinLimit(c.env.EXTRACT_LIMIT, `reread:${c.get("bandId")}`))) {
+    const message = encodeURIComponent(TOO_MANY_REQUESTS);
+    return c.redirect(`${orderPath(event.slug, order.id)}?error=${message}`, 303);
+  }
 
   // Deliberately no alert: the band pressed this button and is already
   // looking at the order it belongs to.
