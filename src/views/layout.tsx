@@ -41,7 +41,7 @@ export const Layout: FC<
       <meta charset="utf-8" />
       <ErrorReporter />
       <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-      <meta name="theme-color" content="#FBF8F2" />
+      <meta name="theme-color" content="#FFF4DE" />
       {/* Almost every page on this layout shows something that belongs to one
           person: the band's bank account and holder name on the buy page, a
           buyer's name and live QR codes on the ticket page. None of that should

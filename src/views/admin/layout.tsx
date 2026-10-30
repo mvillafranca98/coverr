@@ -62,7 +62,7 @@ export const AdminLayout: FC<
       <ErrorReporter />
       <meta name="viewport" content="width=device-width,initial-scale=1" />
       <meta name="robots" content="noindex,nofollow" />
-      <meta name="theme-color" content="#0F0E0B" />
+      <meta name="theme-color" content="#141414" />
       <title>{title}</title>
       {/* The admin app's whole design system, inlined into every page rather
           than linked: the door and the dashboard both get used on venue wifi,

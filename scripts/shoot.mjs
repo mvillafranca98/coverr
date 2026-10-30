@@ -73,12 +73,12 @@ const SHOTS = [
 /** The door flow, driven the way staff actually drive it. */
 async function checkSomebodyIn(page) {
   const who = notYetCheckedIn();
-  await page.getByRole("button", { name: "Buscar" }).click();
+  await page.getByRole("tab", { name: "Buscar" }).click();
   await page.getByPlaceholder("Nombre o código").fill(who);
   await page.getByRole("button", { name: "Marcar" }).first().click();
   await page.waitForTimeout(600);
   // The green result lives in the scan panel, not the search panel.
-  await page.getByRole("button", { name: "Escanear" }).click();
+  await page.getByRole("tab", { name: "Escanear" }).click();
   await page.waitForTimeout(400);
 }
 

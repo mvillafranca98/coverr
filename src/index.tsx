@@ -22,6 +22,7 @@ import { scannerShellRoutes } from "./routes/public/scanner-shell";
 import { signupRoutes } from "./routes/public/signup";
 import { scanApi } from "./routes/scan";
 import { scanErrorApi } from "./routes/scan-errors";
+import { NotFoundPage, ServerErrorPage } from "./views/errors";
 
 /**
  * The worker's entry point: it assembles the app and owns the two responses
@@ -124,15 +125,7 @@ app.route("/admin", admin);
 app.route("/", scannerShellRoutes);
 app.route("/", landingRoutes);
 
-app.notFound((c) =>
-  c.html(
-    `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-     <body style="font-family:system-ui;background:#0C0B09;color:#F6F2EB;padding:48px 24px;text-align:center">
-     <h1>No encontramos esta página</h1>
-     <p style="color:#A79E90">Revisá el enlace que te compartieron.</p></body>`,
-    404,
-  ),
-);
+app.notFound((c) => c.html(<NotFoundPage />, 404));
 
 /**
  * Crashes have to reach somebody. The report runs after the response so the
@@ -148,13 +141,7 @@ app.onError((err, c) => {
       method: c.req.method,
     }),
   );
-  return c.html(
-    `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-     <body style="font-family:system-ui;background:#0C0B09;color:#F6F2EB;padding:48px 24px;text-align:center">
-     <h1>Algo salió mal</h1>
-     <p style="color:#A79E90">Volvé a intentarlo. Si ya transferiste, escribinos y lo resolvemos.</p></body>`,
-    500,
-  );
+  return c.html(<ServerErrorPage />, 500);
 });
 
 /**
