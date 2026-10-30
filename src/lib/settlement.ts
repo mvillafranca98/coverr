@@ -97,8 +97,8 @@ export function perHead(s: Settlement): { gross: number; net: number; cost: numb
  * The band's first event is free regardless of size.
  */
 export function priceBracket(ticketsSold: number): { bracket: string; amount: number } {
-  if (ticketsSold <= 60) return { bracket: "t60", amount: 40000 };
-  if (ticketsSold <= 150) return { bracket: "t150", amount: 80000 };
-  if (ticketsSold <= 300) return { bracket: "t300", amount: 120000 };
-  return { bracket: "t301plus", amount: 180000 };
+  if (ticketsSold <= 60) return { bracket: "t60", amount: 50000 };
+  if (ticketsSold <= 150) return { bracket: "t150", amount: 100000 };
+  if (ticketsSold <= 300) return { bracket: "t300", amount: 150000 };
+  return { bracket: "t301plus", amount: 200000 };
 }

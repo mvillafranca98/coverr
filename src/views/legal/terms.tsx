@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
 import { formatLpsShort } from "../../lib/core";
 import { priceBracket } from "../../lib/settlement";
-import { CONTACT_EMAIL, UPDATED } from "./constants";
+import { CONTACT_EMAIL, TERMS_UPDATED } from "./constants";
 import { LegalDoc } from "./doc";
 
 /**
@@ -38,7 +38,7 @@ export const TermsPage: FC<{ origin: string; billingEnabled: boolean }> = ({
     title="Términos del servicio — Coverr"
     description="Qué hace Coverr, qué no hace, quién responde por el dinero y qué pasa con un reembolso."
     heading="Términos del servicio"
-    updated={UPDATED}
+    updated={TERMS_UPDATED}
     canonical={`${origin}/terminos`}
   >
     <p>

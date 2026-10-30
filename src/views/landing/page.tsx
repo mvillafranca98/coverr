@@ -1,4 +1,6 @@
 import type { FC } from "hono/jsx";
+import { formatLpsShort } from "../../lib/core";
+import { priceBracket } from "../../lib/settlement";
 import LANDING_CSS from "../../styles/landing.css";
 import TOKENS_CSS from "../../styles/tokens.css";
 import { BrandIcons, Monogram, Wordmark } from "../brand";
@@ -26,16 +28,15 @@ import { AccountsVisual, DoorVisual, ShareLinkVisual, TransferVisual } from "./s
  */
 
 /**
- * The real unlock brackets, from `lib/settlement.ts`. Kept as data so the page
- * cannot drift from what the product actually charges — if the brackets move,
- * this list is the thing that fails code review.
+ * The real unlock brackets, read from `priceBracket` the way the terms read
+ * them, so the page cannot advertise a price the product does not charge.
  */
 const PRICE_TIERS: { tickets: string; price: string }[] = [
   { tickets: "Tu primer evento", price: "Gratis" },
-  { tickets: "1 – 60 boletos", price: "L400" },
-  { tickets: "61 – 150", price: "L800" },
-  { tickets: "151 – 300", price: "L1,200" },
-  { tickets: "301 o más", price: "L1,800" },
+  { tickets: "1 – 60 boletos", price: formatLpsShort(priceBracket(60).amount) },
+  { tickets: "61 – 150", price: formatLpsShort(priceBracket(150).amount) },
+  { tickets: "151 – 300", price: formatLpsShort(priceBracket(300).amount) },
+  { tickets: "301 o más", price: formatLpsShort(priceBracket(301).amount) },
 ];
 
 const STEPS: { title: string; body: string; visual: FC }[] = [

@@ -208,14 +208,14 @@ describe("perHead", () => {
 
 describe("priceBracket", () => {
   it("charges by tickets sold", () => {
-    expect(priceBracket(1).amount).toBe(40000);
-    expect(priceBracket(60).amount).toBe(40000);
-    expect(priceBracket(61).amount).toBe(80000);
-    expect(priceBracket(150).amount).toBe(80000);
-    expect(priceBracket(151).amount).toBe(120000);
-    expect(priceBracket(300).amount).toBe(120000);
-    expect(priceBracket(301).amount).toBe(180000);
-    expect(priceBracket(5000).amount).toBe(180000);
+    expect(priceBracket(1).amount).toBe(50000);
+    expect(priceBracket(60).amount).toBe(50000);
+    expect(priceBracket(61).amount).toBe(100000);
+    expect(priceBracket(150).amount).toBe(100000);
+    expect(priceBracket(151).amount).toBe(150000);
+    expect(priceBracket(300).amount).toBe(150000);
+    expect(priceBracket(301).amount).toBe(200000);
+    expect(priceBracket(5000).amount).toBe(200000);
   });
 
   it("names each bracket distinctly", () => {
@@ -223,11 +223,12 @@ describe("priceBracket", () => {
     expect(new Set(names).size).toBe(4);
   });
 
-  // The landing page and the terms both print these figures. If a bracket
-  // moves, those pages are wrong until someone notices.
-  it("matches the figures published on the landing page and in the terms", () => {
+  // The landing page and the terms both derive their tables from this, so
+  // these are the published prices. Changing one is a pricing decision, and
+  // the spec's pricing table (coverr-spec.html, section 11) moves with it.
+  it("charges the published L500 to L2,000", () => {
     expect([60, 150, 300, 301].map((n) => priceBracket(n).amount)).toEqual([
-      40000, 80000, 120000, 180000,
+      50000, 100000, 150000, 200000,
     ]);
   });
 });

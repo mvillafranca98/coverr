@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import { CONTACT_EMAIL, PROOF_RETENTION_DAYS, UPDATED } from "./constants";
+import { CONTACT_EMAIL, PRIVACY_UPDATED, PROOF_RETENTION_DAYS } from "./constants";
 import { LegalDoc } from "./doc";
 
 /**
@@ -23,7 +23,7 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
     title="Aviso de privacidad — Coverr"
     description="Qué datos guarda Coverr, con quién se comparten, cuánto tiempo se conservan y cómo pedir que los borremos."
     heading="Aviso de privacidad"
-    updated={UPDATED}
+    updated={PRIVACY_UPDATED}
     canonical={`${origin}/privacidad`}
   >
     <p>
