@@ -1,5 +1,39 @@
 import { escapeHtml, formatEventDate, formatEventTime, formatLpsShort } from "../lib/core";
 
+/*
+ * Every mail is drawn on the buyer surface (src/styles/buyer.css): cream
+ * page, black ink, 3px outlines, hard shadows, sticker colours with black ink
+ * on them. Written out as inline styles because that is all a mail client
+ * keeps. No webfont: headings are the system sans at its heaviest weight.
+ * Every pair is measured in DESIGN.md.
+ */
+const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif";
+const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
+const CREAM = "#fff4de";
+const INK = "#111111";
+const MUTED = "#3b372f";
+const DIM = "#57524a";
+const LIME = "#b8f35a";
+const YELLOW = "#ffd43b";
+const PINK = "#ff6ec7";
+const CRIT = "#b0102a";
+const CRIT_BG = "#ffd6df";
+
+/** A white card. Outlook drops the shadow and the corners and keeps the outline. */
+const CARD = `background:#ffffff;border:3px solid ${INK};border-radius:18px;box-shadow:5px 5px 0 ${INK}`;
+/** A mail's one action, styled as the buy page's pink submit button. */
+const BUTTON = `display:inline-block;padding:14px 24px;border:3px solid ${INK};border-radius:12px;background:${PINK};box-shadow:4px 4px 0 ${INK};color:${INK};font:900 16px/1 ${SANS};text-decoration:none`;
+const HEADING = `font:900 24px/1.15 ${SANS};letter-spacing:-.02em;color:${INK}`;
+const BODY_TEXT = `font:400 15px/1.7 ${SANS};color:${MUTED}`;
+const FINE_PRINT = `font:400 12px/1.6 ${SANS};color:${DIM}`;
+/**
+ * A pill in a sticker colour: the band's name on a ticket mail, "Coverr" on a
+ * sign-in. `html` goes in as-is, so escape anything somebody typed.
+ */
+function sticker(html: string, background: string): string {
+  return `<span style="display:inline-block;padding:4px 10px;border:2px solid ${INK};border-radius:999px;background:${background};font:700 11px/1.2 ${MONO};letter-spacing:.12em;text-transform:uppercase;color:${INK}">${html}</span>`;
+}
+
 type TicketEmailInput = {
   band: { name: string; contactEmail: string };
   event: {
@@ -25,8 +59,12 @@ type TicketEmailInput = {
  *  - Gmail strips <style> blocks and refuses SVG and data: URIs, so QR codes
  *    are hosted PNGs and every rule is an inline style attribute.
  *  - Outlook ignores flexbox and grid, so layout is tables.
- *  - Dark mode is not reliably controllable, so the ticket panel is explicitly
- *    light with dark text rather than inheriting anything.
+ *  - Dark mode is not reliably controllable, so every surface sets its own
+ *    background and ink rather than inheriting anything.
+ *
+ * Each ticket is the stub from the ticket page: lime, a black head band, a
+ * dashed perforation, and the QR below it on pure white, because a dark code
+ * on white is what scans.
  */
 export function ticketEmailHtml(i: TicketEmailInput): string {
   const when = `${formatEventDate(i.event.startsAt)} · ${formatEventTime(i.event.startsAt)}`;
@@ -34,30 +72,30 @@ export function ticketEmailHtml(i: TicketEmailInput): string {
   const tickets = i.attendees
     .map(
       (a, n) => `
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;margin:0 0 16px">
-        <tr><td style="background:#ffffff;border:1px solid #ddd8cf;border-radius:12px;padding:20px">
-          <div style="font:600 17px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#191713">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;margin:0 0 28px;background:${LIME};border:3px solid ${INK};border-radius:18px;box-shadow:9px 9px 0 ${INK}">
+        <tr><td style="background:${INK};border-radius:15px 15px 0 0;padding:11px 18px;font:700 11px/1.2 ${MONO};letter-spacing:.12em;text-transform:uppercase;color:${LIME}">
+          Boleto ${n + 1} de ${i.attendees.length}
+        </td></tr>
+        <tr><td style="padding:18px 18px 20px">
+          <div style="font:900 24px/1.1 ${SANS};letter-spacing:-.03em;color:${INK}">
             ${escapeHtml(a.name)}
-          </div>
-          <div style="font:400 13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6f6a60;padding-top:3px">
-            Boleto ${n + 1} de ${i.attendees.length}
           </div>
           ${
             a.note
-              ? `<div style="font:italic 400 13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#a8701f;padding-top:5px">${escapeHtml(a.note)}</div>`
+              ? `<div style="font:italic 500 14px/1.4 ${SANS};color:${INK};padding-top:6px">${escapeHtml(a.note)}</div>`
               : ""
           }
-          <div style="padding:16px 0 6px;text-align:center">
-            <img src="${i.origin}/t/${a.qrToken}.png"
-                 width="220" height="220" alt="Código QR de ${escapeHtml(a.name)}"
-                 style="display:block;margin:0 auto;width:220px;height:220px;border:0" />
-          </div>
-          <div style="font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;color:#9a948a;text-align:center;text-transform:uppercase">
+        </td></tr>
+        <tr><td style="background:#ffffff;border-top:3px dashed ${INK};border-radius:0 0 15px 15px;padding:22px 20px 22px;text-align:center">
+          <img src="${i.origin}/t/${a.qrToken}.png"
+               width="220" height="220" alt="Código QR de ${escapeHtml(a.name)}"
+               style="display:block;margin:0 auto;width:220px;height:220px;border:0" />
+          <div style="display:inline-block;margin-top:14px;padding:6px 13px;border:2px solid ${INK};border-radius:8px;background:${YELLOW};font:700 15px/1.2 ${MONO};letter-spacing:.18em;text-transform:uppercase;color:${INK}">
             ${escapeHtml(i.order.shortCode)}
           </div>
-          <div style="text-align:center;padding-top:12px">
+          <div style="padding-top:18px">
             <a href="${i.origin}/boletos/${i.order.id}"
-               style="display:inline-block;padding:9px 18px;border-radius:8px;background:#f5efe2;border:1px solid #e0d3b4;color:#8a5a12;font:600 13px/1 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;text-decoration:none">
+               style="display:inline-block;padding:11px 18px;border:3px solid ${INK};border-radius:12px;background:#ffffff;box-shadow:3px 3px 0 ${INK};color:${INK};font:800 14px/1 ${SANS};text-decoration:none">
               ¿No ves el código? Abrilo aquí
             </a>
           </div>
@@ -69,27 +107,25 @@ export function ticketEmailHtml(i: TicketEmailInput): string {
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tus boletos</title></head>
-<body style="margin:0;padding:0;background:#f3f1ea">
+<body style="margin:0;padding:0;background:${CREAM}">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">Tus ${i.order.quantity === 1 ? "boleto" : `${i.order.quantity} boletos`} para ${escapeHtml(i.event.name)} — ${when}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f1ea;padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CREAM};padding:24px 12px">
   <tr><td align="center">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;text-align:left">
 
-      <tr><td style="padding:0 0 20px">
-        <div style="font:600 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#b0651a">
-          ${escapeHtml(i.band.name)}
-        </div>
-        <h1 style="font:700 25px/1.15 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#191713;margin:10px 0 8px;letter-spacing:-.02em">
+      <tr><td style="padding:0 0 22px">
+        ${sticker(escapeHtml(i.band.name), LIME)}
+        <h1 style="font:900 28px/1.1 ${SANS};color:${INK};margin:14px 0 8px;letter-spacing:-.03em">
           ${escapeHtml(i.event.name)}
         </h1>
-        <div style="font:400 15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#57534b">
+        <div style="font:400 15px/1.5 ${SANS};color:${MUTED}">
           ${when}<br>${escapeHtml(i.event.venue)}
         </div>
       </td></tr>
 
-      <tr><td style="padding:0 0 18px">
+      <tr><td style="padding:0 0 26px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-          <tr><td style="background:#fbf6e8;border:1px solid #e4d5ab;border-radius:9px;padding:13px 15px;font:400 14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6d5518">
+          <tr><td style="background:${YELLOW};border:3px solid ${INK};border-radius:12px;padding:14px 16px;font:500 14px/1.5 ${SANS};color:${INK}">
             Guardá este correo. En la entrada te escanean el código desde el teléfono — no necesitás imprimir nada.
           </td></tr>
         </table>
@@ -97,30 +133,32 @@ export function ticketEmailHtml(i: TicketEmailInput): string {
 
       <tr><td>${tickets}</td></tr>
 
-      <tr><td style="padding:6px 0 0">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #ddd8cf;border-radius:12px">
-          <tr><td style="padding:16px 20px;font:400 14px/1.9 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#57534b">
-            <b style="color:#191713">Boletos:</b> ${i.order.quantity}<br>
-            <b style="color:#191713">Total:</b> ${formatLpsShort(i.order.expectedAmount)}<br>
-            <b style="color:#191713">Código:</b> ${escapeHtml(i.order.shortCode)}
+      <tr><td style="padding:2px 0 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${CARD}">
+          <tr><td style="padding:16px 20px;font:400 14px/1.9 ${SANS};color:${MUTED}">
+            <b style="color:${INK}">Boletos:</b> ${i.order.quantity}<br>
+            <b style="color:${INK}">Total:</b> ${formatLpsShort(i.order.expectedAmount)}<br>
+            <b style="color:${INK}">Código:</b> ${escapeHtml(i.order.shortCode)}
           </td></tr>
         </table>
       </td></tr>
 
       ${
         i.event.thankYouNote
-          ? `<tr><td style="padding:18px 4px 0;font:400 14px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#57534b">
+          ? `<tr><td style="padding:22px 4px 0;font:400 14px/1.6 ${SANS};color:${MUTED}">
                ${escapeHtml(i.event.thankYouNote)}
              </td></tr>`
           : ""
       }
 
-      <tr><td style="padding:22px 4px 0;border-top:1px solid #ddd8cf;margin-top:20px;font:400 12px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#8a857b">
-        ¿Perdiste tus boletos? Recuperalos en
-        <a href="${i.origin}/recuperar" style="color:#b0651a">${i.origin.replace(/^https?:\/\//, "")}/recuperar</a><br>
-        ${i.order.refundPolicy === "none" ? "" : `¿Necesitás un reembolso? <a href="${i.origin}/reembolso/${i.order.id}" style="color:#b0651a">Solicitalo aquí</a><br>`}
-        ¿Algún problema? Escribinos a
-        <a href="mailto:${escapeHtml(i.band.contactEmail)}" style="color:#b0651a">${escapeHtml(i.band.contactEmail)}</a>
+      <tr><td style="padding:24px 0 0">
+        <div style="border-top:3px solid ${INK};padding:18px 4px 0;${FINE_PRINT}">
+          ¿Perdiste tus boletos? Recuperalos en
+          <a href="${i.origin}/recuperar" style="color:${INK}">${i.origin.replace(/^https?:\/\//, "")}/recuperar</a><br>
+          ${i.order.refundPolicy === "none" ? "" : `¿Necesitás un reembolso? <a href="${i.origin}/reembolso/${i.order.id}" style="color:${INK}">Solicitalo aquí</a><br>`}
+          ¿Algún problema? Escribinos a
+          <a href="mailto:${escapeHtml(i.band.contactEmail)}" style="color:${INK}">${escapeHtml(i.band.contactEmail)}</a>
+        </div>
       </td></tr>
 
     </table>
@@ -176,16 +214,15 @@ type LoginEmailInput = { bandName: string; url: string; minutes: number };
  * what an unexpected "click here to sign in" mail looks like.
  */
 export function loginEmailHtml(i: LoginEmailInput): string {
-  const sans = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif";
   return `<!doctype html>
-<html lang="es"><body style="margin:0;background:#f3f1ea;padding:28px 14px;font-family:${sans}">
+<html lang="es"><body style="margin:0;background:${CREAM};padding:28px 14px;font-family:${SANS}">
 <table role="presentation" width="100%"><tr><td align="center">
 <table role="presentation" width="100%" style="max-width:440px;text-align:left">
-<tr><td style="font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#b0651a;padding-bottom:10px">Coverr</td></tr>
-<tr><td style="font:700 22px/1.2 inherit;color:#191713;padding-bottom:10px">Entrar al panel de ${escapeHtml(i.bandName)}</td></tr>
-<tr><td style="font:400 15px/1.5 inherit;color:#57534b;padding-bottom:20px">Tocá el botón para entrar. El enlace vence en ${i.minutes} minutos.</td></tr>
-<tr><td><a href="${i.url}" style="display:inline-block;padding:13px 22px;border-radius:9px;background:#191713;color:#fff;font:600 15px/1 inherit;text-decoration:none">Entrar</a></td></tr>
-<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:22px">Si no pediste esto, ignoralo — nadie puede entrar sin este correo.</td></tr>
+<tr><td style="padding-bottom:16px">${sticker("Coverr", YELLOW)}</td></tr>
+<tr><td style="${HEADING};padding-bottom:10px">Entrar al panel de ${escapeHtml(i.bandName)}</td></tr>
+<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED};padding-bottom:22px">Tocá el botón para entrar. El enlace vence en ${i.minutes} minutos.</td></tr>
+<tr><td><a href="${i.url}" style="${BUTTON}">Entrar</a></td></tr>
+<tr><td style="${FINE_PRINT};padding-top:26px">Si no pediste esto, ignoralo — nadie puede entrar sin este correo.</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -205,13 +242,13 @@ type SignupEmailInput = { bandName: string; url: string };
  * the subject line, which the sign-in mail does not.
  */
 export function signupEmailHtml(i: SignupEmailInput): string {
-  return `<!doctype html><html lang="es"><body style="margin:0;background:#f3f1ea;padding:28px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+  return `<!doctype html><html lang="es"><body style="margin:0;background:${CREAM};padding:28px 14px;font-family:${SANS}">
 <table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:440px;text-align:left">
-<tr><td style="font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#b0651a;padding-bottom:10px">Coverr</td></tr>
-<tr><td style="font:700 22px/1.2 inherit;color:#191713;padding-bottom:10px">Entrar al panel de ${escapeHtml(i.bandName)}</td></tr>
-<tr><td style="font:400 15px/1.5 inherit;color:#57534b;padding-bottom:20px">Tocá el botón para entrar. El enlace vence en 15 minutos.</td></tr>
-<tr><td><a href="${i.url}" style="display:inline-block;padding:13px 22px;border-radius:9px;background:#191713;color:#fff;font:600 15px/1 inherit;text-decoration:none">Entrar</a></td></tr>
-<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:22px">Si no pediste esto, ignoralo — nadie puede entrar sin este correo.</td></tr>
+<tr><td style="padding-bottom:16px">${sticker("Coverr", YELLOW)}</td></tr>
+<tr><td style="${HEADING};padding-bottom:10px">Entrar al panel de ${escapeHtml(i.bandName)}</td></tr>
+<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED};padding-bottom:22px">Tocá el botón para entrar. El enlace vence en 15 minutos.</td></tr>
+<tr><td><a href="${i.url}" style="${BUTTON}">Entrar</a></td></tr>
+<tr><td style="${FINE_PRINT};padding-top:26px">Si no pediste esto, ignoralo — nadie puede entrar sin este correo.</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -255,25 +292,25 @@ export function flagAlertEmailHtml(i: FlagAlertInput): string {
   const rows = i.flags
     .map(
       (f) =>
-        `<tr><td style="background:#fff;border:1px solid #ddd8cf;border-radius:10px;padding:14px 16px;font:400 15px/1.6 inherit;color:#57534b;margin-bottom:8px">
-<b style="color:#8a1c0f;font:600 12px/1 inherit;letter-spacing:.08em">${escapeHtml(f.code)}</b><br>
+        `<tr><td style="background:${CRIT_BG};border:3px solid ${INK};border-radius:12px;padding:14px 16px;font:400 15px/1.6 ${SANS};color:${INK}">
+<b style="color:${CRIT};font:700 12px/1.4 ${MONO};letter-spacing:.08em">${escapeHtml(f.code)}</b><br>
 ${escapeHtml(f.detail)}
-</td></tr><tr><td style="height:8px"></td></tr>`,
+</td></tr><tr><td style="height:10px"></td></tr>`,
     )
     .join("");
 
-  return `<!doctype html><html lang="es"><body style="margin:0;background:#f3f1ea;padding:26px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+  return `<!doctype html><html lang="es"><body style="margin:0;background:${CREAM};padding:26px 14px;font-family:${SANS}">
 <table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:460px;text-align:left">
-<tr><td style="font:700 20px/1.25 inherit;color:#191713;padding-bottom:12px">Una compra necesita revisión</td></tr>
-<tr><td style="font:400 15px/1.7 inherit;color:#57534b;padding-bottom:16px">
-<b style="color:#191713">Orden:</b> ${escapeHtml(i.order.shortCode)}<br>
-<b style="color:#191713">Evento:</b> ${escapeHtml(i.event.name)}<br>
-<b style="color:#191713">Compró:</b> ${escapeHtml(i.order.payerName)} (${escapeHtml(i.order.payerEmail)})<br>
-<b style="color:#191713">Boletos:</b> ${i.order.quantity} · ${formatLpsShort(i.order.expectedAmount)}
+<tr><td style="${HEADING};padding-bottom:12px">Una compra necesita revisión</td></tr>
+<tr><td style="${BODY_TEXT};padding-bottom:16px">
+<b style="color:${INK}">Orden:</b> ${escapeHtml(i.order.shortCode)}<br>
+<b style="color:${INK}">Evento:</b> ${escapeHtml(i.event.name)}<br>
+<b style="color:${INK}">Compró:</b> ${escapeHtml(i.order.payerName)} (${escapeHtml(i.order.payerEmail)})<br>
+<b style="color:${INK}">Boletos:</b> ${i.order.quantity} · ${formatLpsShort(i.order.expectedAmount)}
 </td></tr>
 ${rows}
-<tr><td style="padding-top:10px"><a href="${i.origin}/admin/e/${i.event.slug}/orden/${i.order.id}" style="display:inline-block;padding:12px 20px;border-radius:9px;background:#191713;color:#fff;font:600 15px/1 inherit;text-decoration:none">Ver la orden</a></td></tr>
-<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:20px">Los códigos QR ya se entregaron y siguen sirviendo — esto es para que lo revisés, no para frenar a nadie en la puerta. Respondé este correo para escribirle a quien compró.</td></tr>
+<tr><td style="padding-top:12px"><a href="${i.origin}/admin/e/${i.event.slug}/orden/${i.order.id}" style="${BUTTON}">Ver la orden</a></td></tr>
+<tr><td style="${FINE_PRINT};padding-top:26px">Los códigos QR ya se entregaron y siguen sirviendo — esto es para que lo revisés, no para frenar a nadie en la puerta. Respondé este correo para escribirle a quien compró.</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -316,20 +353,20 @@ type RefundAlertInput = {
  * caller sets to the buyer and the direct link to the order.
  */
 export function refundAlertEmailHtml(i: RefundAlertInput): string {
-  return `<!doctype html><html lang="es"><body style="margin:0;background:#f3f1ea;padding:26px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+  return `<!doctype html><html lang="es"><body style="margin:0;background:${CREAM};padding:26px 14px;font-family:${SANS}">
 <table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:460px;text-align:left">
-<tr><td style="font:700 20px/1.25 inherit;color:#191713;padding-bottom:12px">Solicitud de reembolso</td></tr>
-<tr><td style="font:400 15px/1.7 inherit;color:#57534b;padding-bottom:16px">
-<b style="color:#191713">Orden:</b> ${escapeHtml(i.order.shortCode)}<br>
-<b style="color:#191713">Evento:</b> ${escapeHtml(i.event.name)}<br>
-<b style="color:#191713">Compró:</b> ${escapeHtml(i.order.payerName)} (${escapeHtml(i.order.payerEmail)})<br>
-<b style="color:#191713">Boletos:</b> ${i.order.quantity} · ${formatLpsShort(i.order.expectedAmount)}
+<tr><td style="${HEADING};padding-bottom:12px">Solicitud de reembolso</td></tr>
+<tr><td style="${BODY_TEXT};padding-bottom:16px">
+<b style="color:${INK}">Orden:</b> ${escapeHtml(i.order.shortCode)}<br>
+<b style="color:${INK}">Evento:</b> ${escapeHtml(i.event.name)}<br>
+<b style="color:${INK}">Compró:</b> ${escapeHtml(i.order.payerName)} (${escapeHtml(i.order.payerEmail)})<br>
+<b style="color:${INK}">Boletos:</b> ${i.order.quantity} · ${formatLpsShort(i.order.expectedAmount)}
 </td></tr>
-<tr><td style="background:#fff;border:1px solid #ddd8cf;border-radius:10px;padding:14px 16px;font:400 15px/1.6 inherit;color:#57534b">
+<tr><td style="${CARD};padding:14px 16px;font:400 15px/1.6 ${SANS};color:${INK}">
 ${escapeHtml(i.reason)}
 </td></tr>
-<tr><td style="padding-top:18px"><a href="${i.origin}/admin/e/${i.event.slug}/orden/${i.order.id}" style="display:inline-block;padding:12px 20px;border-radius:9px;background:#191713;color:#fff;font:600 15px/1 inherit;text-decoration:none">Ver la orden</a></td></tr>
-<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:20px">Respondé este correo para contactar directamente a quien compró.</td></tr>
+<tr><td style="padding-top:22px"><a href="${i.origin}/admin/e/${i.event.slug}/orden/${i.order.id}" style="${BUTTON}">Ver la orden</a></td></tr>
+<tr><td style="${FINE_PRINT};padding-top:26px">Respondé este correo para contactar directamente a quien compró.</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -365,24 +402,24 @@ type ErrorAlertInput = {
 export function errorAlertEmailHtml(i: ErrorAlertInput): string {
   const where = [i.method, i.path].filter(Boolean).join(" ") || i.kind;
 
-  return `<!doctype html><html lang="en"><body style="margin:0;background:#f3f1ea;padding:26px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+  return `<!doctype html><html lang="en"><body style="margin:0;background:${CREAM};padding:26px 14px;font-family:${SANS}">
 <table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:560px;text-align:left">
-<tr><td style="font:700 20px/1.25 inherit;color:#191713;padding-bottom:12px">Coverr crashed</td></tr>
-<tr><td style="font:400 15px/1.7 inherit;color:#57534b;padding-bottom:16px">
-<b style="color:#191713">When:</b> ${escapeHtml(i.at)}<br>
-<b style="color:#191713">Where:</b> ${escapeHtml(where)}<br>
-<b style="color:#191713">Kind:</b> ${escapeHtml(i.kind)}
+<tr><td style="${HEADING};padding-bottom:12px">Coverr crashed</td></tr>
+<tr><td style="${BODY_TEXT};padding-bottom:16px">
+<b style="color:${INK}">When:</b> ${escapeHtml(i.at)}<br>
+<b style="color:${INK}">Where:</b> ${escapeHtml(where)}<br>
+<b style="color:${INK}">Kind:</b> ${escapeHtml(i.kind)}
 </td></tr>
-<tr><td style="background:#fff;border:1px solid #ddd8cf;border-radius:10px;padding:14px 16px;font:400 15px/1.6 inherit;color:#57534b">
+<tr><td style="${CARD};padding:14px 16px;font:400 15px/1.6 ${SANS};color:${INK}">
 ${escapeHtml(i.message)}
 </td></tr>
 ${
   i.stack
-    ? `<tr><td style="height:10px"></td></tr>
-<tr><td style="background:#191713;border-radius:10px;padding:14px 16px;font:400 12px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#d6d0c5;white-space:pre-wrap;word-break:break-word">${escapeHtml(i.stack)}</td></tr>`
+    ? `<tr><td style="height:16px"></td></tr>
+<tr><td style="background:${INK};border:3px solid ${INK};border-radius:12px;padding:14px 16px;font:400 12px/1.6 ${MONO};color:${CREAM};white-space:pre-wrap;word-break:break-word">${escapeHtml(i.stack)}</td></tr>`
     : ""
 }
-<tr><td style="font:400 12px/1.6 inherit;color:#8a857b;padding-top:20px">The same error stays quiet for up to the next ${i.quietMinutes} minutes so a crash loop cannot fill this mailbox. Every occurrence is still in the error_log table and in the Cloudflare logs.</td></tr>
+<tr><td style="${FINE_PRINT};padding-top:26px">The same error stays quiet for up to the next ${i.quietMinutes} minutes so a crash loop cannot fill this mailbox. Every occurrence is still in the error_log table and in the Cloudflare logs.</td></tr>
 </table></td></tr></table></body></html>`;
 }
 

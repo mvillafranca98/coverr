@@ -25,7 +25,7 @@ export function scannerShellHtml(i: ScannerShellInput): string {
 <html lang="es"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0C0B09">
+<meta name="theme-color" content="#141414">
 <meta name="robots" content="noindex,nofollow">
 <title>Entrada — ${escapeHtml(i.eventName)}</title>
 <link rel="manifest" href="/manifest.webmanifest">

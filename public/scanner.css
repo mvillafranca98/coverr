@@ -1,160 +1,532 @@
-/* Door scanner. Read at arm's length, one-handed, in a dark venue:
-   colour carries the verdict, the name confirms it, everything else is small. */
+/* Door scanner. Read at arm's length, one-handed, in a dark venue: the
+   verdict fills the panel in a sticker colour and stamps a glyph on it, the
+   name confirms it, everything else is small.
+
+   The band's dark surface from src/styles/admin.css — cream edges, hard
+   shadows, sticker colours with black ink — restated here rather than shared,
+   because this file stands alone: sw.js precaches it so the door works with
+   no signal. It loads no font file. Headings are the system sans at its
+   heaviest weight, not Archivo Black. Every pair is measured in DESIGN.md. */
 :root {
-  --bg: #0C0B09;
-  --surface: #16130F;
-  --surface-2: #211C16;
-  --line: #332B22;
-  --line-2: #4A3F31;
+  color-scheme: dark;
+  --bg: #141414;
+  --surface: #1d1d1d;
+  --surface-2: #272727;
+  --well: #0e0e0e;
+  --line-2: #555555;
   /* A border that is the only thing identifying a control needs 3:1
-     (WCAG 1.4.11). --line-2 reaches 1.80 here. */
-  --line-control: #6E6454;
-  --text: #F6F2EB;
-  --muted: #A79E90;
-  --dim: #8E8679;
-  --accent: #F0A03C;
-  --accent-ink: #100C06;
-  --green: #2BA35F;
-  --green-ink: #04120A;
-  --amber: #D99514;
-  --amber-ink: #1A1204;
-  --red: #C4382A;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+     (WCAG 1.4.11). In this style that is the cream edge itself. */
+  --line-control: #fff4de;
+  --text: #fff4de;
+  --muted: #cfc6b3;
+  --dim: #a8a091;
+  --ink: #111111;
+  /* The sticker colours from tokens.css, plus the band surface's pink-red.
+     Each one carries black ink, never light text. */
+  --pink: #ff6ec7;
+  --yellow: #ffd43b;
+  --lime: #b8f35a;
+  --blue: #4d7cfe;
+  --crit: #ff8fa3;
+  --edge: 2px solid var(--line-control);
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+  --lift: 5px;
+  --sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
-* { box-sizing: border-box }
-[hidden] { display: none !important }
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
 /* Pinch zoom stays on: a name read in the dark is exactly when staff need it.
    Only the double-tap zoom goes, so two quick taps on a button are two taps. */
-html { -webkit-text-size-adjust: 100%; touch-action: manipulation }
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
 body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font-family: var(--sans); font-size: 16px; line-height: 1.45;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   padding-bottom: env(safe-area-inset-bottom);
 }
-.wrap { max-width: 560px; margin: 0 auto; padding: 0 14px 40px }
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 14px 40px;
+}
 
 /* ---- header ---- */
-header { padding: 16px 0 12px; border-bottom: 1px solid var(--line) }
-.ev { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.01em }
-.vn { font-size: 12.5px; color: var(--dim) }
-.net {
-  display: inline-block; margin-top: 8px; font-family: var(--mono);
-  font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
-  padding: 3px 8px; border-radius: 3px; background: var(--surface-2); color: var(--dim);
+header {
+  padding: 16px 0 14px;
+  border-bottom: var(--edge);
 }
-.net.ok { background: #12251A; color: #63C08C }
-.net.off { background: #2A1512; color: #E8776A }
-.net.warn { background: #2A2110; color: #E8B54A }
+.ev {
+  margin: 0;
+  font: 900 19px/1.15 var(--sans);
+  letter-spacing: -0.02em;
+}
+.vn {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 13px;
+}
+/* The connection badge is a status chip: solid sticker, black ink, so it
+   reads across a dark room. */
+.net {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 3px 10px;
+  border: 2px solid var(--line-2);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--muted);
+  font: 700 10.5px/1.4 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.net.ok,
+.net.off,
+.net.warn {
+  border-color: var(--line-control);
+  color: var(--ink);
+}
+.net.ok {
+  background: var(--lime);
+}
+.net.off {
+  background: var(--crit);
+}
+.net.warn {
+  background: var(--yellow);
+}
 
-/* ---- stats ---- */
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px 0 }
-.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px }
-.stat b { display: block; font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1 }
-.stat span { font-size: 10.5px; font-family: var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--dim) }
+/* ---- stats ----
+   One sticker colour per card, carried by its hard shadow, in the order the
+   band's dashboard uses. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px 0 18px;
+}
+.stat {
+  padding: 10px 12px 12px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: 4px 4px 0 var(--yellow);
+}
+.stat:nth-child(2) {
+  box-shadow: 4px 4px 0 var(--pink);
+}
+.stat:nth-child(3) {
+  box-shadow: 4px 4px 0 var(--lime);
+}
+.stat b {
+  display: block;
+  font: 900 1.65rem/1.1 var(--sans);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.stat span {
+  color: var(--muted);
+  font: 700 10.5px/1.4 var(--mono);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
 #queueRow {
-  margin: 0 0 12px; padding: 9px 12px; border-radius: 8px; font-size: 13px;
-  background: #2A2110; border: 1px solid #4A3A16; color: #F0D89C;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--yellow);
+  color: var(--ink);
+  font-size: 14px;
 }
 
 /* ---- tabs ---- */
-.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px }
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
 .tab {
   min-height: 44px;
-  padding: 11px 6px; border: 1px solid var(--line-control); border-radius: 9px;
-  background: var(--surface); color: var(--muted); font: 600 14px/1 var(--sans);
-  cursor: pointer; text-align: center;
+  padding: 10px 6px;
+  border: var(--edge);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--muted);
+  font: 800 15px/1 var(--sans);
+  cursor: pointer;
+  text-align: center;
 }
-.tab.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink) }
+.tab.on {
+  background: var(--yellow);
+  box-shadow: 3px 3px 0 var(--line-control);
+  color: var(--ink);
+}
 
 /* ---- scan ---- */
-#cam { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4/3 }
-#video { width: 100%; height: 100%; object-fit: cover; display: block }
+#cam {
+  position: relative;
+  border: var(--edge);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: #000;
+  box-shadow: var(--lift) var(--lift) 0 var(--blue);
+  aspect-ratio: 4/3;
+}
+#video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Where to hold the code: the crop marks the ticket draws around its own QR. */
 #cam::after {
-  content: ""; position: absolute; inset: 18% 14%;
-  border: 2px solid rgba(240,160,60,.85); border-radius: 12px; pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: 16% 14%;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--yellow), var(--yellow)) top left / 34px 5px,
+    linear-gradient(var(--yellow), var(--yellow)) top left / 5px 34px,
+    linear-gradient(var(--yellow), var(--yellow)) top right / 34px 5px,
+    linear-gradient(var(--yellow), var(--yellow)) top right / 5px 34px,
+    linear-gradient(var(--yellow), var(--yellow)) bottom left / 34px 5px,
+    linear-gradient(var(--yellow), var(--yellow)) bottom left / 5px 34px,
+    linear-gradient(var(--yellow), var(--yellow)) bottom right / 34px 5px,
+    linear-gradient(var(--yellow), var(--yellow)) bottom right / 5px 34px;
+  background-repeat: no-repeat;
 }
+/* Buttons press flat into their own shadow, as on the band's dashboard. */
 .big {
-  display: block; width: 100%; padding: 18px; border: none; border-radius: 11px;
-  background: var(--accent); color: var(--accent-ink);
-  font: 750 17px/1 var(--sans); cursor: pointer;
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  padding: 16px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--yellow);
+  box-shadow: 4px 4px 0 var(--line-control);
+  color: var(--ink);
+  font: 900 18px/1 var(--sans);
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition:
+    transform 0.08s ease-out,
+    box-shadow 0.08s ease-out;
 }
-.big:active { filter: brightness(.9) }
+.big:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--line-control);
+}
 
-.result { margin-top: 14px; border-radius: 12px; padding: 20px 18px; text-align: center }
-.result.green { background: var(--green); color: var(--green-ink) }
-.result.amber { background: var(--amber); color: var(--amber-ink) }
-.result.red { background: var(--red); color: #fff }
-.r-title { font-size: 1.7rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.05 }
-.r-sub { font-size: 1.05rem; font-weight: 600; margin-top: 5px }
-.r-detail { font-size: 13.5px; margin-top: 7px; opacity: .9 }
+/* The verdict. Three things tell it apart, so no one of them has to work
+   alone: the fill (lime, yellow, pink-red), the glyph stamped on top (✓, !,
+   ✕ — lime and yellow sit close for a red-green colour-blind eye, the glyphs
+   do not), and the amber panel's shape, the only one carrying a boxed reason
+   and two buttons. The glyph is decorative; the words carry the verdict to a
+   screen reader through #verdict. */
+.result {
+  margin: 16px 0 22px;
+  padding: 16px 18px 20px;
+  border: var(--edge);
+  border-radius: var(--r-lg);
+  box-shadow: var(--lift) var(--lift) 0 var(--line-control);
+  color: var(--ink);
+  text-align: center;
+}
+.result::before {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  background: var(--ink);
+  font: 900 32px/1 var(--sans);
+  /* ✓ and ✕ come from a symbol font with one thin weight on most phones;
+     the stroke gives them the same heft as the "!". */
+  -webkit-text-stroke: 2px currentColor;
+}
+.result.green {
+  background: var(--lime);
+}
+.result.green::before {
+  content: "✓";
+  content: "✓" / "";
+  color: var(--lime);
+}
+.result.amber {
+  background: var(--yellow);
+}
+.result.amber::before {
+  content: "!";
+  content: "!" / "";
+  color: var(--yellow);
+}
+.result.red {
+  background: var(--crit);
+}
+.result.red::before {
+  content: "✕";
+  content: "✕" / "";
+  color: var(--crit);
+}
+.r-title {
+  font: 900 1.75rem/1.08 var(--sans);
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.r-sub {
+  margin-top: 6px;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+.r-detail {
+  margin-top: 7px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.r-detail:empty {
+  display: none;
+}
+/* On amber the detail is the reason staff must act on — the flag, or the
+   cash to collect — so it is boxed on white rather than left as small print. */
+.result.amber .r-detail {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 2px solid var(--ink);
+  border-radius: var(--r-md);
+  background: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+}
 
 /* Actions on an amber result. Tall and full width: this is tapped on a phone,
    at night, by somebody holding a queue. 52px clears the 44px floor. */
-.r-actions { display: grid; gap: 8px; margin-top: 14px }
-.r-actions button {
-  min-height: 52px; border-radius: 10px; font-size: 15px; font-weight: 700;
-  border: 1px solid currentColor; width: 100%;
+.r-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
 }
-.r-go { background: var(--amber-ink); color: var(--amber) }
-.r-no { background: transparent; color: var(--amber-ink) }
+.r-actions button {
+  width: 100%;
+  min-height: 52px;
+  border: 2px solid var(--ink);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  font: 800 16px/1.2 var(--sans);
+  cursor: pointer;
+}
+.r-go {
+  background: #ffffff;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition:
+    transform 0.08s ease-out,
+    box-shadow 0.08s ease-out;
+}
+.r-go:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--ink);
+}
+.r-no {
+  background: transparent;
+}
 
 /* ---- search ---- */
-input[type=text], input[type=number] {
-  width: 100%; padding: 13px; border: 1px solid var(--line-control); border-radius: 9px;
-  background: var(--surface); color: var(--text); font-size: 16px; font-family: var(--sans);
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--well);
+  color: var(--text);
+  font-size: 16px;
+  font-family: var(--sans);
 }
-input:focus { outline: 2px solid var(--accent); outline-offset: -1px }
+input::placeholder {
+  color: var(--dim);
+  opacity: 1;
+}
+input:focus {
+  outline: 3px solid var(--yellow);
+  outline-offset: 1px;
+}
 /* Every control shows where the keyboard is. The amber result is the one
-   place the accent ring would vanish into the background, so it takes the
+   place the yellow ring would vanish into the background, so it takes the
    ink colour there. */
-button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px }
-.result button:focus-visible { outline-color: var(--amber-ink) }
+button:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+.result button:focus-visible {
+  outline-color: var(--ink);
+}
 
 /* Read by screen readers, never shown. */
 .sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 .srow {
-  display: flex; align-items: center; gap: 10px; justify-content: space-between;
-  padding: 11px 13px; margin-top: 8px; background: var(--surface);
-  border: 1px solid var(--line); border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 10px 12px 10px 14px;
+  margin-top: 10px;
+  border: 2px solid var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--surface);
 }
-.srow.in { opacity: .55 }
-.srow b { display: block; font-size: 15px; font-weight: 600 }
-.srow small { display: block; font-size: 12px; color: var(--dim) }
-/* The button that lets somebody in, tapped one-handed with a queue waiting. */
-.srow button {
-  flex: none; min-height: 44px; padding: 9px 14px; border-radius: 8px; border: none;
-  background: var(--accent); color: var(--accent-ink); font: 700 13px/1 var(--sans); cursor: pointer;
+.srow b {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 700;
 }
-.srow button:disabled { background: var(--surface-2); color: var(--dim); cursor: default }
-
-/* ---- cash ---- */
-.qty { display: flex; align-items: center; gap: 12px; margin: 14px 0 }
-.qty button {
-  width: 52px; height: 52px; flex: none; border-radius: 10px; border: 1px solid var(--line-control);
-  background: var(--surface-2); color: var(--text); font-size: 24px; cursor: pointer; font-family: var(--sans);
+.srow small {
+  display: block;
+  color: var(--muted);
+  font-size: 12.5px;
 }
-.qty input { text-align: center; font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums }
-.hint { font-size: 13.5px; color: var(--muted); margin: 10px 0 0 }
-.hint.ok { color: #63C08C }
-.hint.warn { color: #E8B54A }
-.ghost {
-  display: block; width: 100%; margin-top: 9px; padding: 14px; border-radius: 10px;
-  border: 1px solid var(--line-control); background: var(--surface); color: var(--text);
-  font: 600 15px/1 var(--sans); cursor: pointer;
+/* Already inside, or refunded: stepped back in colour rather than opacity,
+   which would drag the text under 4.5:1. */
+.srow.in b,
+.srow.in small,
+.srow.voided b,
+.srow.voided small {
+  color: var(--dim);
 }
-h2 { font-size: 1rem; font-weight: 650; margin: 0 0 4px }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
-
 /* A refunded ticket, surfaced so staff are told the truth rather than
    "nadie con ese nombre". Not actionable — the button is disabled. */
-.srow.voided{opacity:.62}
-.srow.voided b{text-decoration:line-through}
+.srow.voided b {
+  text-decoration: line-through;
+}
+/* The button that lets somebody in, tapped one-handed with a queue waiting. */
+.srow button {
+  flex: none;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--yellow);
+  box-shadow: 3px 3px 0 var(--line-control);
+  color: var(--ink);
+  font: 800 14px/1 var(--sans);
+  cursor: pointer;
+}
+.srow button:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--line-control);
+}
+.srow button:disabled {
+  border-color: var(--line-2);
+  background: var(--surface-2);
+  box-shadow: none;
+  color: var(--dim);
+  cursor: default;
+  transform: none;
+}
 
 /* The door list is long and read on a phone, so it scrolls inside the pane
    rather than pushing the search box off the top of the screen. */
-#searchResults { max-height: 62vh; overflow-y: auto; -webkit-overflow-scrolling: touch }
+#searchResults {
+  max-height: 62vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---- cash ---- */
+.qty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 18px;
+}
+.qty button {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: 3px 3px 0 var(--line-control);
+  color: var(--text);
+  font: 800 26px/1 var(--sans);
+  cursor: pointer;
+}
+.qty button:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--line-control);
+}
+.qty input {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.hint.ok {
+  color: var(--lime);
+}
+.hint.warn {
+  color: var(--yellow);
+}
+.ghost {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 14px;
+  padding: 14px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: 4px 4px 0 var(--line-control);
+  color: var(--text);
+  font: 800 16px/1 var(--sans);
+  cursor: pointer;
+}
+.ghost:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--line-control);
+}
+h2 {
+  margin: 0 0 4px;
+  font: 900 1.15rem/1.2 var(--sans);
+  letter-spacing: -0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

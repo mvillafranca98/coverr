@@ -132,8 +132,17 @@ More pairs, measured the same way:
 | Blue focus ring on cream (3:1 floor, it is an outline) | 3.42 |
 | Band `--muted` on a hovered table row `#272727` | 8.81 |
 | Scanner ink `#04120A` on scanner green `#2BA35F` (landing drawing) | 5.94 |
+| Door scanner: ink on the valid, amber and refused panels (lime, yellow, `#FF8FA3`) | 14.39 / 13.25 / 8.73 |
+| Door scanner: ink on the white box that holds an amber result's reason | 18.88 |
+| Door scanner: `--dim` on a disabled row button `#272727` / as placeholder on the input well `#0E0E0E` | 5.76 / 7.45 |
+| Door scanner: lime and yellow hint text on `--bg` | 14.04 / 12.92 |
+| Email: fine print `#57524A` on cream | 7.10 |
+| Email: flag code `#B0102A` on `#FFD6DF` | 5.40 |
+| Email: cream stack trace on black | 17.31 |
 
-The door scanner (`public/scanner.css`) and the emails (`src/views/email.ts`) keep the previous amber palette. Both were left out of the redesign on purpose — see *The landing page* and FE-01 in `docs/STANDARDS.md`.
+The door scanner (`public/scanner.css`) and the emails (`src/views/email.ts`) use this same palette, restated in their own files: the scanner because its service worker precaches it as a standalone file, the emails because a mail client keeps nothing but inline styles. The scanner is the band's dark surface. Every mail is the light one, including those sent to the band, since a mail client's dark mode cannot be relied on to leave a dark design alone.
+
+Lime and yellow measure **1.09** against each other — the same lightness — so a red-green colour-blind eye can take a valid scan for an amber one. The scanner never leans on the fill alone: each verdict stamps a glyph on the panel (✓, !, ✕), and the amber panel is the only one carrying a boxed reason and two buttons.
 
 ## Typography
 Three roles, one of them a webfont:
@@ -146,7 +155,7 @@ Three roles, one of them a webfont:
 
 **Archivo Black is the one webfont, on every page but the door scanner.** OFL, from `@fontsource/archivo-black` 5.3.0, Latin subset, 18.6 KB, self-hosted in `public/vendor/fonts/` so the CSP stays `'self'`. It is preloaded by each layout and set `font-display: swap`, so text paints at once in the system sans and swaps when the font lands. **Nothing ever waits on it** — that is the reason the product once loaded no fonts at all, and it still binds. One heavy weight is the whole display system; there is no second face.
 
-**The door scanner stays system-only**: it must open at a venue with no signal, and its service worker precaches an explicit file list the font is not on.
+**The door scanner stays system-only**: it must open at a venue with no signal, and its service worker precaches an explicit file list the font is not on. Its headings take the system sans at weight 900 instead. The emails load no font either, and do the same.
 
 Headings that box a phrase in a sticker (`<em>`) need line-height around **1.16–1.24**: the box is as tall as the font's whole line, and anything tighter lets it cover the descenders of the line above. The boxed phrase is `white-space: nowrap` — it is always two or three words and should never split across lines.
 
@@ -178,7 +187,7 @@ Every brand image is generated from it by `npm run brand` (`scripts/brand.mjs`):
 Buttons, inputs and cards are defined in the front matter. Three states carry every message in the product, as solid stickers with black ink:
 
 - **ok** — lime, a clean scan or a confirmed order
-- **warn** — yellow, a flag that needs a human but does not block anyone (amber at the door scanner)
+- **warn** — yellow, a flag that needs a human but does not block anyone (the door scanner's "amber" result)
 - **crit** — pink-red, a duplicate scan or a voided order
 
 **A warning must always name its reason on screen.** A door flag that says only "revisar" has failed: staff resolving it in five seconds is the point, staff phoning the admin is the failure.
