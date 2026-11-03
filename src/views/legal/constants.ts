@@ -10,15 +10,16 @@ export { PROOF_RETENTION_DAYS };
 
 /**
  * Where a reader writes to exercise habeas data, report a leak, or ask about
- * the terms. This is the address Coverr already sends from, so it is the one a
- * reader would reply to anyway — it has to be able to *receive* mail, which is
- * a setting on the sending domain, not something the code can guarantee.
+ * the terms. This is the address Coverr sends from (EMAIL_FROM), so it is the
+ * one a reader would reply to anyway. It receives mail only because Cloudflare
+ * Email Routing forwards it to the operator's inbox — a setting on the domain,
+ * not something the code can guarantee. See docs/EMAIL-SETUP.md.
  */
-export const CONTACT_EMAIL = "coverr@macawly.dev";
+export const CONTACT_EMAIL = "hola@coverr.live";
 
 /**
  * Each document's own last change. They shared one date until the report
  * prices moved, which changed the terms and not the privacy notice.
  */
-export const PRIVACY_UPDATED = "28 de octubre de 2026";
-export const TERMS_UPDATED = "30 de octubre de 2026";
+export const PRIVACY_UPDATED = "3 de noviembre de 2026";
+export const TERMS_UPDATED = "3 de noviembre de 2026";

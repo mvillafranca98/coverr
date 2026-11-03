@@ -320,6 +320,7 @@ not evidence of an old one.
 | `EXTRACT_LIMIT` | Rate limiter | 10 a minute per band for the order page's "read it again" button, a paid vision call per press |
 | `APP_ORIGIN` | Variable | The canonical URL. Links in email and QR codes are built from it, and any other hostname is marked `noindex` |
 | `REDIRECT_HOSTS` | Variable | Hostnames that redirect to `APP_ORIGIN`: `www.coverr.live`, and the `workers.dev` address every link sent before November 2026 points at. `/api/` and `/t/` are still served there — see `src/lib/host-redirect.ts` |
+| `EMAIL_FROM` | Variable | The sender on every email, `Coverr <hola@coverr.live>`. Has to be on a domain verified in Resend, and changes together with `RESEND_API_KEY` — see [`docs/EMAIL-SETUP.md`](docs/EMAIL-SETUP.md) |
 | `ALERT_EMAIL` | Variable | Where crash alerts go |
 
 Secrets, set in production with `npx wrangler secret put <NAME>`:
@@ -329,9 +330,6 @@ Secrets, set in production with `npx wrangler secret put <NAME>`:
 | `SESSION_SECRET` | Yes | Signs admin sessions and magic links |
 | `RESEND_API_KEY` | For email | Sends email through Resend |
 | `ANTHROPIC_API_KEY` | For receipt reading | The vision call. Without it, orders still sell |
-
-`EMAIL_FROM` is deliberately unset in production for now — see
-[Known limitations](#known-limitations).
 
 A cron trigger runs every day at 03:00 UTC: it deletes payment proofs 30 days after their
 event and error-log rows after 90 days.
@@ -413,8 +411,9 @@ another one:
 4. Set `APP_ORIGIN` to the URL the worker will answer on, and `ALERT_EMAIL` to whoever should
    hear about crashes. `routes` names the custom domains, which have to be zones active on the
    new account; remove them, or add the domain to that account first. Update the
-   `workers.dev` entry in `REDIRECT_HOSTS` to the new account's address. While `EMAIL_FROM` is unset, that has to be the address the Resend
-   account is registered under — see [docs/EMAIL-SETUP.md](docs/EMAIL-SETUP.md).
+   `workers.dev` entry in `REDIRECT_HOSTS` to the new account's address. `EMAIL_FROM` has to
+   be on a domain verified in the Resend account whose key you set in step 6 — see
+   [docs/EMAIL-SETUP.md](docs/EMAIL-SETUP.md).
 5. `npm run db:migrate:remote && npm run deploy`.
 6. `npx wrangler secret put SESSION_SECRET`, with a value generated the way
    [Set up](#set-up) shows. Add `RESEND_API_KEY` and `ANTHROPIC_API_KEY` the same way when
@@ -449,11 +448,6 @@ stored or sent.
 The live, itemised status of security, privacy, performance and launch readiness is in
 [`docs/STANDARDS.md`](docs/STANDARDS.md). The ones a developer trips over first:
 
-- **Email reaches only the Resend account owner.** The sending domain cannot currently be
-  verified in Resend, so production uses Resend's test sender, which delivers to one address.
-  Real buyers get no ticket email until that is fixed — they still get their codes on screen
-  and through `/recuperar`. [`docs/EMAIL-SETUP.md`](docs/EMAIL-SETUP.md) explains why and lists
-  the steps.
 - **18+ is stated, not enforced.** The terms and the checkout say so; nothing checks it.
 
 ## Conventions

@@ -195,14 +195,14 @@ exists, since the spreadsheet it replaces had `92` hardcoded and silently stoppe
 
 ## Production
 
-Production has all three secrets set, so extraction and rate limiting work there. **The admin
-is still unreachable**, because every way in is a magic link and `macawly.dev` is unverified in
-Resend, so nothing sends.
+Production has all three secrets set, so extraction and rate limiting work there, and email
+goes out from `hola@coverr.live`, so a sign-in link reaches any address.
 
-There is a shortcut if you want production access before fixing DNS: **unset `EMAIL_FROM`**.
-The mailer then falls back to Resend's own test sender, which delivers *only* to the address
-your Resend account was verified with — your own. Enough to log in and to receive your own test
-tickets; useless for real buyers, who would get nothing. A stopgap, not a fix.
+If Resend ever stops accepting the domain, there is a stopgap: **unset `EMAIL_FROM`**. The
+mailer then falls back to Resend's own test sender, which delivers *only* to the address the
+Resend account is registered under. Enough to log in; useless for real buyers, who would get
+nothing. It also needs a key that is not restricted to `coverr.live` — see
+[`EMAIL-SETUP.md`](EMAIL-SETUP.md).
 
 ## Starting over
 

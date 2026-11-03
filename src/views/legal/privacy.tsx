@@ -152,6 +152,13 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
         </span>
       </li>
       <li>
+        <strong>Cloudflare — Email Routing y Google — Gmail</strong>
+        <span>
+          Sólo si nos escribís a {CONTACT_EMAIL}: Cloudflare recibe tu mensaje y lo reenvía a la
+          casilla de Gmail donde lo leemos.
+        </span>
+      </li>
+      <li>
         <strong>WhatsApp</strong>
         <span>
           Sólo si quien administra la banda toca el botón para escribirte: se abre WhatsApp con tu

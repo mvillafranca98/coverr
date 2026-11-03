@@ -93,30 +93,15 @@
     // until November 2026; it stays listed for as long as old links exist.
     "REDIRECT_HOSTS": ["www.coverr.live", "coverr.a-mencias99.workers.dev"],
 
+    // The sender on every email. coverr.live is verified in Resend, and the
+    // RESEND_API_KEY secret may only send from that domain, so the two change
+    // together. Replies reach the hola@ inbox through Cloudflare Email
+    // Routing. See docs/EMAIL-SETUP.md before touching either.
+    "EMAIL_FROM": "Coverr <hola@coverr.live>",
+
     // Who hears about a crash. The operator, not a band: a band can do nothing
     // about a stack trace. Not a secret — an address, in the open on purpose so
     // `wrangler deploy --dry-run` shows whether alerting is wired up at all.
-    //
-    // It has to be the address this Resend account is registered under for as
-    // long as EMAIL_FROM is unset (see below), because the test sender
-    // delivers nowhere else.
     "ALERT_EMAIL": "a.mencias99@gmail.com"
-
-    // EMAIL_FROM is deliberately absent, and this is TEMPORARY.
-    //
-    // macawly.dev cannot be verified in Resend: another Resend team claimed
-    // the domain on 2026-10-01, and a claimed-away entry never verifies no
-    // matter how correct the DNS is. Sending with it returns
-    // 403 "The macawly.dev domain is not verified".
-    //
-    // With EMAIL_FROM unset, lib/email.ts falls back to Resend's own test
-    // sender (onboarding@resend.dev), which needs no verified domain. The
-    // catch is that it delivers ONLY to the address the Resend account is
-    // registered under, so real buyers receive nothing.
-    //
-    // This buys a working admin login and a testable end-to-end run. Restore
-    //   "EMAIL_FROM": "Coverr <coverr@macawly.dev>"
-    // the moment the domain claim is resolved — before anyone sells a ticket
-    // to somebody who is not you.
   }
 }

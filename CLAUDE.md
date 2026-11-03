@@ -33,8 +33,9 @@ Commands: `npm run dev`, `npm run typecheck`, `npm run db:generate`, `npm run db
   affects an item — a new service, a new paid API, auth, uploads, AI.
 - `docs/RUNBOOK.md`: backup, restore and the procedures that have actually been run against
   production. A D1 export cannot be re-imported unmodified — read it before trusting a backup.
-- `docs/EMAIL-SETUP.md`: why email currently reaches only the account owner, and the steps to
-  make it reach real buyers. Read it before changing `EMAIL_FROM` or the Resend key.
+- `docs/EMAIL-SETUP.md`: how sending (Resend), receiving (`hola@`, Cloudflare Email Routing)
+  and DMARC are set up on coverr.live, and how to check them. Read it before changing
+  `EMAIL_FROM` or the Resend key.
 
 ## Project rules
 - **Honduras only.** Money is lempiras, copy is Honduran Spanish, banks are the six in
