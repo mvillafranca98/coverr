@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import { formatLpsShort } from "../../lib/core";
-import { priceBracket } from "../../lib/settlement";
+import { freeFirstEventLastDay, priceBracket } from "../../lib/settlement";
 import { CONTACT_EMAIL, TERMS_UPDATED } from "./constants";
 import { LegalDoc } from "./doc";
 
@@ -129,7 +129,8 @@ export const TermsPage: FC<{ origin: string; billingEnabled: boolean }> = ({
     <p>
       Lo único que se cobra es el <b>reporte de reparto</b> al final de cada evento, cuando el toque
       ya pasó y el dinero ya está en la cuenta de la banda. El primer evento de cada banda es
-      gratis, sin importar su tamaño. Las cortesías no cuentan para el tramo.
+      gratis, sin importar su tamaño, si se realiza a más tardar el{" "}
+      {freeFirstEventLastDay({ year: true })}. Las cortesías no cuentan para el tramo.
     </p>
     <ul class="rows">
       {REPORT_TIERS.map((tier) => (

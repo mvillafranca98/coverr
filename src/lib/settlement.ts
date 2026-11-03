@@ -1,3 +1,5 @@
+import { formatDayMonth, HN_OFFSET } from "./core";
+
 /**
  * Settlement, restructured from the original spreadsheet.
  *
@@ -94,11 +96,51 @@ export function perHead(s: Settlement): { gross: number; net: number; cost: numb
 /**
  * Pricing bracket, resolved from tickets actually sold. Comps never count —
  * they are free tickets and charging for them would be indefensible.
- * The band's first event is free regardless of size.
+ * A band's first event can be free regardless of size; see `isFreeFirstEvent`.
  */
 export function priceBracket(ticketsSold: number): { bracket: string; amount: number } {
   if (ticketsSold <= 60) return { bracket: "t60", amount: 50000 };
   if (ticketsSold <= 150) return { bracket: "t150", amount: 100000 };
   if (ticketsSold <= 300) return { bracket: "t300", amount: 150000 };
   return { bracket: "t301plus", amount: 200000 };
+}
+
+/**
+ * "Primer toque gratis" is a launch offer, not a permanent tier: a band's first
+ * event is free only if it is held on or before this day, Honduras time.
+ * Extending the offer is this one line — the landing page and the terms quote
+ * the date from here.
+ */
+const FREE_FIRST_EVENT_LAST_DAY = "2027-01-31";
+
+/** Midnight at the end of the offer's last day, Honduras time (no DST). */
+const FREE_FIRST_EVENT_ENDS_AT =
+  Date.parse(`${FREE_FIRST_EVENT_LAST_DAY}T00:00:00${HN_OFFSET}`) + 24 * 3600 * 1000;
+
+/** The offer's last day as copy quotes it: "31 de enero", or with the year. */
+export function freeFirstEventLastDay(options: { year?: boolean } = {}): string {
+  return formatDayMonth(`${FREE_FIRST_EVENT_LAST_DAY}T12:00:00${HN_OFFSET}`, options);
+}
+
+/** True while a band could still hold a free first event — the landing page offers it. */
+export function freeFirstEventOfferOpen(now: Date): boolean {
+  return now.getTime() < FREE_FIRST_EVENT_ENDS_AT;
+}
+
+/**
+ * True when unlocking this event's report costs nothing: it is the first event
+ * the band has ever unlocked, and it is held by the offer's last day.
+ *
+ * Judged by when the show happens, not when it was created or unlocked. A band
+ * setting up a March gig in December would otherwise stretch the offer months
+ * past its end, while a January gig unlocked in February is still inside it.
+ * An unreadable start date gets no discount rather than one by accident.
+ */
+export function isFreeFirstEvent(input: {
+  bandsFirstUnlock: boolean;
+  eventStartsAt: string;
+}): boolean {
+  if (!input.bandsFirstUnlock) return false;
+  const startsAt = Date.parse(input.eventStartsAt);
+  return !Number.isNaN(startsAt) && startsAt < FREE_FIRST_EVENT_ENDS_AT;
 }

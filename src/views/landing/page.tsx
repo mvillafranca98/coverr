@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import { formatLpsShort, slugify } from "../../lib/core";
-import { priceBracket } from "../../lib/settlement";
+import { freeFirstEventLastDay, priceBracket } from "../../lib/settlement";
 import LANDING_CSS from "../../styles/landing.css";
 import TOKENS_CSS from "../../styles/tokens.css";
 import { BrandIcons, Monogram, Wordmark } from "../brand";
@@ -33,7 +33,6 @@ import { AccountsVisual, DoorVisual, ShareLinkVisual, TransferVisual } from "./s
  * them, so the page cannot advertise a price the product does not charge.
  */
 const PRICE_TIERS: { tickets: string; price: string }[] = [
-  { tickets: "Tu primer evento", price: "Gratis" },
   { tickets: "1 – 60 boletos", price: formatLpsShort(priceBracket(60).amount) },
   { tickets: "61 – 150", price: formatLpsShort(priceBracket(150).amount) },
   { tickets: "151 – 300", price: formatLpsShort(priceBracket(300).amount) },
@@ -135,11 +134,13 @@ const Words: FC<{ text: string }> = ({ text }) => (
   </>
 );
 
-export const LandingPage: FC<{ origin: string; billingEnabled: boolean; show: DemoShow }> = ({
-  origin,
-  billingEnabled,
-  show,
-}) => (
+export const LandingPage: FC<{
+  origin: string;
+  billingEnabled: boolean;
+  /** Whether "Primer toque gratis" is still running; its tier goes when it ends. */
+  freeFirstEventOpen: boolean;
+  show: DemoShow;
+}> = ({ origin, billingEnabled, freeFirstEventOpen, show }) => (
   <html lang="es">
     <head>
       <meta charset="utf-8" />
@@ -378,8 +379,16 @@ export const LandingPage: FC<{ origin: string; billingEnabled: boolean; show: De
               Reporte de reparto, por evento
             </p>
             <ol class="tiers">
-              {PRICE_TIERS.map((tier, i) => (
-                <li class={i === 0 ? "tier tier--free" : "tier"} key={tier.tickets} data-reveal>
+              {freeFirstEventOpen ? (
+                <li class="tier tier--free" data-reveal>
+                  <span class="tier__range">
+                    Tu primer evento, hasta el {freeFirstEventLastDay()}
+                  </span>
+                  <span class="tier__price">Gratis</span>
+                </li>
+              ) : null}
+              {PRICE_TIERS.map((tier) => (
+                <li class="tier" key={tier.tickets} data-reveal>
                   <span class="tier__range">{tier.tickets}</span>
                   <span class="tier__price">{tier.price}</span>
                 </li>

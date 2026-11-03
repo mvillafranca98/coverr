@@ -162,26 +162,37 @@ export function jsonForScript(value: unknown): string {
   );
 }
 
+const MONTHS = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+];
+
 export function formatEventDate(iso: string): string {
   const d = new Date(iso);
   const days = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-  const months = [
-    "enero",
-    "febrero",
-    "marzo",
-    "abril",
-    "mayo",
-    "junio",
-    "julio",
-    "agosto",
-    "septiembre",
-    "octubre",
-    "noviembre",
-    "diciembre",
-  ];
   // Honduras is UTC-6 year round, no DST.
   const local = new Date(d.getTime() - 6 * 3600 * 1000);
-  return `${days[local.getUTCDay()]} ${local.getUTCDate()} de ${months[local.getUTCMonth()]}`;
+  return `${days[local.getUTCDay()]} ${local.getUTCDate()} de ${MONTHS[local.getUTCMonth()]}`;
+}
+
+/**
+ * "31 de enero", or "31 de enero de 2027" with `year`: a day in Honduras, for
+ * copy that names a deadline rather than a gig.
+ */
+export function formatDayMonth(iso: string, options: { year?: boolean } = {}): string {
+  const local = new Date(new Date(iso).getTime() - 6 * 3600 * 1000);
+  const day = `${local.getUTCDate()} de ${MONTHS[local.getUTCMonth()]}`;
+  return options.year ? `${day} de ${local.getUTCFullYear()}` : day;
 }
 
 export function formatEventTime(iso: string): string {

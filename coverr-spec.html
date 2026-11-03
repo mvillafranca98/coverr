@@ -753,7 +753,7 @@ Payout[i] = Share[i] &minus; advances[i]</pre>
     <table>
       <thead><tr><th>Tickets sold</th><th class="n">Fee</th><th>Reasoning</th></tr></thead>
       <tbody>
-        <tr><td>First event, any size</td><td class="n">Free</td><td>Full features including the report. Nobody in this market pre-pays for unproven software from an unknown developer.</td></tr>
+        <tr><td>First event, any size, held by 31 January 2027</td><td class="n">Free</td><td>Full features including the report. Nobody in this market pre-pays for unproven software from an unknown developer.</td></tr>
         <tr><td>1 &ndash; 60</td><td class="n">L500</td><td>A 40-person bar gig grosses ~L4,000, so this is 12.5% of it.</td></tr>
         <tr><td>61 &ndash; 150</td><td class="n">L1,000</td><td></td></tr>
         <tr><td>151 &ndash; 300</td><td class="n">L1,500</td><td>The baseline event lands here &mdash; 2.8% of gross, 3.5% of net.</td></tr>
@@ -763,6 +763,7 @@ Payout[i] = Share[i] &minus; advances[i]</pre>
   </div>
   <ul>
     <li><strong>Raised on 30 October 2026</strong> from L400&ndash;L1,800 to L500&ndash;L2,000. An event already unlocked keeps the price it was unlocked at.</li>
+    <li><strong>&ldquo;Primer toque gratis&rdquo; is a launch offer, limited on 3 November 2026.</strong> A band&rsquo;s first event is free only if it is <em>held</em> on or before 31 January 2027, Honduras time &mdash; judged by when the show happens, not when it was created, so a March gig set up in December does not stretch the offer. A first event held later is charged by its bracket. The landing page drops its free tier when the offer ends; the date lives in one place, <code>lib/settlement.ts</code>.</li>
     <li><strong>Comps don&rsquo;t count toward the bracket.</strong> They&rsquo;re free tickets; don&rsquo;t charge for them.</li>
     <li><strong>No subscription, no seat pricing, no expiry.</strong> A band that plays twice a year pays twice a year and keeps its history in between.</li>
     <li><strong>Sell to bands and event planners, not venues.</strong> The band holds the bank account and the pain; the venue holds neither. Bands also carry the tool from venue to venue, so venues see it repeatedly without being sold to.</li>

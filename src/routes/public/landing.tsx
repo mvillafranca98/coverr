@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { readFlags } from "../../db/queries/flags";
 import * as s from "../../db/schema";
+import { freeFirstEventOfferOpen } from "../../lib/settlement";
 import { pickDemoShow } from "../../views/demo-shows";
 import { LandingPage } from "../../views/landing/page";
 import type { PublicEnv } from "./context";
@@ -21,6 +22,11 @@ landingRoutes.get("/", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const flags = await readFlags(db);
   return c.html(
-    <LandingPage origin={c.env.APP_ORIGIN} billingEnabled={flags.billing} show={pickDemoShow()} />,
+    <LandingPage
+      origin={c.env.APP_ORIGIN}
+      billingEnabled={flags.billing}
+      freeFirstEventOpen={freeFirstEventOfferOpen(new Date())}
+      show={pickDemoShow()}
+    />,
   );
 });

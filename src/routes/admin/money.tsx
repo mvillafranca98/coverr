@@ -7,7 +7,7 @@ import { findEventBySlug } from "../../db/queries/events";
 import { readFlags } from "../../db/queries/flags";
 import * as s from "../../db/schema";
 import { newId, nowIso } from "../../lib/core";
-import { priceBracket } from "../../lib/settlement";
+import { isFreeFirstEvent, priceBracket } from "../../lib/settlement";
 import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { MoneyPage } from "../../views/admin/money";
 import type { AdminEnv } from "./context";
@@ -16,8 +16,12 @@ export const moneyRoutes = new Hono<AdminEnv>();
 
 const moneyPath = (slug: string) => `/admin/e/${slug}/dinero`;
 
-/** The unlock fee is per gig, so the first one a band ever runs is free. */
-async function isFirstEventForBand(db: DrizzleD1Database<typeof s>, bandId: string) {
+/**
+ * True when the band has never unlocked an event. Only half of whether this
+ * unlock is free: the event also has to fall inside the offer, see
+ * `isFreeFirstEvent`.
+ */
+async function isBandsFirstUnlock(db: DrizzleD1Database<typeof s>, bandId: string) {
   const [priorUnlocks] = await db
     .select({ n: sql<number>`count(*)` })
     .from(s.eventUnlocks)
@@ -61,7 +65,10 @@ moneyRoutes.get("/e/:slug/dinero", async (c) => {
       advancesByMember={advancesByMember}
       unlocked={!flags.billing || !!unlock[0]}
       bracket={priceBracket(paidTickets)}
-      isFirstEvent={await isFirstEventForBand(db, bandId)}
+      freeUnlock={isFreeFirstEvent({
+        bandsFirstUnlock: await isBandsFirstUnlock(db, bandId),
+        eventStartsAt: event.startsAt,
+      })}
       error={c.req.query("error") ?? undefined}
     />,
   );
@@ -132,16 +139,19 @@ moneyRoutes.post("/e/:slug/dinero/desbloquear", async (c) => {
   if (existing[0]) return c.redirect(moneyPath(event.slug), 303);
 
   const { counts } = await settlementFor(db, bandId, event.id);
-  const isFirst = await isFirstEventForBand(db, bandId);
+  const free = isFreeFirstEvent({
+    bandsFirstUnlock: await isBandsFirstUnlock(db, bandId),
+    eventStartsAt: event.startsAt,
+  });
   const bracket = priceBracket(counts.sold - counts.comp);
 
   await db.insert(s.eventUnlocks).values({
     id: newId("unl"),
     eventId: event.id,
-    bracket: isFirst ? "free_first" : bracket.bracket,
-    amount: isFirst ? 0 : bracket.amount,
+    bracket: free ? "free_first" : bracket.bracket,
+    amount: free ? 0 : bracket.amount,
     paidAt: nowIso(),
-    method: isFirst ? "free_first_event" : "pending_transfer",
+    method: free ? "free_first_event" : "pending_transfer",
     reference: null,
   });
   return c.redirect(moneyPath(event.slug), 303);

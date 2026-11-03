@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   type ChannelTotals,
   computeSettlement,
+  freeFirstEventLastDay,
+  freeFirstEventOfferOpen,
+  isFreeFirstEvent,
   type MemberInput,
   perHead,
   priceBracket,
@@ -230,5 +233,49 @@ describe("priceBracket", () => {
     expect([60, 150, 300, 301].map((n) => priceBracket(n).amount)).toEqual([
       50000, 100000, 150000, 200000,
     ]);
+  });
+});
+
+// "Primer toque gratis" is a launch offer that ends with January 2027, judged
+// by when the show is held. Times are Honduras time, which is UTC-6 all year.
+describe("the free first event", () => {
+  const first = (eventStartsAt: string) =>
+    isFreeFirstEvent({ bandsFirstUnlock: true, eventStartsAt });
+
+  it("is free when the band's first event is held by 31 January", () => {
+    expect(first("2026-12-12T21:00:00-06:00")).toBe(true);
+    expect(first("2027-01-31T23:59:00-06:00")).toBe(true);
+  });
+
+  it("is charged when it is held from 1 February on, even though it is the first", () => {
+    expect(first("2027-02-01T00:00:00-06:00")).toBe(false);
+    expect(first("2027-03-20T21:00:00-06:00")).toBe(false);
+  });
+
+  // A late show on the 31st in Honduras is already 1 February in UTC.
+  it("reads the deadline in Honduras time, not UTC", () => {
+    expect(first("2027-02-01T05:30:00Z")).toBe(true);
+    expect(first("2027-02-01T06:00:00Z")).toBe(false);
+  });
+
+  it("is never free once the band has unlocked an event before", () => {
+    expect(
+      isFreeFirstEvent({ bandsFirstUnlock: false, eventStartsAt: "2026-12-12T21:00:00-06:00" }),
+    ).toBe(false);
+  });
+
+  it("gives no discount for an unreadable start date", () => {
+    expect(first("not a date")).toBe(false);
+  });
+
+  it("is offered on the landing page until the last day ends", () => {
+    expect(freeFirstEventOfferOpen(new Date("2027-01-31T23:59:59-06:00"))).toBe(true);
+    expect(freeFirstEventOfferOpen(new Date("2027-02-01T00:00:00-06:00"))).toBe(false);
+  });
+
+  // The landing page and the terms quote these; the spec's section 11 says the same.
+  it("names its last day the way the copy quotes it", () => {
+    expect(freeFirstEventLastDay()).toBe("31 de enero");
+    expect(freeFirstEventLastDay({ year: true })).toBe("31 de enero de 2027");
   });
 });

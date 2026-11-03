@@ -219,8 +219,9 @@ estás haciendo hoy*, four habits on white cards, each struck out in pink as it 
 *Directo a tu cuenta*, the transfer going from buyer to the band's account with
 Coverr beside the path, never on it; the four steps as yellow, pink, lime and blue
 cards, each with a small HTML drawing of its screen; the product shots in white device
-frames; the price brackets as ticket stubs, with a lime note while billing is switched off
-(the route reads the switch, as the terms do); a closing yellow card; a black footer with
+frames; the price brackets as ticket stubs, led by a pink "Tu primer evento" stub that names the
+offer's last day and disappears once it has passed, with a lime note while billing is
+switched off (the route reads the switch, as the terms do); a closing yellow card; a black footer with
 a giant yellow wordmark running off the bottom.
 
 The headline is capped at 68px so it sets in four lines and the buttons under it stay on

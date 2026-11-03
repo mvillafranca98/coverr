@@ -11,9 +11,10 @@ export const MoneyPage: FC<{
   advancesByMember: Record<string, number>;
   unlocked: boolean;
   bracket: { bracket: string; amount: number };
-  isFirstEvent: boolean;
+  /** The band's first event, held while the free-first-event offer ran. */
+  freeUnlock: boolean;
   error?: string;
-}> = ({ bandName, event, expenses, settlement, unlocked, bracket, isFirstEvent, error }) => (
+}> = ({ bandName, event, expenses, settlement, unlocked, bracket, freeUnlock, error }) => (
   <AdminLayout
     title={`Dinero — ${event.name}`}
     bandName={bandName}
@@ -169,7 +170,7 @@ export const MoneyPage: FC<{
           Todo lo demás — preventa, códigos QR, entrada, ventas en efectivo, el resumen en vivo — es
           gratis y siempre lo va a ser. El reparto final de este evento cuesta{" "}
           <b>{formatLpsShort(bracket.amount)}</b>
-          {isFirstEvent ? " (pero tu primer evento es gratis)" : ""}.
+          {freeUnlock ? " (pero tu primer evento es gratis)" : ""}.
         </p>
         <form
           method="post"
@@ -177,7 +178,7 @@ export const MoneyPage: FC<{
           style="margin-top:12px"
         >
           <button class="btn" type="submit">
-            {isFirstEvent
+            {freeUnlock
               ? "Desbloquear gratis"
               : `Desbloquear por ${formatLpsShort(bracket.amount)}`}
           </button>
