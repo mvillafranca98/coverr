@@ -64,11 +64,22 @@ what a band or a buyer can do, except where a row says so.
 
 **Decided on 2026-11-03:**
 
-- **"Permissions" means per-band status, set by the operator:** active, banned, or on a free
-  pass. Not roles inside a band — a band still has one login, its contact email.
+- **"Permissions" means per-band status, set by the operator:** active, banned, on a free pass,
+  or holding a promo. Not roles inside a band — a band still has one login, its contact email.
 - **A fee payment unlocks the report immediately**, the same rule buyers get. The transfer
   screenshot is checked after the response, and any problem emails the operator, who reviews it
   and contacts the band. A band is never left waiting on the operator after a gig.
+- **A flag never blocks a band by itself.** The checks raise false alarms — every real BAC
+  notification is flagged today for its missing year (see Open questions). Only the operator,
+  after talking to the band, marks a fee unpaid, and only that blocks anything.
+- **Coverr's receiving accounts are entered in the panel:** the company's BAC account as the
+  main one, the operator's and the associate's personal accounts as fallbacks.
+- **Invoices are sent by hand for now.** Each fee payment carries the number of the invoice
+  sent for it. Whether SAR requires a factura with CAI per payment is the operator's to confirm
+  before billing goes on.
+- **A fee screenshot is kept 90 days**, then deleted unless it is flagged. Its extracted amount,
+  reference and date stay in the ledger for good.
+- **Operator emails go to every operator address.**
 
 | # | Feature | Acceptance criteria (testable) | Status |
 |---|---|---|---|
@@ -76,31 +87,16 @@ what a band or a buyer can do, except where a row says so.
 | F13 | Every band | One list of all bands, newest first and paginated: name, contact email, signup date, events, paid tickets, last activity, status and fees paid. Searchable by name or email. Each band opens to its events and its fee history | planned |
 | F14 | Ban a band | The operator bans a band with a written reason, and can lift it. A banned band cannot sign in or create events, and its event pages stop taking new purchases. Tickets already sold keep working everywhere — ticket page, `/recuperar`, door scanner — because those buyers have paid the band. Every ban and unban is logged with who did it and when | planned |
 | F15 | Free pass | The operator gives a band free reports, permanently or until a date, with a note ("la banda del operador"). An unlock under a pass costs nothing and records bracket `free_pass`; one outside its dates is charged normally | planned |
-| F16 | Paying the fee | With billing on, a report that is not free shows the exact amount and Coverr's bank account for the band's own bank, so nobody pays an interbank fee. The band uploads its transfer screenshot and the report unlocks on that response. Extraction and the rules in `lib/verify.ts` run afterwards against Coverr's accounts and the bracket amount; any flag emails the operator with the band, the event, the reason and a link. The operator marks each flagged payment resolved, with a note | planned |
-| F17 | Fees ledger | Fees by month: charged, received, flagged, and waived (free first event, free pass, promo), each total built from records and each row linking to its band and event. Paginated, with a CSV export | planned |
-| F18 | Promo activations | To be defined — see the questions below | open |
+| F16 | Paying the fee | With billing on, a report that is not free shows the exact amount and Coverr's main account (or a fallback at the band's own bank, if there is one, so nobody pays the interbank fee). The band uploads its transfer screenshot and the report unlocks on that response. Extraction and the rules in `lib/verify.ts` run afterwards against all of Coverr's accounts and the amount due; any flag emails every operator with the band, the event, the reason and a link | planned |
+| F17 | Fees ledger | Fees by month: charged, received, flagged, unpaid and waived (free first event, free pass, promo), each total built from records and each row linking to its band and event. Each payment shows the invoice number sent for it, or that none has been. Paginated, with a CSV export | planned |
+| F18 | Promo | The operator grants one band a percentage off (1 to 100) on its next one or more reports, optionally until a date, with a note ("50% en su primer toque"). It applies by itself when the band unlocks, and the unlock records the discount. It never stacks: a report that is already free (first event, free pass) uses no promo | planned |
+| F19 | An unpaid fee | After contacting the band, the operator marks a fee unpaid, with a note, and can mark it paid later. While any fee is unpaid the band cannot create a new event: the new-event page says which report is owed and to write to `hola@coverr.live`. Events already on sale keep selling, and every report already unlocked stays open — history is never gated | planned |
 
-**Questions before building:**
+**Still to settle:**
 
-1. **What is a promo activation?** Three readings, each a different feature: a code a band types
-   to get a report free or discounted; a one-off free report the operator grants a band; or
-   extending the free first event for a band that missed 31 January.
-2. **A fee that turns out unpaid.** A report the band has unlocked stays open — history is never
-   gated. So what does an unpaid fee change? The proposal: the band's next report cannot be
-   unlocked until it is settled, and the operator can ban if it is not.
-3. **Coverr's receiving accounts.** Which banks, and in whose name — a person or a company? The
-   fee page shows these to every band.
-4. **Invoices.** A fee is Coverr's income. Honduras's SAR may require a fiscal invoice (factura
-   with CAI) per payment, which is a feature of its own. Needs an answer from an accountant
-   before billing goes on, not after.
-5. **How long fee screenshots are kept.** A buyer's proof is deleted 30 days after the event
-   because it carries a third party's account number. A fee screenshot carries a band member's,
-   but it is also Coverr's payment record. The proposal: keep the extracted amount, reference
-   and date in the ledger for good, and delete the image 90 days after the payment unless it is
-   flagged.
-6. **Who gets the operator's emails, and is anyone else an operator?** Flagged payments could go
-   to `hola@coverr.live` (forwarded to the operator's Gmail) or to `ALERT_EMAIL`, where crashes
-   go.
+1. **Is the associate an operator?** If so, their address joins `OPERATOR_EMAILS`. `hola@` already
+   forwards to the operator's Gmail, so listing both would send every alert twice.
+2. **SAR invoicing** — see above; needed before billing goes on, not before building.
 
 **Out of scope for this phase:** roles inside a band; levels among operators; automatic bank
 reconciliation; anything that lets the operator see or move a band's ticket money, which never
