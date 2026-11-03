@@ -220,7 +220,8 @@ estás haciendo hoy*, four habits on white cards, each struck out in pink as it 
 Coverr beside the path, never on it; the four steps as yellow, pink, lime and blue
 cards, each with a small HTML drawing of its screen; the product shots in white device
 frames; the price brackets as ticket stubs, led by a pink "Tu primer evento" stub that names the
-offer's last day and disappears once it has passed, with a lime note while billing is
+offer's last day, wears a blue "¡Oferta limitada!" sticker on its corner and disappears once
+the offer has passed, with a lime note while billing is
 switched off (the route reads the switch, as the terms do); a closing yellow card; a black footer with
 a giant yellow wordmark running off the bottom.
 
@@ -292,7 +293,12 @@ Two rules:
   After that the ticket bobs, its sticker wobbles, and on a real pointer it tilts toward
   the cursor. On scroll: batched reveals, the habits struck out, the accounts drawing's
   bars filled, and the device frames drifting at their own speed — wide screens only,
-  since on a phone parallax reads as jitter. Anything a keyboard user tabs to is shown at
+  since on a phone parallax reads as jitter. The free tier's "¡Oferta limitada!" sticker
+  is slapped on once, just after its card arrives, and then stays still: a looping
+  blink was considered and turned down, because it reads as an ad and WCAG 2.2.2 would
+  need a way to stop it. The sticker reaches no further into the card than its 20px of
+  top padding, checked clear of the label, price, caption and next card from 375 to
+  1920 px. Anything a keyboard user tabs to is shown at
   once, without the animation: focus on something still hidden is focus nobody can see.
 - The tape strips, the money diagram's moving coin and the buttons' press are **CSS**,
   so they work with no JavaScript at all.

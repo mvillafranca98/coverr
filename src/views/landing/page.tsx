@@ -378,13 +378,14 @@ export const LandingPage: FC<{
             <p class="tiers__cap" data-reveal>
               Reporte de reparto, por evento
             </p>
-            <ol class="tiers">
+            <ol class={freeFirstEventOpen ? "tiers tiers--offer" : "tiers"}>
               {freeFirstEventOpen ? (
                 <li class="tier tier--free" data-reveal>
                   <span class="tier__range">
                     Tu primer evento, hasta el {freeFirstEventLastDay()}
                   </span>
                   <span class="tier__price">Gratis</span>
+                  <span class="tier__sticker">¡Oferta limitada!</span>
                 </li>
               ) : null}
               {PRICE_TIERS.map((tier) => (

@@ -1276,6 +1276,35 @@ b {
   background: var(--pink);
   transform: rotate(-1.5deg);
 }
+/* The free tier's sticker, slapped on like the hero ticket's. Real text, not
+   decoration: it is what tells a reader the free tier ends. Ink on blue is
+   5.06:1, which is why nothing grey ever goes on this blue.
+
+   It hangs off the card's top corner and reaches no further in than the
+   card's own 20px of top padding, so it never covers the label at any width;
+   the row drops to make room above it rather than letting it sit on the
+   caption. It stops short of the 16px gap, so the next card stays clear. */
+.tiers--offer {
+  margin-top: 60px;
+}
+.tier__sticker {
+  position: absolute;
+  top: -55px;
+  right: -12px;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  padding: 6px;
+  border: var(--line);
+  border-radius: 50%;
+  background: var(--blue);
+  font-family: var(--display);
+  font-size: 12px;
+  line-height: 1.05;
+  text-align: center;
+  transform: rotate(12deg);
+}
 .note {
   margin-top: 26px;
   font-size: var(--step--1);

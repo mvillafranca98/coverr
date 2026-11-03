@@ -117,6 +117,14 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   });
 
+  // The offer's sticker lands once, just after its card: one bounce and done.
+  // A loop here would read as an ad blinking at the reader, not a sticker.
+  // It starts hidden with its card, so the from-state never flashes.
+  gsap.from('.tier__sticker', {
+    scale: 1.8, rotation: -24, opacity: 0, duration: .55, delay: .2, ease: 'back.out(2.4)',
+    scrollTrigger: { trigger: '.tier--free', start: 'top 88%', once: true }
+  });
+
   // Tabbing jumps straight to a link that may not have been revealed yet, and
   // focus on something invisible is focus nobody can see. Whatever holds the
   // focused element is shown at once, without the animation.
