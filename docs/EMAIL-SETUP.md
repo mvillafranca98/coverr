@@ -32,15 +32,16 @@ All in Cloudflare, zone `coverr.live`. Names are as Cloudflare shows them.
 | `coverr.live` | TXT | `v=spf1 include:_spf.mx.cloudflare.net ~all` | Email Routing |
 | `cf2024-1._domainkey` | TXT | Cloudflare's DKIM key | Email Routing, for mail it forwards |
 | `resend._domainkey` | TXT | `p=MIGf…` | Resend: signs every email Coverr sends |
-| `send` | CNAME | `send.forge.rmta.net` | Resend: the return path, and the SPF that covers it |
+| `send` | CNAME | `send.forge.rmta.net` | Resend's sending setup |
+| `rsend` | CNAME | `rsend.forge.rmta.net` | Resend: the return path every email carries (`…@rsend.coverr.live`), and the SPF that passes for it |
 | `_dmarc` | TXT | `v=DMARC1; p=none; rua=mailto:…@dmarc-reports.cloudflare.net` | DMARC |
 
 Three rules that are easy to break by accident:
 
 - **One SPF record on `coverr.live`, ever.** Two `v=spf1` records at one name make both fail. If
   another service needs SPF on the root, merge its `include:` into the existing record.
-- **Nothing else can live at `send`.** It is a CNAME, and a CNAME cannot share its name with any
-  other record. Resend's SPF sits behind it, not beside it.
+- **Nothing else can live at `send` or `rsend`.** Each is a CNAME, and a CNAME cannot share its
+  name with any other record. Resend's SPF sits behind them, not beside them.
 - **Leave the Email Routing records locked.** Cloudflare marks them *Locked* and re-adds them if
   they disappear; editing them by hand stops `hola@` receiving.
 
