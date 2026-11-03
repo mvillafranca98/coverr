@@ -76,30 +76,60 @@ export const SESSION_COOKIE = "coverr_session";
 export const LOGIN_TTL = 15 * 60; // link is short-lived; the cookie carries the session
 export const SESSION_TTL = 30 * 24 * 60 * 60;
 
-export function sessionCookie(token: string, secure: boolean): string {
+/**
+ * The operator's session: its own cookie, sent only to /operador, and a day
+ * long rather than a month. It opens every band's buyers and settings, so a
+ * forgotten browser should not keep it for weeks.
+ */
+export const OPERATOR_COOKIE = "coverr_operator";
+export const OPERATOR_SESSION_TTL = 12 * 60 * 60;
+
+/**
+ * The signing secret. Without one the admin is not safe to serve at all, so
+ * this fails loudly rather than signing sessions with a guessable constant.
+ */
+export function sessionSecret(env: { SESSION_SECRET?: string }): string {
+  const secret = env.SESSION_SECRET;
+  if (!secret) throw new Error("SESSION_SECRET is not configured");
+  return secret;
+}
+
+/** HttpOnly and SameSite=Lax always: no script reads these, and no other site posts with them. */
+function cookieHeader(
+  name: string,
+  value: string,
+  options: { path: string; maxAge: number; secure: boolean },
+): string {
   return [
-    `${SESSION_COOKIE}=${token}`,
-    "Path=/",
+    `${name}=${value}`,
+    `Path=${options.path}`,
     "HttpOnly",
     "SameSite=Lax",
-    secure ? "Secure" : "",
-    `Max-Age=${SESSION_TTL}`,
+    options.secure ? "Secure" : "",
+    `Max-Age=${options.maxAge}`,
   ]
     .filter(Boolean)
     .join("; ");
 }
 
+export function sessionCookie(token: string, secure: boolean): string {
+  return cookieHeader(SESSION_COOKIE, token, { path: "/", maxAge: SESSION_TTL, secure });
+}
+
 export function clearCookie(secure: boolean): string {
-  return [
-    `${SESSION_COOKIE}=`,
-    "Path=/",
-    "HttpOnly",
-    "SameSite=Lax",
-    secure ? "Secure" : "",
-    "Max-Age=0",
-  ]
-    .filter(Boolean)
-    .join("; ");
+  return cookieHeader(SESSION_COOKIE, "", { path: "/", maxAge: 0, secure });
+}
+
+export function operatorCookie(token: string, secure: boolean): string {
+  return cookieHeader(OPERATOR_COOKIE, token, {
+    path: "/operador",
+    maxAge: OPERATOR_SESSION_TTL,
+    secure,
+  });
+}
+
+export function clearOperatorCookie(secure: boolean): string {
+  return cookieHeader(OPERATOR_COOKIE, "", { path: "/operador", maxAge: 0, secure });
 }
 
 export function readCookie(header: string | undefined, name: string): string | null {

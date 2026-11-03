@@ -7,7 +7,7 @@ import { findEventBySlug } from "../../db/queries/events";
 import { readFlags } from "../../db/queries/flags";
 import * as s from "../../db/schema";
 import { newId, nowIso } from "../../lib/core";
-import { isFreeFirstEvent, priceBracket } from "../../lib/settlement";
+import { type FreePass, type UnlockWaiver, unlockPrice } from "../../lib/settlement";
 import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { MoneyPage } from "../../views/admin/money";
 import type { AdminEnv } from "./context";
@@ -29,6 +29,18 @@ async function isBandsFirstUnlock(db: DrizzleD1Database<typeof s>, bandId: strin
     .where(eq(s.events.bandId, bandId));
   return Number(priorUnlocks?.n ?? 0) === 0;
 }
+
+/** The band's free pass as the price rules read it, or null when it holds none. */
+function freePassOf(band: { freePassGrantedAt: string | null; freePassUntil: string | null }) {
+  return band.freePassGrantedAt ? ({ until: band.freePassUntil } satisfies FreePass) : null;
+}
+
+/** How each kind of unlock is recorded: what it was priced at and why. */
+const UNLOCK_RECORD: Record<UnlockWaiver | "charged", { bracket?: string; method: string }> = {
+  free_pass: { bracket: "free_pass", method: "free_pass" },
+  free_first: { bracket: "free_first", method: "free_first_event" },
+  charged: { method: "pending_transfer" },
+};
 
 moneyRoutes.get("/e/:slug/dinero", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
@@ -64,10 +76,11 @@ moneyRoutes.get("/e/:slug/dinero", async (c) => {
       settlement={settlement}
       advancesByMember={advancesByMember}
       unlocked={!flags.billing || !!unlock[0]}
-      bracket={priceBracket(paidTickets)}
-      freeUnlock={isFreeFirstEvent({
+      price={unlockPrice({
+        paidTickets,
         bandsFirstUnlock: await isBandsFirstUnlock(db, bandId),
         eventStartsAt: event.startsAt,
+        freePass: freePassOf(band),
       })}
       error={c.req.query("error") ?? undefined}
     />,
@@ -138,20 +151,25 @@ moneyRoutes.post("/e/:slug/dinero/desbloquear", async (c) => {
     .limit(1);
   if (existing[0]) return c.redirect(moneyPath(event.slug), 303);
 
+  const band = await findBand(db, bandId);
+  if (!band) return c.notFound();
+
   const { counts } = await settlementFor(db, bandId, event.id);
-  const free = isFreeFirstEvent({
+  const price = unlockPrice({
+    paidTickets: counts.sold - counts.comp,
     bandsFirstUnlock: await isBandsFirstUnlock(db, bandId),
     eventStartsAt: event.startsAt,
+    freePass: freePassOf(band),
   });
-  const bracket = priceBracket(counts.sold - counts.comp);
+  const record = UNLOCK_RECORD[price.waiver ?? "charged"];
 
   await db.insert(s.eventUnlocks).values({
     id: newId("unl"),
     eventId: event.id,
-    bracket: free ? "free_first" : bracket.bracket,
-    amount: free ? 0 : bracket.amount,
+    bracket: record.bracket ?? price.bracket.bracket,
+    amount: price.amount,
     paidAt: nowIso(),
-    method: free ? "free_first_event" : "pending_transfer",
+    method: record.method,
     reference: null,
   });
   return c.redirect(moneyPath(event.slug), 303);

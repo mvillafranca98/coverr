@@ -17,8 +17,41 @@ export const bands = sqliteTable(
     /** The login identity — unique, or a band becomes unreachable. */
     contactEmail: text("contact_email").notNull(),
     createdAt: text("created_at").notNull(),
+    /** Set when the operator bans the band; null while it is in good standing. */
+    bannedAt: text("banned_at"),
+    banReason: text("ban_reason"),
+    /** Set while the band holds a free pass: the reports it unlocks are free. */
+    freePassGrantedAt: text("free_pass_granted_at"),
+    /** The pass's last day, YYYY-MM-DD in Honduras. Null means it never ends. */
+    freePassUntil: text("free_pass_until"),
+    freePassNote: text("free_pass_note"),
   },
-  (t) => [uniqueIndex("idx_bands_contact_email").on(t.contactEmail)],
+  (t) => [
+    uniqueIndex("idx_bands_contact_email").on(t.contactEmail),
+    // The operator's list of every band, newest first.
+    index("idx_bands_created").on(t.createdAt),
+  ],
+);
+
+/**
+ * Every change the operator makes to a band's standing, so a ban or a free
+ * pass can always be traced to who did it and when. It goes with the band if
+ * the band deletes its account, like everything else of theirs.
+ */
+export const operatorActions = sqliteTable(
+  "operator_actions",
+  {
+    id: text("id").primaryKey(),
+    bandId: text("band_id")
+      .notNull()
+      .references(() => bands.id, { onDelete: "cascade" }),
+    operatorEmail: text("operator_email").notNull(),
+    /** ban | unban | free_pass | free_pass_end */
+    action: text("action").notNull(),
+    note: text("note"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("idx_operator_actions_band").on(t.bandId, t.createdAt)],
 );
 
 export const bandMembers = sqliteTable(
@@ -372,7 +405,7 @@ export const eventUnlocks = sqliteTable("event_unlocks", {
     .notNull()
     .references(() => events.id, { onDelete: "cascade" })
     .unique(),
-  /** free_first | t60 | t150 | t300 | t301plus */
+  /** free_first | free_pass | t60 | t150 | t300 | t301plus */
   bracket: text("bracket").notNull(),
   amount: integer("amount").notNull(),
   paidAt: text("paid_at"),

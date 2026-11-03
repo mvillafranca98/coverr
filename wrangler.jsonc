@@ -99,6 +99,12 @@
     // Routing. See docs/EMAIL-SETUP.md before touching either.
     "EMAIL_FROM": "Coverr <hola@coverr.live>",
 
+    // Who may sign in to /operador, Coverr's back office (lib/operator.ts).
+    // Checked on every request, so removing an address ends that person's
+    // access on their next click. Addresses, not secrets: in the open on
+    // purpose, like ALERT_EMAIL below.
+    "OPERATOR_EMAILS": ["mvillafranca98@gmail.com", "a.mencias99@gmail.com"],
+
     // Who hears about a crash. The operator, not a band: a band can do nothing
     // about a stack trace. Not a secret — an address, in the open on purpose so
     // `wrangler deploy --dry-run` shows whether alerting is wired up at all.

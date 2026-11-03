@@ -239,6 +239,8 @@ src/
                    sitemap, and where pages report their own errors
     admin/         the band's side: sign-in, home, dashboard, orders, an order,
                    manual sales, money, event and band settings
+    operator/      Coverr's back office at /operador: operator sign-in, every
+                   band, bans and free passes
     scan.ts        the scanner's API: attendee list, check-in, cash, stats
     scan-errors.ts where the scanner reports its own failures
   views/           markup only — a view never touches the database
@@ -322,6 +324,7 @@ not evidence of an old one.
 | `REDIRECT_HOSTS` | Variable | Hostnames that redirect to `APP_ORIGIN`: `www.coverr.live`, and the `workers.dev` address every link sent before November 2026 points at. `/api/` and `/t/` are still served there — see `src/lib/host-redirect.ts` |
 | `EMAIL_FROM` | Variable | The sender on every email, `Coverr <hola@coverr.live>`. Has to be on a domain verified in Resend, and changes together with `RESEND_API_KEY` — see [`docs/EMAIL-SETUP.md`](docs/EMAIL-SETUP.md) |
 | `ALERT_EMAIL` | Variable | Where crash alerts go |
+| `OPERATOR_EMAILS` | Variable | Who may sign in to `/operador`, Coverr's back office. Checked on every request, so removing an address ends that access at once |
 
 Secrets, set in production with `npx wrangler secret put <NAME>`:
 
@@ -435,6 +438,13 @@ been run against production:
   specific consequences while older code is live.
 - **Backup and restore** — D1 Time Travel, exports, and why an export cannot be re-imported
   unmodified.
+
+**The operator panel** is at `/operador`, signed into by magic link from an address in
+`OPERATOR_EMAILS`. It lists every band and lets the operator suspend one, with a reason, or give
+it a free pass, and it logs who changed what and when. A suspended band cannot sign in or
+create events and its event pages stop selling; tickets it has already sold keep working at
+the ticket page, `/recuperar` and the door. The operator session is its own cookie, sent only to
+`/operador`, and lasts 12 hours.
 
 Crashes reach the operator on their own. Unhandled errors in requests and the nightly jobs,
 and JavaScript errors in the browser — the door scanner and every other page — are written to

@@ -16,14 +16,14 @@ export const INDEXABLE_PATHS = ["/", "/privacidad", "/terminos"] as const;
 
 /**
  * Only paths that cannot carry a noindex of their own: the scanner and admin
- * APIs answer JSON and `/t/` answers QR images. `/admin` is here because
- * nothing behind it is ever linked publicly.
+ * APIs answer JSON and `/t/` answers QR images. `/admin` and `/operador` are
+ * here because nothing behind them is ever linked publicly.
  *
  * The buy, ticket and refund pages are deliberately *not* listed. They already
  * say noindex, and a crawler can only obey a noindex it was allowed to read —
  * blocking them here invites a bare-URL listing for a page somebody shared.
  */
-export const DISALLOWED_PREFIXES = ["/admin", "/api/", "/t/"] as const;
+export const DISALLOWED_PREFIXES = ["/admin", "/operador", "/api/", "/t/"] as const;
 
 /**
  * True when the request is for the production site rather than a version

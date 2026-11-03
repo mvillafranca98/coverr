@@ -7,6 +7,7 @@ import { sweepExpiredProofFiles } from "./jobs/sweep-proof-files";
 import { isCanonicalHost } from "./lib/crawl";
 import { hostRedirectTarget } from "./lib/host-redirect";
 import { admin } from "./routes/admin";
+import { operator } from "./routes/operator";
 import { buyRoutes } from "./routes/public/buy";
 import { confirmationRoutes } from "./routes/public/confirmation";
 import type { Bindings, PublicEnv } from "./routes/public/context";
@@ -30,8 +31,8 @@ import { NotFoundPage, ServerErrorPage } from "./views/errors";
  * that belong to no feature — the 404 and the crash page.
  *
  * Each router below declares its own full paths, so this file is the one place
- * to read the whole URL map. The only ordering that matters is the `/admin/`
- * redirect sitting above the `/admin` mount.
+ * to read the whole URL map. The only ordering that matters is each trailing-
+ * slash redirect sitting above its mount, `/admin/` and `/operador/`.
  */
 const app = new Hono<PublicEnv>();
 
@@ -137,6 +138,9 @@ app.route("/", pageErrorRoutes);
 
 app.get("/admin/", (c) => c.redirect("/admin", 301));
 app.route("/admin", admin);
+
+app.get("/operador/", (c) => c.redirect("/operador", 301));
+app.route("/operador", operator);
 
 app.route("/", scannerShellRoutes);
 app.route("/", landingRoutes);

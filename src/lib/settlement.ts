@@ -113,9 +113,15 @@ export function priceBracket(ticketsSold: number): { bracket: string; amount: nu
  */
 const FREE_FIRST_EVENT_LAST_DAY = "2027-01-31";
 
-/** Midnight at the end of the offer's last day, Honduras time (no DST). */
-const FREE_FIRST_EVENT_ENDS_AT =
-  Date.parse(`${FREE_FIRST_EVENT_LAST_DAY}T00:00:00${HN_OFFSET}`) + 24 * 3600 * 1000;
+const DAY_MS = 24 * 3600 * 1000;
+
+/** Midnight at the end of a YYYY-MM-DD day in Honduras (no DST), or NaN for a bad date. */
+function endOfHondurasDay(day: string): number {
+  return Date.parse(`${day}T00:00:00${HN_OFFSET}`) + DAY_MS;
+}
+
+/** Midnight at the end of the offer's last day. */
+const FREE_FIRST_EVENT_ENDS_AT = endOfHondurasDay(FREE_FIRST_EVENT_LAST_DAY);
 
 /** The offer's last day as copy quotes it: "31 de enero", or with the year. */
 export function freeFirstEventLastDay(options: { year?: boolean } = {}): string {
@@ -143,4 +149,54 @@ export function isFreeFirstEvent(input: {
   if (!input.bandsFirstUnlock) return false;
   const startsAt = Date.parse(input.eventStartsAt);
   return !Number.isNaN(startsAt) && startsAt < FREE_FIRST_EVENT_ENDS_AT;
+}
+
+/** A band's free pass: the last day it covers (YYYY-MM-DD), or null if it never ends. */
+export type FreePass = { until: string | null };
+
+/**
+ * True when the band's free pass covers this event. Judged by when the show is
+ * held, like the first-event offer, so a pass "until December" covers a
+ * December gig unlocked in January and not a January gig. An unreadable date
+ * on either side is not covered.
+ */
+export function freePassCovers(pass: FreePass | null, eventStartsAt: string): boolean {
+  if (!pass) return false;
+  if (pass.until === null) return true;
+  const startsAt = Date.parse(eventStartsAt);
+  const passEndsAt = endOfHondurasDay(pass.until);
+  return !Number.isNaN(startsAt) && !Number.isNaN(passEndsAt) && startsAt < passEndsAt;
+}
+
+/** Why a report costs nothing, or null when the bracket price applies. */
+export type UnlockWaiver = "free_pass" | "free_first";
+
+export type UnlockPrice = {
+  /** The bracket the paid tickets fall in, shown even when nothing is charged. */
+  bracket: { bracket: string; amount: number };
+  /** What the band pays: zero when waived. */
+  amount: number;
+  waiver: UnlockWaiver | null;
+};
+
+/**
+ * What unlocking this event's report costs the band.
+ *
+ * A free pass comes first, because the operator granted it on purpose; then
+ * the first-event offer; otherwise the bracket for the paid tickets. Comps
+ * never count — the caller passes tickets sold minus comps.
+ */
+export function unlockPrice(input: {
+  paidTickets: number;
+  bandsFirstUnlock: boolean;
+  eventStartsAt: string;
+  freePass: FreePass | null;
+}): UnlockPrice {
+  const bracket = priceBracket(input.paidTickets);
+  const waiver: UnlockWaiver | null = freePassCovers(input.freePass, input.eventStartsAt)
+    ? "free_pass"
+    : isFreeFirstEvent(input)
+      ? "free_first"
+      : null;
+  return { bracket, amount: waiver ? 0 : bracket.amount, waiver };
 }

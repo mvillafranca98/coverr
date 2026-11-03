@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import { formatLps, formatLpsShort } from "../../lib/core";
-import type { Settlement } from "../../lib/settlement";
+import type { Settlement, UnlockPrice } from "../../lib/settlement";
 import { AdminLayout } from "./layout";
 
 export const MoneyPage: FC<{
@@ -10,11 +10,10 @@ export const MoneyPage: FC<{
   settlement: Settlement;
   advancesByMember: Record<string, number>;
   unlocked: boolean;
-  bracket: { bracket: string; amount: number };
-  /** The band's first event, held while the free-first-event offer ran. */
-  freeUnlock: boolean;
+  /** What unlocking costs, and why it is free when it is. */
+  price: UnlockPrice;
   error?: string;
-}> = ({ bandName, event, expenses, settlement, unlocked, bracket, freeUnlock, error }) => (
+}> = ({ bandName, event, expenses, settlement, unlocked, price, error }) => (
   <AdminLayout
     title={`Dinero — ${event.name}`}
     bandName={bandName}
@@ -170,8 +169,9 @@ export const MoneyPage: FC<{
         <p style="margin:8px 0 0">
           Todo lo demás — preventa, códigos QR, entrada, ventas en efectivo, el resumen en vivo — es
           gratis y siempre lo va a ser. El reparto final de este evento cuesta{" "}
-          <b>{formatLpsShort(bracket.amount)}</b>
-          {freeUnlock ? " (pero tu primer evento es gratis)" : ""}.
+          <b>{formatLpsShort(price.bracket.amount)}</b>
+          {price.waiver === "free_pass" ? " (pero tenés pase libre, así que no pagás)" : ""}
+          {price.waiver === "free_first" ? " (pero tu primer evento es gratis)" : ""}.
         </p>
         <form
           method="post"
@@ -179,9 +179,9 @@ export const MoneyPage: FC<{
           style="margin-top:12px"
         >
           <button class="btn" type="submit">
-            {freeUnlock
+            {price.waiver
               ? "Desbloquear gratis"
-              : `Desbloquear por ${formatLpsShort(bracket.amount)}`}
+              : `Desbloquear por ${formatLpsShort(price.amount)}`}
           </button>
         </form>
       </div>

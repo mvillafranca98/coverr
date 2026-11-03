@@ -29,7 +29,12 @@ buyRoutes.get("/e/:slug", async (c) => {
   const flags = await readFlags(db);
   if (!flags.sales) return c.html(<SalesPausedPage band={band} event={event} />, 503);
 
-  if (event.status !== "live") return c.html(<SaleNotOpenPage band={band} event={event} />, 404);
+  // A banned band's pages stop selling, with the same neutral page as a sale
+  // that is not open: the ban is between Coverr and the band, not the buyer's
+  // business. Tickets already sold keep working everywhere else.
+  if (event.status !== "live" || band.bannedAt) {
+    return c.html(<SaleNotOpenPage band={band} event={event} />, 404);
+  }
 
   // No sellable rule means sold out, and the page has to say so — there is no
   // price to fall back to.

@@ -26,6 +26,8 @@ export const TEXT_LIMITS = {
   /** The longest account number format in use anywhere (IBAN). */
   accountNumber: 34,
   expenseLabel: 120,
+  /** Why the operator banned a band, or what a free pass is for. */
+  operatorNote: 500,
 } as const;
 
 /**

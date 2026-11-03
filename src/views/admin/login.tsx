@@ -1,14 +1,26 @@
 import type { FC } from "hono/jsx";
+import { CONTACT_EMAIL } from "../legal/constants";
 import { AuthShell } from "./auth-shell";
 import { AdminLayout } from "./layout";
 
-export const LoginPage: FC<{ sent?: boolean; error?: string }> = ({ sent, error }) => (
+export const LoginPage: FC<{
+  sent?: boolean;
+  error?: string;
+  /** The session just ended because the operator suspended this band. */
+  suspended?: boolean;
+}> = ({ sent, error, suspended }) => (
   <AdminLayout
     title="Coverr — Admin"
     description="Entrá al panel de tu banda en Coverr con un enlace a tu correo. Sin contraseña."
   >
     <AuthShell>
       <h1>Panel de la banda</h1>
+      {suspended ? (
+        <div class="note crit">
+          Esta cuenta está suspendida. Si creés que es un error, escribinos a{" "}
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+        </div>
+      ) : null}
       {sent ? (
         <div class="note ok">
           Si ese correo pertenece a una banda, te enviamos un enlace para entrar. Revisá tu bandeja

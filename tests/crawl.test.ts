@@ -46,7 +46,7 @@ describe("robots.txt on production", () => {
   });
 
   it("keeps crawlers out of what cannot carry a noindex of its own", () => {
-    expect(disallowed).toEqual(["/admin", "/api/", "/t/"]);
+    expect(disallowed).toEqual(["/admin", "/operador", "/api/", "/t/"]);
   });
 
   it("never blocks the whole site", () => {

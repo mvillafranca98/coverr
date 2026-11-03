@@ -64,6 +64,8 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
   if (!flags.sales) {
     return backToForm("La venta está pausada ahora mismo. Volvé a intentarlo en un rato.");
   }
+  // Same reason: the page may predate the ban, and this is where money changes hands.
+  if (band.bannedAt) return backToForm("Esta venta no está abierta.");
 
   const form = readPurchaseForm(await c.req.parseBody());
   if (!form.ok) return backToForm(form.message, form.field);

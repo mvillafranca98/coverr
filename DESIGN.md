@@ -98,6 +98,8 @@ Coverr is used in two very different rooms, and that — not personal preference
 
 **Dark is for the band.** The dashboard and the door scanner are used at night, stage-side, in a dark venue, often for hours. A dark surface is kinder there and doesn't blow out anyone's night vision at the door.
 
+Coverr's own back office, `/operador`, is staff-facing like the band panel, so it wears the same dark surface and stylesheet — under a bar that reads "Coverr · operación" rather than a band's name, so someone signed in as both never mistakes one for the other.
+
 Same token names on both. The style flips with the surface: on light, outlines and shadows are black; on dark, outlines are cream and the hard shadows take the sticker colours, because a black shadow vanishes on a black page.
 
 ## Colors

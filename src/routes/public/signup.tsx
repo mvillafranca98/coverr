@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findBandByEmail, uniqueBandSlug } from "../../db/queries/bands";
 import * as s from "../../db/schema";
+import { sendSuspendedNotice } from "../../jobs/notify-suspended";
 import { LOGIN_TTL, sign } from "../../lib/auth";
 import { newId, normalizeEmail, nowIso } from "../../lib/core";
 import { makeTransport } from "../../lib/email";
@@ -44,6 +45,13 @@ signupRoutes.post("/registro", async (c) => {
   if (!c.env.SESSION_SECRET) return c.text("SESSION_SECRET no está configurado.", 500);
 
   const existing = await findBandByEmail(db, email);
+
+  // A banned band gets the reason by mail instead of a link, and the page
+  // answers exactly as it would for anyone else.
+  if (existing?.bannedAt) {
+    c.executionCtx.waitUntil(sendSuspendedNotice(c.env, existing));
+    return c.html(<SignupSentPage email={email} />);
+  }
 
   let bandId: string;
   let bandName: string;

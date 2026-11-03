@@ -1,4 +1,5 @@
 import { escapeHtml, formatEventDate, formatEventTime, formatLpsShort } from "../lib/core";
+import { CONTACT_EMAIL } from "./legal/constants";
 
 /*
  * Every mail is drawn on the buyer surface (src/styles/buyer.css): cream
@@ -259,6 +260,32 @@ export function signupEmailText(i: SignupEmailInput): string {
 export function signupEmailSubject(i: SignupEmailInput): string {
   return `Entrar a Coverr — ${i.bandName}`;
 }
+
+// ----------------------------------------------------------- suspended band
+
+type SuspendedEmailInput = { bandName: string };
+
+/**
+ * Sent in place of a sign-in link when a banned band asks for one, so the band
+ * learns why it cannot get in instead of waiting for a link that never comes.
+ * It only ever goes to that band's own address, and the page that asked
+ * answers exactly as it always does.
+ */
+export function suspendedEmailHtml(i: SuspendedEmailInput): string {
+  return `<!doctype html><html lang="es"><body style="margin:0;background:${CREAM};padding:28px 14px;font-family:${SANS}">
+<table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:440px;text-align:left">
+<tr><td style="padding-bottom:16px">${sticker("Coverr", YELLOW)}</td></tr>
+<tr><td style="${HEADING};padding-bottom:10px">La cuenta de ${escapeHtml(i.bandName)} está suspendida</td></tr>
+<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED};padding-bottom:14px">Por ahora no podés entrar al panel ni crear eventos. Los boletos que ya vendiste siguen funcionando: tus compradores pueden verlos y la entrada los sigue escaneando.</td></tr>
+<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED}">Si creés que es un error, escribinos a <a href="mailto:${CONTACT_EMAIL}" style="color:${INK}">${CONTACT_EMAIL}</a>.</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export function suspendedEmailText(i: SuspendedEmailInput): string {
+  return `La cuenta de ${i.bandName} está suspendida.\n\nPor ahora no podés entrar al panel ni crear eventos. Los boletos que ya vendiste siguen funcionando.\n\nSi creés que es un error, escribinos a ${CONTACT_EMAIL}.`;
+}
+
+export const SUSPENDED_EMAIL_SUBJECT = "Tu cuenta de Coverr está suspendida";
 
 // ------------------------------------------------------------ refund request
 

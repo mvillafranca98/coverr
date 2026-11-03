@@ -419,7 +419,9 @@ label.fl {
 }
 input[type="text"],
 input[type="email"],
+input[type="search"],
 input[type="number"],
+input[type="date"],
 input[type="datetime-local"],
 textarea,
 select {
@@ -440,6 +442,7 @@ textarea {
   resize: vertical;
 }
 /* The native picker icon is drawn dark; flip it so it shows on this surface. */
+input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   filter: invert(0.9);
 }

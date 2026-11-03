@@ -4,10 +4,12 @@ import {
   computeSettlement,
   freeFirstEventLastDay,
   freeFirstEventOfferOpen,
+  freePassCovers,
   isFreeFirstEvent,
   type MemberInput,
   perHead,
   priceBracket,
+  unlockPrice,
 } from "../src/lib/settlement";
 
 /**
@@ -277,5 +279,78 @@ describe("the free first event", () => {
   it("names its last day the way the copy quotes it", () => {
     expect(freeFirstEventLastDay()).toBe("31 de enero");
     expect(freeFirstEventLastDay({ year: true })).toBe("31 de enero de 2027");
+  });
+});
+
+// A free pass is the operator's to give, permanently or until a day. Like the
+// first-event offer it is judged by when the show is held.
+describe("a free pass", () => {
+  it("covers every event when it has no end", () => {
+    expect(freePassCovers({ until: null }, "2031-06-01T21:00:00-06:00")).toBe(true);
+  });
+
+  it("covers an event held on its last day, Honduras time, and not the day after", () => {
+    expect(freePassCovers({ until: "2026-12-31" }, "2026-12-31T23:30:00-06:00")).toBe(true);
+    expect(freePassCovers({ until: "2026-12-31" }, "2027-01-01T00:00:00-06:00")).toBe(false);
+  });
+
+  it("covers nothing when the band holds no pass, or a date cannot be read", () => {
+    expect(freePassCovers(null, "2026-12-12T21:00:00-06:00")).toBe(false);
+    expect(freePassCovers({ until: "2026-12-31" }, "not a date")).toBe(false);
+    expect(freePassCovers({ until: "someday" }, "2026-12-12T21:00:00-06:00")).toBe(false);
+  });
+});
+
+describe("what unlocking a report costs", () => {
+  const LATER_GIG = "2027-03-20T21:00:00-06:00";
+
+  it("is the bracket price for an ordinary report", () => {
+    const price = unlockPrice({
+      paidTickets: 152,
+      bandsFirstUnlock: false,
+      eventStartsAt: LATER_GIG,
+      freePass: null,
+    });
+    expect(price).toEqual({
+      bracket: { bracket: "t300", amount: 150000 },
+      amount: 150000,
+      waiver: null,
+    });
+  });
+
+  it("is nothing under a free pass, which wins over the first-event offer", () => {
+    const price = unlockPrice({
+      paidTickets: 152,
+      bandsFirstUnlock: true,
+      eventStartsAt: "2026-12-12T21:00:00-06:00",
+      freePass: { until: null },
+    });
+    expect(price.amount).toBe(0);
+    expect(price.waiver).toBe("free_pass");
+  });
+
+  it("is nothing for a first event inside the offer when there is no pass", () => {
+    const price = unlockPrice({
+      paidTickets: 40,
+      bandsFirstUnlock: true,
+      eventStartsAt: "2026-12-12T21:00:00-06:00",
+      freePass: null,
+    });
+    expect(price).toEqual({
+      bracket: { bracket: "t60", amount: 50000 },
+      amount: 0,
+      waiver: "free_first",
+    });
+  });
+
+  it("is charged once a pass has ended before the show", () => {
+    const price = unlockPrice({
+      paidTickets: 40,
+      bandsFirstUnlock: false,
+      eventStartsAt: LATER_GIG,
+      freePass: { until: "2026-12-31" },
+    });
+    expect(price.amount).toBe(50000);
+    expect(price.waiver).toBeNull();
   });
 });
