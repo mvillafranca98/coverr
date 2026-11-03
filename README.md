@@ -319,6 +319,7 @@ not evidence of an old one.
 | `EMAIL_LIMIT` | Rate limiter | 5 a minute per IP for anything that sends email: sign-in, sign-up, ticket recovery, refund requests |
 | `EXTRACT_LIMIT` | Rate limiter | 10 a minute per band for the order page's "read it again" button, a paid vision call per press |
 | `APP_ORIGIN` | Variable | The canonical URL. Links in email and QR codes are built from it, and any other hostname is marked `noindex` |
+| `REDIRECT_HOSTS` | Variable | Hostnames that redirect to `APP_ORIGIN`: `www.coverr.live`, and the `workers.dev` address every link sent before November 2026 points at. `/api/` and `/t/` are still served there — see `src/lib/host-redirect.ts` |
 | `ALERT_EMAIL` | Variable | Where crash alerts go |
 
 Secrets, set in production with `npx wrangler secret put <NAME>`:
@@ -393,7 +394,7 @@ changes says so in its label.
 Then check it:
 
 ```bash
-curl -s https://coverr.a-mencias99.workers.dev/health
+curl -s https://coverr.live/health
 ```
 
 `{"ok":true,"database":"ok","proofs":"ok"}` means the worker is serving, D1 and R2 answer,
@@ -410,7 +411,9 @@ another one:
    `wrangler.jsonc`.
 3. `npx wrangler r2 bucket create coverr-proofs`.
 4. Set `APP_ORIGIN` to the URL the worker will answer on, and `ALERT_EMAIL` to whoever should
-   hear about crashes. While `EMAIL_FROM` is unset, that has to be the address the Resend
+   hear about crashes. `routes` names the custom domains, which have to be zones active on the
+   new account; remove them, or add the domain to that account first. Update the
+   `workers.dev` entry in `REDIRECT_HOSTS` to the new account's address. While `EMAIL_FROM` is unset, that has to be the address the Resend
    account is registered under — see [docs/EMAIL-SETUP.md](docs/EMAIL-SETUP.md).
 5. `npm run db:migrate:remote && npm run deploy`.
 6. `npx wrangler secret put SESSION_SECRET`, with a value generated the way
@@ -418,7 +421,7 @@ another one:
    email and receipt reading should work. Each secret takes effect as soon as it is set.
 7. Check `/health` on the new origin.
 
-The two rate limiters and the nightly cron need nothing created: they deploy with the worker,
+The rate limiters and the nightly cron need nothing created: they deploy with the worker,
 and a limiter's `namespace_id` only has to be unique within the account.
 
 ## Operating it
@@ -452,7 +455,6 @@ The live, itemised status of security, privacy, performance and launch readiness
   and through `/recuperar`. [`docs/EMAIL-SETUP.md`](docs/EMAIL-SETUP.md) explains why and lists
   the steps.
 - **18+ is stated, not enforced.** The terms and the checkout say so; nothing checks it.
-- **The site runs on its `workers.dev` address.** No custom domain yet.
 
 ## Conventions
 

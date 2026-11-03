@@ -7,7 +7,7 @@ import { INDEXABLE_PATHS, isCanonicalHost, robotsTxt, sitemapXml } from "../src/
  * blocks too little lets a preview copy of the site compete with the real one.
  */
 
-const PRODUCTION = "https://coverr.a-mencias99.workers.dev";
+const PRODUCTION = "https://coverr.live";
 
 describe("which hostname is the real site", () => {
   it("is the one APP_ORIGIN names", () => {
@@ -19,10 +19,10 @@ describe("which hostname is the real site", () => {
     expect(isCanonicalHost(preview, PRODUCTION)).toBe(false);
   });
 
-  // The day a custom domain becomes APP_ORIGIN, the old address has to drop
-  // out of search on its own.
-  it("is not the old workers.dev address once a custom domain takes over", () => {
-    expect(isCanonicalHost(`${PRODUCTION}/`, "https://coverr.hn")).toBe(false);
+  // The address Coverr lived on before coverr.live has to drop out of search
+  // on its own.
+  it("is not the old workers.dev address", () => {
+    expect(isCanonicalHost("https://coverr.a-mencias99.workers.dev/", PRODUCTION)).toBe(false);
   });
 
   it("tells ports apart, so a local server is never production", () => {

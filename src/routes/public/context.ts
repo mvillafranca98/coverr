@@ -9,6 +9,8 @@ export type Bindings = {
   PROOFS: R2Bucket;
   ASSETS: Fetcher;
   APP_ORIGIN: string;
+  /** Hostnames that redirect to APP_ORIGIN. See `lib/host-redirect.ts`. */
+  REDIRECT_HOSTS?: string[];
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
   SESSION_SECRET?: string;

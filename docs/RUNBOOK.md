@@ -64,7 +64,7 @@ is not. It exists for an external monitor; `/` cannot do this job, because the l
 renders without touching the database and stays green through a complete D1 outage.
 
 ```bash
-curl -s https://coverr.a-mencias99.workers.dev/health
+curl -s https://coverr.live/health
 ```
 
 ```json
@@ -90,7 +90,7 @@ the vision API here would also be a paid call every few minutes.
 The worker cannot watch itself — if it is down, so is anything it would run — so this has to be
 an outside service. Any uptime monitor works. What it needs:
 
-- URL `https://coverr.a-mencias99.workers.dev/health` (update it when the custom domain lands, LCH-12)
+- URL `https://coverr.live/health`
 - Every 5 minutes or more often
 - Alert on any status other than 200
 - Alerts to your own inbox from the monitoring service itself — **not** through Coverr's Resend
@@ -151,7 +151,7 @@ From `b91d16a` on every version is labelled, so this table does not need to grow
 **Undoing a rollback** is another rollback, to the newer version's id — or `npm run deploy` from
 `main`.
 
-**Checking it worked.** `curl -s https://coverr.a-mencias99.workers.dev/health`. A version from
+**Checking it worked.** `curl -s https://coverr.live/health`. A version from
 before LCH-06 has no `/health` and answers 404, so the uptime monitor goes red for as long as it
 is live. That is the rollback, not an outage.
 

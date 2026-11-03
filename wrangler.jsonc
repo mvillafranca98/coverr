@@ -11,6 +11,21 @@
   // .html, .sql) alive instead of silently shadowing it.
   "rules": [{ "type": "Text", "globs": ["**/*.css"], "fallthrough": true }],
 
+  // Custom domains: Cloudflare creates their DNS records and certificates on
+  // deploy, which needs the coverr.live zone active on this account first.
+  "routes": [
+    { "pattern": "coverr.live", "custom_domain": true },
+    { "pattern": "www.coverr.live", "custom_domain": true }
+  ],
+  // Has to be said out loud: with routes present, wrangler would switch the
+  // workers.dev address off, and every ticket email and link sent before
+  // coverr.live existed points there. It redirects instead (REDIRECT_HOSTS).
+  "workers_dev": true,
+  // Without this, `wrangler dev` presents every local request as one to the
+  // first route, http://coverr.live, and the app's https redirect sends each
+  // page back to itself forever.
+  "dev": { "host": "localhost" },
+
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
@@ -71,7 +86,12 @@
     }
   ],
   "vars": {
-    "APP_ORIGIN": "https://coverr.a-mencias99.workers.dev",
+    "APP_ORIGIN": "https://coverr.live",
+
+    // Answer with a redirect to APP_ORIGIN instead of serving the site
+    // (lib/host-redirect.ts). The workers.dev address is where Coverr lived
+    // until November 2026; it stays listed for as long as old links exist.
+    "REDIRECT_HOSTS": ["www.coverr.live", "coverr.a-mencias99.workers.dev"],
 
     // Who hears about a crash. The operator, not a band: a band can do nothing
     // about a stack trace. Not a secret — an address, in the open on purpose so

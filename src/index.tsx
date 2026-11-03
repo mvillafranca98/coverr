@@ -5,6 +5,7 @@ import { purgeExpiredProofs } from "./jobs/purge-proofs";
 import { reportError } from "./jobs/report-error";
 import { sweepExpiredProofFiles } from "./jobs/sweep-proof-files";
 import { isCanonicalHost } from "./lib/crawl";
+import { hostRedirectTarget } from "./lib/host-redirect";
 import { admin } from "./routes/admin";
 import { buyRoutes } from "./routes/public/buy";
 import { confirmationRoutes } from "./routes/public/confirmation";
@@ -33,6 +34,21 @@ import { NotFoundPage, ServerErrorPage } from "./views/errors";
  * redirect sitting above the `/admin` mount.
  */
 const app = new Hono<PublicEnv>();
+
+/**
+ * www and the old workers.dev address send people on to coverr.live — see
+ * lib/host-redirect for what they still serve themselves. First, so an old
+ * http:// link takes one hop rather than two.
+ */
+app.use("*", async (c, next) => {
+  const target = hostRedirectTarget({
+    requestUrl: c.req.url,
+    method: c.req.method,
+    appOrigin: c.env.APP_ORIGIN,
+    redirectHosts: c.env.REDIRECT_HOSTS ?? [],
+  });
+  return target ? c.redirect(target, 301) : next();
+});
 
 /**
  * Security headers on every response, mounted before any route.
@@ -93,10 +109,10 @@ app.use(
 
 /**
  * Only the production hostname may be indexed. Version preview URLs serve the
- * whole site, landing page included, and once a custom domain becomes
- * APP_ORIGIN the workers.dev address will too — both would otherwise compete
- * with the real site in search. A header rather than a robots.txt block,
- * because a crawler has to be let in to read a noindex.
+ * whole site, landing page included, and would otherwise compete with the
+ * real site in search; the old workers.dev address still serves its QR images
+ * itself. A header rather than a robots.txt block, because a crawler has to be
+ * let in to read a noindex.
  */
 app.use("*", async (c, next) => {
   await next();
