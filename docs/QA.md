@@ -20,16 +20,15 @@ State verified on 2026-10-24:
 
 ## Read this first — three constraints that will waste your time otherwise
 
-**1. Only `mvillafranca98@gmail.com` receives email.** `EMAIL_FROM` is unset, so Resend sends
-from its test sender, which refuses every other recipient. I tested `+qa` aliases: Resend
-rejects those too, explicitly. So **every email field in this QA must be exactly that address**.
-Use any other and the request succeeds, the QR still issues, and the mail silently never
-arrives — which looks like a bug and isn't.
+**1. Gmail may file Coverr's email under Promotions.** Since 3 November 2026 email goes out
+from `hola@coverr.live` and reaches any address — before that only `mvillafranca98@gmail.com`
+got anything. The first sign-in email to an outside Gmail landed in Promotions, not the inbox
+and not Spam. Look there before deciding an email never arrived.
 
-**2. Onboarding a new band can't be done here.** A new band needs a contact address that isn't
-already in use, and any address other than the one above gets no login link. Signing up again
-with the same address just logs you into Daydrinking — by design, so the page can't be used to
-discover who has an account. **Do Part 1 locally**; everything else is production.
+**2. A new band needs an address that isn't already in use.** Signing up again with an
+existing address just logs you into that band — by design, so the page can't be used to discover
+who has an account. Onboarding now works in production too (checked 3 November 2026); Part 1 is
+still written for a local run.
 
 **3. Email is rate-limited to 5 per 60s per IP**, purchases to 20 per 60s. Real limits, live.
 If you retry a login five times in a minute you will be throttled and conclude email is broken
@@ -117,12 +116,12 @@ decide. No model judges authenticity.
 
 ## Part 5 — Email delivery · production
 
-- [ ] **5.1** The ticket email arrives at `mvillafranca98@gmail.com` within a minute of purchase
+- [ ] **5.1** The ticket email arrives within a minute of purchase — at an address that is not `mvillafranca98@gmail.com`, and note which Gmail tab it lands in
 - [ ] **5.2** QR codes **render in Gmail** — hosted PNGs, not blocked attachments
 - [ ] **5.3** Scanning the QR **from the email** works at the door
 - [ ] **5.4** `/recuperar` with that address re-sends the tickets
 - [ ] **5.5** `/recuperar` with an address that has never bought answers **identically** — no membership leak
-- [ ] **5.6** Sender reads sensibly in the inbox *(expect `onboarding@resend.dev` — that is the stopgap, see Blockers)*
+- [ ] **5.6** Sender reads sensibly in the inbox *(expect `Coverr <hola@coverr.live>`)*
 
 ---
 
@@ -163,7 +162,8 @@ Event → **Resumen** → *Entrada* → copy the staff link. Open on a phone.
 
 Independent of the checks above. **All of these must be done.**
 
-- [ ] **B1 — Restore `EMAIL_FROM`.** Right now only you receive mail. Every buyer who is not you
+- [x] **B1 — Restore `EMAIL_FROM`.** Done 3 November 2026 by moving to `coverr.live` instead —
+      see [`EMAIL-SETUP.md`](EMAIL-SETUP.md). What it said before: right now only you receive mail. Every buyer who is not you
       gets a QR on screen and **no email**. Requires resolving the Resend domain claim: delete the
       `macawly.dev` entry on the team holding your API key, re-add it, complete the claim with the
       ownership TXT, then add the fresh DKIM + SPF records — and delete the `send` CNAME so the MX

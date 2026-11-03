@@ -113,11 +113,13 @@ export const OnboardingChecklist: FC<{
   return (
     <div class="note warn">
       <b>Te falta poco para vender.</b>
+      {/* The note's own ink throughout: the band greys are made for the dark page
+          and all but vanish on yellow. A done step reads from its strikethrough. */}
       <ol style="margin:10px 0 0;padding-left:20px">
         {steps.map((x) => (
-          <li key={x.label} style={x.done ? "color:var(--dim);text-decoration:line-through" : ""}>
+          <li key={x.label} style={x.done ? "text-decoration:line-through" : ""}>
             {x.label}
-            {x.done ? null : <span style="color:var(--muted)"> — {x.why}</span>}
+            {x.done ? null : <span> — {x.why}</span>}
           </li>
         ))}
       </ol>
