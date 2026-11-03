@@ -1,19 +1,21 @@
 import type { FC } from "hono/jsx";
 import { qrDataUri } from "../../lib/qr";
+import type { DemoShow } from "../demo-shows";
 
 /**
  * The hero object: a ticket stub drawn as a sticker — flat colour, heavy
  * outline, hard shadow — with a round sticker slapped on its corner.
  *
- * Everything on it is the fabricated demo band from seed/demo.sql, and the
- * caption says it is an example. The QR is real and encodes this page's own
+ * Everything on it is one of the invented shows in views/demo-shows.ts, the
+ * same one the screenshots further down show, and the caption says it is an
+ * example. The QR is real and encodes this page's own
  * address, so anyone who scans it out of curiosity lands back here rather
  * than on a dead code.
  *
  * Decorative to assistive tech: the headline beside it carries the message,
  * and a stub read aloud field by field would only be noise.
  */
-export const HeroTicket: FC<{ origin: string }> = ({ origin }) => (
+export const HeroTicket: FC<{ origin: string; show: DemoShow }> = ({ origin, show }) => (
   <figure class="stage" data-rise>
     <div class="tix-tilt" data-tilt>
       <div class="tix-float" data-float>
@@ -23,8 +25,8 @@ export const HeroTicket: FC<{ origin: string }> = ({ origin }) => (
             <span>Preventa · Admite 1</span>
           </div>
           <div class="tix__body">
-            <p class="tix__band">Ruido Local</p>
-            <p class="tix__event">Noche de Ruido</p>
+            <p class="tix__band">{show.band}</p>
+            <p class="tix__event">{show.event}</p>
             <dl class="tix__meta">
               <div>
                 <dt>Fecha</dt>
@@ -36,7 +38,7 @@ export const HeroTicket: FC<{ origin: string }> = ({ origin }) => (
               </div>
               <div>
                 <dt>Lugar</dt>
-                <dd>Casa Quinchón</dd>
+                <dd>{show.venue}</dd>
               </div>
             </dl>
           </div>

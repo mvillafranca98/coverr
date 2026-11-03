@@ -228,8 +228,13 @@ screen down to a 1366×768 laptop. The lede names all three jobs — presale, th
 the split at the end of the night — because a reader who only skims the hero should still
 know what Coverr does.
 
-The hero ticket shows the fabricated demo band and says so in its caption. Its QR is
-real and encodes the site's own address.
+The hero ticket shows one of six invented shows (`src/views/demo-shows.ts`), picked again
+on every visit so the joke changes on refresh, and says it is an example in its caption.
+The product shots further down show the same show. Every name is short enough that the
+ticket keeps the height it had with the old demo band at 375, 1024, 1366 and 1920 px, so a
+different show never moves the hero; "Prueba de Sonido", "Azotea del Primo", "Garaje
+Prestado" and "Techo de Lámina" each grew it by a line and were replaced. Its QR is real
+and encodes the site's own address.
 
 Two things deliberately absent:
 
@@ -242,6 +247,12 @@ Two things deliberately absent:
 
 Three screens on `/`, captured by `npm run shots` (`scripts/shoot.mjs`). Never by hand:
 hand-captures cannot be repeated, and the browser pane caps resolution at its own width.
+
+There is a set per invented show, saved as `<shot>-<show key>.webp`: eighteen files, of
+which a visit loads three. Before each set the rig reseeds the demo and renames it to that
+show, and it refuses a show whose names wrap or are cut off, because every crop below
+assumes they sit on one line. `tests/demo-shows.test.ts` fails while any show is missing a
+file.
 
 The rig drives the Chrome already on the machine through `playwright-core`, so nothing
 downloads a second browser. It re-applies `seed/demo.sql` first, so every run starts from
@@ -263,7 +274,10 @@ Two rules:
 
 - **The data is fabricated and the page says so.** `seed/make-demo.mjs` invents the band,
   the venue, 89 orders and every figure. Publishing a real band's takings, with real
-  buyers' names in the orders list, is not a thing to do for a marketing image.
+  buyers' names in the orders list, is not a thing to do for a marketing image. The names
+  on screen follow the same rule: every band, event and venue is made up, and none may be
+  one a San Pedro Sula or Tegucigalpa audience could tie to a real one. The person on the
+  ticket and the one at the door are famous musicians — an obvious joke, not a claim.
 - **Crop heights are measured, not guessed.** Cutting through a table header reads as a
   broken screenshot rather than a cropped one. The dashboard crops at 914 (its income
   table ends at 895, the next heading starts at 933, on a 1360×960 viewport); the ticket

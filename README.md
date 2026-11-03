@@ -194,7 +194,7 @@ the seed. Everything in it is invented — the band, the venue, every buyer and 
 npx wrangler d1 execute coverr-db --local --file=./seed/demo.sql
 ```
 
-Sign in as `demo@ejemplo.com`. The event is at `/e/noche-de-ruido`, and its door scanner at
+Sign in as `demo@ejemplo.com`. The event is at `/e/evento-de-ejemplo`, and its door scanner at
 <http://localhost:8787/scan/demostaff00000000000000000000000>. Any event's scanner link is
 also on its dashboard, under *Entrada*.
 
@@ -213,7 +213,7 @@ also on its dashboard, under *Entrada*.
 | `npm run db:reset` | Deletes local state, migrates and seeds |
 | `npm run db:migrate:remote` | Applies pending migrations to **production** |
 | `npm run deploy` | Deploys to **production**, labelling the version with its commit |
-| `npm run shots` | Regenerates the landing page's product screenshots from the demo band |
+| `npm run shots` | Regenerates the landing page's product screenshots: one set per invented show in `src/views/demo-shows.ts`, with the dev server running |
 | `npm run brand` | Regenerates the favicons, app icons and link-preview image from the brand mark |
 | `npm run cf-typegen` | Regenerates Wrangler's binding types |
 

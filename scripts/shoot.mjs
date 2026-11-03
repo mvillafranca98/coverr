@@ -12,7 +12,15 @@ import { join } from "node:path";
  * produces the same images.
  *
  *   npm run dev          # in another terminal
- *   node scripts/shoot.mjs
+ *   node scripts/shoot.mjs                 # every shot of every show
+ *   node scripts/shoot.mjs acople          # one show
+ *   node scripts/shoot.mjs shot-ticket     # one shot, for every show
+ *
+ * One set per invented show in src/views/demo-shows.ts, saved as
+ * `<shot>-<show key>.webp`; the landing page picks a show per visit and shows
+ * its set. Before each set the demo is reseeded and renamed to that show, and
+ * a show whose names wrap onto a second line is refused, because every crop
+ * below is measured for names that sit on one.
  *
  * Drives the Chrome already installed on the machine through playwright-core,
  * so nothing downloads a second browser. Captures at deviceScaleFactor 2 and
@@ -28,10 +36,14 @@ import { join } from "node:path";
  * scanner at 1360px wide would be a picture of something nobody sees.
  */
 import { chromium } from "playwright-core";
+import { DEMO_SHOWS } from "../src/views/demo-shows.ts";
 
 const ORIGIN = "http://127.0.0.1:8787";
 const OUT = "public/img";
 const BAND = "bnd_demo";
+const EVENT = "evt_demo";
+/** The first ticket on /boletos/ord_demo_002, the one the ticket shot frames. */
+const TICKET_ATTENDEE = "att_demo_002";
 
 const PHONE = { width: 390, height: 844 };
 const LAPTOP = { width: 1360, height: 960 };
@@ -53,7 +65,7 @@ const SHOTS = [
   },
   {
     name: "shot-dashboard",
-    url: "/admin/e/noche-de-ruido",
+    url: "/admin/e/evento-de-ejemplo",
     viewport: LAPTOP,
     auth: true,
     // Measured, not guessed: the income table ends at 895 and the next
@@ -72,9 +84,14 @@ const SHOTS = [
   },
 ];
 
-/** The door flow, driven the way staff actually drive it. */
-async function checkSomebodyIn(page) {
-  const who = notYetCheckedIn();
+/**
+ * The door flow, driven the way staff actually drive it. Whoever is next in
+ * the queue takes the show's name first, so the green result names them.
+ */
+async function checkSomebodyIn(page, show) {
+  const who = show.checkedIn;
+  d1(`update attendees set name = '${esc(who)}' where id = '${notYetCheckedIn()}'`);
+  await page.reload({ waitUntil: "networkidle" });
   await page.getByRole("tab", { name: "Buscar" }).click();
   await page.getByPlaceholder("Nombre o código").fill(who);
   await page.getByRole("button", { name: "Marcar" }).first().click();
@@ -107,11 +124,58 @@ function d1(sql) {
 
 function notYetCheckedIn() {
   const rows = d1(
-    "select a.name from attendees a join orders o on a.order_id = o.id" +
-      " where o.event_id = 'evt_demo' and a.checked_in_at is null limit 1",
+    "select a.id from attendees a join orders o on a.order_id = o.id" +
+      ` where o.event_id = '${EVENT}' and a.checked_in_at is null limit 1`,
   );
   if (!rows.length) throw new Error("every demo attendee is already checked in — reseed first");
-  return rows[0].name;
+  return rows[0].id;
+}
+
+/** A value for inside single quotes in SQL. */
+const esc = (text) => text.replace(/'/g, "''");
+
+/**
+ * Renames the freshly reseeded demo to `show`: the band, the event and its
+ * venue, and the buyer on the ticket shot. The scanner's person is renamed in
+ * checkSomebodyIn, the one place that knows who is next.
+ */
+function becomeShow(show) {
+  d1(
+    `update bands set name = '${esc(show.band)}' where id = '${BAND}';` +
+      ` update events set name = '${esc(show.event)}', venue = '${esc(show.venue)}' where id = '${EVENT}';` +
+      ` update attendees set name = '${esc(show.ticketHolder)}' where id = '${TICKET_ATTENDEE}';`,
+  );
+}
+
+/**
+ * Refuses a show whose names wrap or are cut off on this screen. Each crop is
+ * measured for names on one line; a second line pushes everything under it
+ * down, and the crop then cuts through a table or a button.
+ */
+async function assertNamesFit(page, show) {
+  const names = [show.band, show.event, show.venue, show.ticketHolder, show.checkedIn];
+  const problems = await page.evaluate((names) => {
+    const found = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const text = (node.textContent ?? "").trim();
+      // Long text is a sentence that happens to mention a name, and may wrap.
+      if (text.length > 60 || !names.some((name) => text.includes(name))) continue;
+      const box = node.parentElement;
+      // Not on screen: a hidden panel, or a screen-reader-only box clipped to 1px.
+      const shown = box?.getBoundingClientRect();
+      if (!box || !shown || shown.width < 2 || shown.height < 2) continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const lines = new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+      if (lines > 1) found.push(`"${text}" wraps onto ${lines} lines`);
+      else if (box.scrollWidth > box.clientWidth + 1) found.push(`"${text}" is cut off`);
+    }
+    return found;
+  }, names);
+  if (problems.length) {
+    throw new Error(`${show.key}: ${problems.join("; ")}. Shorten it in src/views/demo-shows.ts.`);
+  }
 }
 
 /** Same HMAC the worker uses; see src/lib/auth.ts. */
@@ -146,8 +210,9 @@ async function signSession() {
 }
 
 /**
- * Re-applies the demo seed so every run starts from the same 151 checked in,
- * rather than one more each time the scanner shot is retaken.
+ * Re-applies the demo seed so every set starts from the same 151 checked in,
+ * rather than one more each time the scanner shot is retaken, and from the
+ * seed's own names.
  */
 function reseed() {
   wrangler(["d1", "execute", "coverr-db", "--local", "--file=./seed/demo.sql", "--yes"], {
@@ -173,11 +238,11 @@ async function toWebp(page, png, width, height) {
   return Buffer.from(dataUrl.split(",")[1], "base64");
 }
 
-const argv = process.argv.slice(2);
-const only = argv.filter((a) => !a.startsWith("-"));
-
-console.log("reseeding the demo band…");
-reseed();
+const only = process.argv.slice(2).filter((a) => !a.startsWith("-"));
+const onlyShots = only.filter((a) => SHOTS.some((shot) => shot.name === a));
+const onlyShows = only.filter((a) => DEMO_SHOWS.some((show) => show.key === a));
+const unknown = only.filter((a) => !onlyShots.includes(a) && !onlyShows.includes(a));
+if (unknown.length) throw new Error(`not a shot or a show key: ${unknown.join(", ")}`);
 
 const token = await signSession();
 const browser = await chromium.launch({ channel: "chrome" });
@@ -186,8 +251,22 @@ const browser = await chromium.launch({ channel: "chrome" });
 const encoderPage = await (await browser.newContext()).newPage();
 
 try {
+  for (const show of DEMO_SHOWS) {
+    if (onlyShows.length && !onlyShows.includes(show.key)) continue;
+    console.log(`${show.key}: ${show.band} · ${show.event} · ${show.venue}`);
+    reseed();
+    becomeShow(show);
+    await shootShow(show);
+  }
+} finally {
+  await browser.close();
+  // Leaves the local demo as the seed has it, not as the last show.
+  reseed();
+}
+
+async function shootShow(show) {
   for (const shot of SHOTS) {
-    if (only.length && !only.includes(shot.name)) continue;
+    if (onlyShots.length && !onlyShots.includes(shot.name)) continue;
 
     const context = await browser.newContext({
       viewport: shot.viewport,
@@ -202,9 +281,10 @@ try {
       await page.goto(`${ORIGIN}/admin/entrar?t=${encodeURIComponent(token)}`);
     }
     await page.goto(ORIGIN + shot.url, { waitUntil: "networkidle" });
-    if (shot.prepare) await shot.prepare(page);
+    if (shot.prepare) await shot.prepare(page, show);
     if (shot.scroll) await page.evaluate((y) => window.scrollTo(0, y), shot.scroll);
     await page.waitForTimeout(500);
+    await assertNamesFit(page, show);
 
     const height = shot.height ?? shot.viewport.height;
     const png = await page.screenshot({
@@ -212,13 +292,12 @@ try {
     });
 
     const webp = await toWebp(encoderPage, png, shot.viewport.width * 2, height * 2);
-    writeFileSync(join(OUT, `${shot.name}.webp`), webp);
+    const file = `${shot.name}-${show.key}.webp`;
+    writeFileSync(join(OUT, file), webp);
     console.log(
-      `  ${shot.name}.webp  ${shot.viewport.width * 2}x${height * 2}  ${Math.round(webp.length / 1024)} KB`,
+      `  ${file}  ${shot.viewport.width * 2}x${height * 2}  ${Math.round(webp.length / 1024)} KB`,
     );
 
     await context.close();
   }
-} finally {
-  await browser.close();
 }

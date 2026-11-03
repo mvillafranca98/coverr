@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { isoToLocalInput } from "../../lib/core";
+import { type DemoShow, pickDemoShow } from "../demo-shows";
 
 /**
  * The event form, shared by the create and the settings screens so the two
@@ -25,7 +26,11 @@ export type EventFormValues = {
   doorAmount: number;
 };
 
-export const Fields: FC<{ v: Partial<EventFormValues> }> = ({ v }) => (
+export const Fields: FC<{
+  v: Partial<EventFormValues>;
+  /** The invented show its examples come from; a random one unless given. */
+  example?: DemoShow;
+}> = ({ v, example = pickDemoShow() }) => (
   <>
     <h2>El evento</h2>
     <label class="fl" for="name">
@@ -37,7 +42,7 @@ export const Fields: FC<{ v: Partial<EventFormValues> }> = ({ v }) => (
       id="name"
       required
       value={v.name ?? ""}
-      placeholder="Noche de rock"
+      placeholder={example.event}
     />
 
     <label class="fl" for="venue">
@@ -49,7 +54,7 @@ export const Fields: FC<{ v: Partial<EventFormValues> }> = ({ v }) => (
       id="venue"
       required
       value={v.venue ?? ""}
-      placeholder="La Jungla"
+      placeholder={example.venue}
     />
 
     <div class="field-pair">

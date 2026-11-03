@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { formatLpsShort } from "../lib/core";
 import { AdminLayout } from "./admin/layout";
+import { type DemoShow, pickDemoShow } from "./demo-shows";
 
 /**
  * A sale the band makes away from both the link and the door: a friend hands
@@ -30,7 +31,18 @@ export const ManualSalePage: FC<{
     payerName?: string;
     payerEmail?: string;
   };
-}> = ({ bandName, event, defaultPrice, priceLabel, created, error, values }) => (
+  /** The invented show its examples come from; a random one unless given. */
+  example?: DemoShow;
+}> = ({
+  bandName,
+  event,
+  defaultPrice,
+  priceLabel,
+  created,
+  error,
+  values,
+  example = pickDemoShow(),
+}) => (
   <AdminLayout
     title={`Venta manual — ${event.name}`}
     bandName={bandName}
@@ -75,7 +87,7 @@ export const ManualSalePage: FC<{
         required
         aria-labelledby="namesHeading"
         aria-describedby="namesHint"
-        placeholder={"Marvin Mora\nKeyla Discua"}
+        placeholder={`${example.ticketHolder}\n${example.checkedIn}`}
       >
         {values?.names ?? ""}
       </textarea>

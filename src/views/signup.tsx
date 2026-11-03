@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { AuthShell } from "./admin/auth-shell";
 import { AdminLayout } from "./admin/layout";
+import { type DemoShow, pickDemoShow } from "./demo-shows";
 
 /**
  * Band signup. Deliberately two fields: a musician arriving from a link in a
@@ -11,11 +12,13 @@ import { AdminLayout } from "./admin/layout";
  * No password. The magic link that logs them in is the same one used forever
  * after, so there is nothing to forget and nothing to leak.
  */
-export const SignupPage: FC<{ error?: string; name?: string; email?: string }> = ({
-  error,
-  name,
-  email,
-}) => (
+export const SignupPage: FC<{
+  error?: string;
+  name?: string;
+  email?: string;
+  /** The invented show its examples come from; a random one unless given. */
+  example?: DemoShow;
+}> = ({ error, name, email, example = pickDemoShow() }) => (
   <AdminLayout
     title="Crear tu banda — Coverr"
     description="Creá tu banda en Coverr: preventa con el dinero directo a tu cuenta, códigos QR al instante, entrada sin señal y el reparto al final."
@@ -34,7 +37,7 @@ export const SignupPage: FC<{ error?: string; name?: string; email?: string }> =
           id="name"
           required
           value={name ?? ""}
-          placeholder="daydrinking"
+          placeholder={example.band}
         />
 
         <label class="fl" for="email">

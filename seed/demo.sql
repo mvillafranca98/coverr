@@ -4,7 +4,7 @@
 
 DELETE FROM bands WHERE id = 'bnd_demo';
 
-INSERT INTO bands (id, name, slug, contact_email, created_at) VALUES ('bnd_demo', 'Ruido Local', 'ruido-local', 'demo@ejemplo.com', '2026-09-01T00:00:00Z');
+INSERT INTO bands (id, name, slug, contact_email, created_at) VALUES ('bnd_demo', 'Acople Eterno', 'banda-de-ejemplo', 'demo@ejemplo.com', '2026-09-01T00:00:00Z');
 
 INSERT INTO band_members (id, band_id, name, split_pct, is_core, sort_order) VALUES
   ('mem_demo_1', 'bnd_demo', 'Keyla', 28, 1, 0),
@@ -20,8 +20,8 @@ INSERT INTO events (
   thank_you_note, capacity_cap, refund_policy, refund_policy_text,
   wristbands_start, staff_token, status, created_at
 ) VALUES (
-  'evt_demo', 'bnd_demo', 'Noche de Ruido', 'noche-de-ruido',
-  'Casa Quinchón', '2026-10-24T21:00:00-06:00', '2026-10-24T20:00:00-06:00',
+  'evt_demo', 'bnd_demo', 'Probando, 1, 2', 'evento-de-ejemplo',
+  'Cochera del Tío', '2026-10-24T21:00:00-06:00', '2026-10-24T20:00:00-06:00',
   'Tres bandas, una noche. Barra abierta hasta las 9pm.',
   'Rock / punk',
   '¡Gracias! Guardá tu código QR — lo necesitás en la entrada.',

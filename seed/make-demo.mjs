@@ -12,10 +12,17 @@
  * same numbers, so a screenshot can be retaken months later and still match
  * the one beside it.
  *
+ * The band, event and venue are the first show in src/views/demo-shows.ts.
+ * `scripts/shoot.mjs` renames them to each of the other shows in turn before
+ * shooting, so the slugs here are neutral and never change with a name.
+ *
  *   node seed/make-demo.mjs
  *   npx wrangler d1 execute coverr-db --local --file=./seed/demo.sql
  */
 import { writeFileSync } from "node:fs";
+import { DEMO_SHOWS } from "../src/views/demo-shows.ts";
+
+const [SHOW] = DEMO_SHOWS;
 
 /** Mulberry32 — small, seeded, and good enough to pick names with. */
 function rng(seed) {
@@ -116,7 +123,7 @@ out(`DELETE FROM bands WHERE id = '${BAND}';`);
 out("");
 out(
   `INSERT INTO bands (id, name, slug, contact_email, created_at) VALUES ` +
-    `('${BAND}', 'Ruido Local', 'ruido-local', 'demo@ejemplo.com', '2026-09-01T00:00:00Z');`,
+    `('${BAND}', '${esc(SHOW.band)}', 'banda-de-ejemplo', 'demo@ejemplo.com', '2026-09-01T00:00:00Z');`,
 );
 out("");
 out("INSERT INTO band_members (id, band_id, name, split_pct, is_core, sort_order) VALUES");
@@ -141,8 +148,8 @@ out(`INSERT INTO events (
   thank_you_note, capacity_cap, refund_policy, refund_policy_text,
   wristbands_start, staff_token, status, created_at
 ) VALUES (
-  '${EVENT}', '${BAND}', 'Noche de Ruido', 'noche-de-ruido',
-  'Casa Quinchón', '2026-10-24T21:00:00-06:00', '2026-10-24T20:00:00-06:00',
+  '${EVENT}', '${BAND}', '${esc(SHOW.event)}', 'evento-de-ejemplo',
+  '${esc(SHOW.venue)}', '2026-10-24T21:00:00-06:00', '2026-10-24T20:00:00-06:00',
   'Tres bandas, una noche. Barra abierta hasta las 9pm.',
   'Rock / punk',
   '¡Gracias! Guardá tu código QR — lo necesitás en la entrada.',
@@ -238,4 +245,4 @@ console.log(`seed/demo.sql written
   people      ${people}
   checked in  ${checkedIn} (${people - checkedIn} never showed)
   scanner     /scan/${STAFF_TOKEN}
-  dashboard   /admin/e/noche-de-ruido`);
+  dashboard   /admin/e/evento-de-ejemplo`);

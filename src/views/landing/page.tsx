@@ -1,9 +1,10 @@
 import type { FC } from "hono/jsx";
-import { formatLpsShort } from "../../lib/core";
+import { formatLpsShort, slugify } from "../../lib/core";
 import { priceBracket } from "../../lib/settlement";
 import LANDING_CSS from "../../styles/landing.css";
 import TOKENS_CSS from "../../styles/tokens.css";
 import { BrandIcons, Monogram, Wordmark } from "../brand";
+import type { DemoShow } from "../demo-shows";
 import { ErrorReporter } from "../error-reporter";
 import { LegalLinks } from "../legal/links";
 import { HeroTicket } from "./hero-ticket";
@@ -39,7 +40,7 @@ const PRICE_TIERS: { tickets: string; price: string }[] = [
   { tickets: "301 o más", price: formatLpsShort(priceBracket(301).amount) },
 ];
 
-const STEPS: { title: string; body: string; visual: FC }[] = [
+const STEPS: { title: string; body: string; visual: FC<{ slug: string }> }[] = [
   {
     title: "Compartís un enlace",
     body: "En el flyer o la bio. Ahí está tu número de cuenta listo para copiar, con el banco correcto para que nadie pague comisión.",
@@ -74,9 +75,11 @@ const TODAY = [
  * Screen captures of the real product, taken against the fabricated band in
  * `seed/demo.sql` so no band's takings and no buyer's name is published. The
  * page says so under the heading — these are real screens, invented numbers.
+ * Each exists once per show in views/demo-shows.ts, as `<file>-<key>.webp`,
+ * and the page shows the set for the show it picked.
  */
 const SHOTS: {
-  src: string;
+  file: string;
   cap: string;
   alt: string;
   body: string;
@@ -88,7 +91,7 @@ const SHOTS: {
     lead: true,
     w: 2720,
     h: 1828,
-    src: "/img/shot-dashboard.webp",
+    file: "shot-dashboard",
     cap: "El resumen en vivo",
     alt: "Resumen del evento: 152 personas adentro, 157 vendidos, 48 brazaletes y L33,950 de bruto, con los ingresos desglosados por canal.",
     body: "Adentro, vendidos, brazaletes y bruto. Los ingresos por canal se actualizan mientras entra la gente.",
@@ -96,7 +99,7 @@ const SHOTS: {
   {
     w: 780,
     h: 1200,
-    src: "/img/shot-scanner.webp",
+    file: "shot-scanner",
     cap: "La puerta",
     alt: "El escáner de entrada en verde, mostrando «Adelante» con el nombre del asistente y su código.",
     body: "Verde y el nombre de quien entra. Si algo no cuadra, amarillo y el motivo en pantalla.",
@@ -104,7 +107,7 @@ const SHOTS: {
   {
     w: 780,
     h: 1508,
-    src: "/img/shot-ticket.webp",
+    file: "shot-ticket",
     cap: "El boleto",
     alt: "La pantalla de boletos del comprador, con el código QR y el código corto debajo.",
     body: "El código QR aparece al instante, antes de que verifiquemos nada. Se descarga como imagen.",
@@ -132,9 +135,10 @@ const Words: FC<{ text: string }> = ({ text }) => (
   </>
 );
 
-export const LandingPage: FC<{ origin: string; billingEnabled: boolean }> = ({
+export const LandingPage: FC<{ origin: string; billingEnabled: boolean; show: DemoShow }> = ({
   origin,
   billingEnabled,
+  show,
 }) => (
   <html lang="es">
     <head>
@@ -238,7 +242,7 @@ export const LandingPage: FC<{ origin: string; billingEnabled: boolean }> = ({
               <li>Entrada sin señal</li>
             </ul>
           </div>
-          <HeroTicket origin={origin} />
+          <HeroTicket origin={origin} show={show} />
         </div>
       </header>
 
@@ -307,7 +311,7 @@ export const LandingPage: FC<{ origin: string; billingEnabled: boolean }> = ({
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <div class="cell__ix">/ {String(i + 1).padStart(2, "0")}</div>
-                  <step.visual />
+                  <step.visual slug={slugify(show.event)} />
                   <h3>{step.title}</h3>
                   <p>{step.body}</p>
                 </li>
@@ -330,7 +334,7 @@ export const LandingPage: FC<{ origin: string; billingEnabled: boolean }> = ({
               {SHOTS.map((shot) => (
                 <li
                   class={`shot ${shot.lead ? "shot--lead" : "shot--phone"}`}
-                  key={shot.src}
+                  key={shot.file}
                   data-reveal
                 >
                   <div
@@ -342,7 +346,7 @@ export const LandingPage: FC<{ origin: string; billingEnabled: boolean }> = ({
                         image: the row must not jump while they load. */}
                     <div class="device__screen">
                       <img
-                        src={shot.src}
+                        src={`/img/${shot.file}-${show.key}.webp`}
                         alt={shot.alt}
                         width={shot.w}
                         height={shot.h}
