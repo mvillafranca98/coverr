@@ -168,8 +168,35 @@ export function freePassCovers(pass: FreePass | null, eventStartsAt: string): bo
   return !Number.isNaN(startsAt) && !Number.isNaN(passEndsAt) && startsAt < passEndsAt;
 }
 
-/** Why a report costs nothing, or null when the bracket price applies. */
-export type UnlockWaiver = "free_pass" | "free_first";
+/**
+ * A discount the operator granted one band: a percentage off its next charged
+ * reports, for shows held by `until` (YYYY-MM-DD) when there is one.
+ */
+export type Promo = { percent: number; reportsLeft: number; until: string | null };
+
+/**
+ * True when the promo can price this event: it has a report left, a sane
+ * percentage, and the show is held by its last day. Judged by the show's
+ * date, like every other offer here.
+ */
+export function promoApplies(promo: Promo | null, eventStartsAt: string): promo is Promo {
+  if (!promo || promo.reportsLeft < 1 || promo.percent < 1 || promo.percent > 100) return false;
+  if (promo.until === null) return true;
+  const startsAt = Date.parse(eventStartsAt);
+  const promoEndsAt = endOfHondurasDay(promo.until);
+  return !Number.isNaN(startsAt) && !Number.isNaN(promoEndsAt) && startsAt < promoEndsAt;
+}
+
+/**
+ * The bracket price less the promo, to the nearest whole lempira: the band
+ * types this into its banking app, and L333.33 is a number nobody gets right.
+ */
+export function discountedAmount(amount: number, percent: number): number {
+  return Math.round((amount * (100 - percent)) / 100 / 100) * 100;
+}
+
+/** Why a report costs nothing, or null when something is charged. */
+export type UnlockWaiver = "free_pass" | "free_first" | "promo";
 
 export type UnlockPrice = {
   /** The bracket the paid tickets fall in, shown even when nothing is charged. */
@@ -177,26 +204,41 @@ export type UnlockPrice = {
   /** What the band pays: zero when waived. */
   amount: number;
   waiver: UnlockWaiver | null;
+  /** The promo's percentage when one priced this report, so the page and the unlock can say so. */
+  discountPercent: number | null;
 };
 
 /**
  * What unlocking this event's report costs the band.
  *
  * A free pass comes first, because the operator granted it on purpose; then
- * the first-event offer; otherwise the bracket for the paid tickets. Comps
- * never count — the caller passes tickets sold minus comps.
+ * the first-event offer; then a promo; otherwise the bracket for the paid
+ * tickets. Nothing stacks — a report already free leaves the promo unused for
+ * the next one. A promo of 100% makes the report free outright. Comps never
+ * count: the caller passes tickets sold minus comps.
  */
 export function unlockPrice(input: {
   paidTickets: number;
   bandsFirstUnlock: boolean;
   eventStartsAt: string;
   freePass: FreePass | null;
+  promo: Promo | null;
 }): UnlockPrice {
   const bracket = priceBracket(input.paidTickets);
-  const waiver: UnlockWaiver | null = freePassCovers(input.freePass, input.eventStartsAt)
-    ? "free_pass"
-    : isFreeFirstEvent(input)
-      ? "free_first"
-      : null;
-  return { bracket, amount: waiver ? 0 : bracket.amount, waiver };
+  if (freePassCovers(input.freePass, input.eventStartsAt)) {
+    return { bracket, amount: 0, waiver: "free_pass", discountPercent: null };
+  }
+  if (isFreeFirstEvent(input)) {
+    return { bracket, amount: 0, waiver: "free_first", discountPercent: null };
+  }
+  if (promoApplies(input.promo, input.eventStartsAt)) {
+    const amount = discountedAmount(bracket.amount, input.promo.percent);
+    return {
+      bracket,
+      amount,
+      waiver: amount === 0 ? "promo" : null,
+      discountPercent: input.promo.percent,
+    };
+  }
+  return { bracket, amount: bracket.amount, waiver: null, discountPercent: null };
 }

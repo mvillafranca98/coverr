@@ -25,6 +25,16 @@ export const bands = sqliteTable(
     /** The pass's last day, YYYY-MM-DD in Honduras. Null means it never ends. */
     freePassUntil: text("free_pass_until"),
     freePassNote: text("free_pass_note"),
+    /**
+     * A discount the operator granted this band, set while it has reports left
+     * to use it on: a percentage off its next `promoReportsLeft` charged
+     * reports, for shows held by `promoUntil` (YYYY-MM-DD) when there is one.
+     */
+    promoGrantedAt: text("promo_granted_at"),
+    promoPercent: integer("promo_percent"),
+    promoReportsLeft: integer("promo_reports_left"),
+    promoUntil: text("promo_until"),
+    promoNote: text("promo_note"),
   },
   (t) => [
     uniqueIndex("idx_bands_contact_email").on(t.contactEmail),
@@ -46,7 +56,7 @@ export const operatorActions = sqliteTable(
       .notNull()
       .references(() => bands.id, { onDelete: "cascade" }),
     operatorEmail: text("operator_email").notNull(),
-    /** ban | unban | free_pass | free_pass_end | fee_resolved | fee_unpaid */
+    /** ban | unban | free_pass | free_pass_end | promo | promo_end | fee_resolved | fee_unpaid */
     action: text("action").notNull(),
     note: text("note"),
     createdAt: text("created_at").notNull(),
@@ -407,9 +417,11 @@ export const eventUnlocks = sqliteTable(
       .notNull()
       .references(() => events.id, { onDelete: "cascade" })
       .unique(),
-    /** free_first | free_pass | t60 | t150 | t300 | t301plus */
+    /** free_first | free_pass | promo | t60 | t150 | t300 | t301plus */
     bracket: text("bracket").notNull(),
     amount: integer("amount").notNull(),
+    /** The promo's percentage when one priced this unlock; null when none did. */
+    discountPercent: integer("discount_percent"),
     paidAt: text("paid_at"),
     /** free_first_event | free_pass | transfer (a fee_payments row holds the proof) */
     method: text("method"),

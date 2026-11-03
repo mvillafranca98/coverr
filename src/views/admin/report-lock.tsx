@@ -31,7 +31,15 @@ export const ReportLock: FC<{
           gratis y siempre lo va a ser. El reparto final de este evento cuesta{" "}
           <b>{formatLpsShort(price.bracket.amount)}</b>
           {price.waiver === "free_pass" ? " (pero tenés pase libre, así que no pagás)" : ""}
-          {price.waiver === "free_first" ? " (pero tu primer evento es gratis)" : ""}.
+          {price.waiver === "free_first" ? " (pero tu primer evento es gratis)" : ""}
+          {price.waiver === "promo" ? " (pero tenés una promo del 100%, así que no pagás)" : ""}
+          {!price.waiver && price.discountPercent ? (
+            <>
+              {" "}
+              — con tu promo del {price.discountPercent}%, <b>{formatLpsShort(price.amount)}</b>
+            </>
+          ) : null}
+          .
         </p>
         {price.waiver ? (
           <form method="post" action={action} style="margin-top:12px">

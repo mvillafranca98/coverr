@@ -89,6 +89,8 @@ export const BandListPage: FC<{
                       bannedAt={band.bannedAt}
                       freePassGrantedAt={band.freePassGrantedAt}
                       freePassUntil={band.freePassUntil}
+                      promoPercent={band.promoPercent}
+                      promoReportsLeft={band.promoReportsLeft}
                     />
                   </td>
                 </tr>

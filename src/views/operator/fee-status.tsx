@@ -24,5 +24,6 @@ export const FeeStatusChip: FC<{ status: FeeStatus | null; bracket: string }> = 
   }
   if (bracket === "free_first") return <span class="chip info">Gratis · primer evento</span>;
   if (bracket === "free_pass") return <span class="chip info">Gratis · pase libre</span>;
+  if (bracket === "promo") return <span class="chip info">Gratis · promo</span>;
   return <span class="chip info">Sin pago</span>;
 };

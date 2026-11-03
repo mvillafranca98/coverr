@@ -4,6 +4,7 @@ import { newId } from "../../lib/core";
 import { type FeeStatus, feeAccountFor } from "../../lib/fees";
 import type { Flag } from "../../lib/verify";
 import * as s from "../schema";
+import { spendPromoUse } from "./unlocks";
 
 type Db = DrizzleD1Database<typeof s>;
 
@@ -108,28 +109,31 @@ export async function unlockByTransfer(
     eventId: string;
     bracket: string;
     amount: number;
+    /** Set when a promo priced this report; that promo is spent in the same batch. */
+    discountPercent: number | null;
     fee: NewFeePayment;
   },
 ) {
   const unlockId = newId("unl");
-  await db.batch([
-    db.insert(s.eventUnlocks).values({
-      id: unlockId,
-      eventId: input.eventId,
-      bracket: input.bracket,
-      amount: input.amount,
-      paidAt: input.fee.uploadedAt,
-      method: "transfer",
-      reference: null,
-    }),
-    db.insert(s.feePayments).values({
-      ...input.fee,
-      unlockId,
-      bandId: input.bandId,
-      amount: input.amount,
-      status: "checking",
-    }),
-  ]);
+  const unlock = db.insert(s.eventUnlocks).values({
+    id: unlockId,
+    eventId: input.eventId,
+    bracket: input.bracket,
+    amount: input.amount,
+    discountPercent: input.discountPercent,
+    paidAt: input.fee.uploadedAt,
+    method: "transfer",
+    reference: null,
+  });
+  const payment = db.insert(s.feePayments).values({
+    ...input.fee,
+    unlockId,
+    bandId: input.bandId,
+    amount: input.amount,
+    status: "checking",
+  });
+  if (input.discountPercent === null) await db.batch([unlock, payment]);
+  else await db.batch([unlock, payment, spendPromoUse(db, input.bandId)]);
 }
 
 /** A fee payment with what reading it needs: its band and its event. */
@@ -286,6 +290,8 @@ export type LedgerRow = {
   unlockId: string;
   paidAt: string;
   bracket: string;
+  /** The promo's percentage off, when one priced this report. */
+  discountPercent: number | null;
   bandId: string;
   bandName: string;
   eventName: string;
@@ -317,7 +323,8 @@ export async function ledgerForMonth(
   const [list, sums] = await db.batch([
     db
       .prepare(
-        `SELECT u.id AS unlock_id, u.paid_at, u.bracket, b.id AS band_id, b.name AS band_name,
+        `SELECT u.id AS unlock_id, u.paid_at, u.bracket, u.discount_percent,
+                b.id AS band_id, b.name AS band_name,
                 e.name AS event_name, f.id AS fee_id, f.amount AS fee_amount, f.status,
                 f.invoice_number
            FROM event_unlocks u
@@ -335,7 +342,7 @@ export async function ledgerForMonth(
                 COALESCE(SUM(CASE WHEN f.status IN ('ok', 'resolved') THEN f.amount END), 0) AS received,
                 COALESCE(SUM(CASE WHEN f.status IN ('checking', 'flagged') THEN f.amount END), 0) AS in_review,
                 COALESCE(SUM(CASE WHEN f.status = 'unpaid' THEN f.amount END), 0) AS unpaid,
-                COUNT(CASE WHEN f.id IS NULL AND u.bracket IN ('free_first', 'free_pass') THEN 1 END) AS waived,
+                COUNT(CASE WHEN f.id IS NULL AND u.bracket IN ('free_first', 'free_pass', 'promo') THEN 1 END) AS waived,
                 COUNT(*) AS row_count
            FROM event_unlocks u
            LEFT JOIN fee_payments f ON f.unlock_id = u.id
@@ -350,6 +357,7 @@ export async function ledgerForMonth(
       unlockId: String(row["unlock_id"]),
       paidAt: String(row["paid_at"]),
       bracket: String(row["bracket"]),
+      discountPercent: row["discount_percent"] === null ? null : Number(row["discount_percent"]),
       bandId: String(row["band_id"]),
       bandName: String(row["band_name"]),
       eventName: String(row["event_name"]),

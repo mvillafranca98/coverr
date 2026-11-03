@@ -1,6 +1,7 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import { type FreePass, type UnlockPrice, unlockPrice } from "../../lib/settlement";
+import { newId } from "../../lib/core";
+import { type FreePass, type Promo, type UnlockPrice, unlockPrice } from "../../lib/settlement";
 import * as s from "../schema";
 
 type Db = DrizzleD1Database<typeof s>;
@@ -29,9 +30,68 @@ export async function unlockForEvent(db: Db, eventId: string) {
   return rows[0] ?? null;
 }
 
+type PricedBand = {
+  id: string;
+  freePassGrantedAt: string | null;
+  freePassUntil: string | null;
+  promoGrantedAt: string | null;
+  promoPercent: number | null;
+  promoReportsLeft: number | null;
+  promoUntil: string | null;
+};
+
 /** The band's free pass as the price rules read it, or null when it holds none. */
-function freePassOf(band: { freePassGrantedAt: string | null; freePassUntil: string | null }) {
+function freePassOf(band: PricedBand) {
   return band.freePassGrantedAt ? ({ until: band.freePassUntil } satisfies FreePass) : null;
+}
+
+/** The band's promo as the price rules read it, or null when it holds none. */
+function promoOf(band: PricedBand): Promo | null {
+  if (!band.promoGrantedAt || band.promoPercent === null || band.promoReportsLeft === null) {
+    return null;
+  }
+  return { percent: band.promoPercent, reportsLeft: band.promoReportsLeft, until: band.promoUntil };
+}
+
+/**
+ * Spends one report of the band's promo. Guarded in the statement itself, so
+ * two unlocks at the same moment cannot both spend the last one — the second
+ * finds nothing left and changes nothing.
+ */
+export function spendPromoUse(db: Db, bandId: string) {
+  return db
+    .update(s.bands)
+    .set({ promoReportsLeft: sql`${s.bands.promoReportsLeft} - 1` })
+    .where(and(eq(s.bands.id, bandId), gt(s.bands.promoReportsLeft, 0)));
+}
+
+/**
+ * Unlocks a report that costs the band nothing — a free pass, the first-event
+ * offer, a promo of 100% — spending the promo in the same batch if one priced it.
+ */
+export async function unlockWithoutCharge(
+  db: Db,
+  input: {
+    bandId: string;
+    eventId: string;
+    bracket: string;
+    method: string;
+    discountPercent: number | null;
+    at: string;
+  },
+) {
+  const unlock = db.insert(s.eventUnlocks).values({
+    id: newId("unl"),
+    eventId: input.eventId,
+    bracket: input.bracket,
+    amount: 0,
+    discountPercent: input.discountPercent,
+    paidAt: input.at,
+    method: input.method,
+    reference: null,
+  });
+  if (input.discountPercent === null) await unlock;
+  else await db.batch([unlock, spendPromoUse(db, input.bandId)]);
 }
 
 /**
@@ -42,7 +102,7 @@ function freePassOf(band: { freePassGrantedAt: string | null; freePassUntil: str
 export async function priceToUnlock(
   db: Db,
   input: {
-    band: { id: string; freePassGrantedAt: string | null; freePassUntil: string | null };
+    band: PricedBand;
     event: { startsAt: string };
     paidTickets: number;
   },
@@ -52,5 +112,6 @@ export async function priceToUnlock(
     bandsFirstUnlock: await isBandsFirstUnlock(db, input.band.id),
     eventStartsAt: input.event.startsAt,
     freePass: freePassOf(input.band),
+    promo: promoOf(input.band),
   });
 }

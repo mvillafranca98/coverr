@@ -5,7 +5,7 @@ import { settlementFor } from "../../db/queries/event-totals";
 import { findEventBySlug } from "../../db/queries/events";
 import { feeAccountForBand, unlockByTransfer } from "../../db/queries/fees";
 import { readFlags } from "../../db/queries/flags";
-import { priceToUnlock, unlockForEvent } from "../../db/queries/unlocks";
+import { priceToUnlock, unlockForEvent, unlockWithoutCharge } from "../../db/queries/unlocks";
 import * as s from "../../db/schema";
 import { runFeeVerification } from "../../jobs/verify-fee";
 import { newId, nowIso, sha256Hex } from "../../lib/core";
@@ -25,6 +25,7 @@ const moneyPath = (slug: string) => `/admin/e/${slug}/dinero`;
 const WAIVED: Record<UnlockWaiver, { bracket: string; method: string }> = {
   free_pass: { bracket: "free_pass", method: "free_pass" },
   free_first: { bracket: "free_first", method: "free_first_event" },
+  promo: { bracket: "promo", method: "promo" },
 };
 
 /**
@@ -56,13 +57,12 @@ unlockRoutes.post("/e/:slug/dinero/desbloquear", async (c) => {
   const price = await priceToUnlock(db, { band, event, paidTickets: counts.sold - counts.comp });
 
   if (price.waiver) {
-    await db.insert(s.eventUnlocks).values({
-      id: newId("unl"),
+    await unlockWithoutCharge(db, {
+      bandId,
       eventId: event.id,
       ...WAIVED[price.waiver],
-      amount: 0,
-      paidAt: nowIso(),
-      reference: null,
+      discountPercent: price.discountPercent,
+      at: nowIso(),
     });
     return c.redirect(moneyPath(event.slug), 303);
   }
@@ -91,6 +91,7 @@ unlockRoutes.post("/e/:slug/dinero/desbloquear", async (c) => {
       eventId: event.id,
       bracket: price.bracket.bracket,
       amount: price.amount,
+      discountPercent: price.discountPercent,
       fee: {
         id: feeId,
         fileKey,

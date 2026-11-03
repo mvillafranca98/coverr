@@ -17,6 +17,11 @@ type Band = {
   freePassGrantedAt: string | null;
   freePassUntil: string | null;
   freePassNote: string | null;
+  promoGrantedAt: string | null;
+  promoPercent: number | null;
+  promoReportsLeft: number | null;
+  promoUntil: string | null;
+  promoNote: string | null;
 };
 
 type Action = {
@@ -33,6 +38,8 @@ const DONE: Record<string, string> = {
   reactivada: "Banda reactivada.",
   pase: "Pase libre guardado.",
   "sin-pase": "Pase libre quitado.",
+  promo: "Promo guardada. Se aplica sola en sus próximos reportes.",
+  "sin-promo": "Promo quitada.",
 };
 
 const ACTION_LABEL: Record<string, string> = {
@@ -40,6 +47,8 @@ const ACTION_LABEL: Record<string, string> = {
   unban: "Reactivada",
   free_pass: "Pase libre",
   free_pass_end: "Pase quitado",
+  promo: "Promo",
+  promo_end: "Promo quitada",
   fee_resolved: "Pago revisado",
   fee_unpaid: "Pago no pagado",
 };
@@ -76,6 +85,105 @@ const SuspendForm: FC<{ band: Band }> = ({ band }) =>
       </button>
     </form>
   );
+
+const PromoForm: FC<{ band: Band }> = ({ band }) => {
+  // A promo with no reports left is spent: shown as used, and the form starts fresh.
+  const active = !!band.promoGrantedAt && !!band.promoPercent && (band.promoReportsLeft ?? 0) > 0;
+  const spent = !!band.promoGrantedAt && !active;
+  return (
+    <>
+      {active ? (
+        <div class="note ok">
+          <b>
+            {band.promoPercent}% de descuento,{" "}
+            {band.promoReportsLeft === 1
+              ? "le queda 1 reporte"
+              : `le quedan ${band.promoReportsLeft ?? 0} reportes`}
+            {band.promoUntil ? `, para eventos hasta el ${passLastDay(band.promoUntil)}` : ""}.
+          </b>
+          {band.promoNote ? <p style="margin:8px 0 0">{band.promoNote}</p> : null}
+          <form
+            method="post"
+            action={`/operador/bandas/${band.id}/promo/quitar`}
+            style="margin-top:12px"
+          >
+            <button class="btn sm ghost" type="submit">
+              Quitar promo
+            </button>
+          </form>
+        </div>
+      ) : (
+        <p class="sub" style="margin-top:0">
+          {spent ? `La promo del ${band.promoPercent ?? 0}% ya se usó en todos sus reportes. ` : ""}
+          Un descuento tuyo para esta banda, en sus próximos reportes cobrados. No se suma a otro:
+          si un reporte ya es gratis por el pase o por su primer evento, la promo queda para el
+          siguiente.
+        </p>
+      )}
+      <form method="post" action={`/operador/bandas/${band.id}/promo`}>
+        <div class="field-pair">
+          <div>
+            <label class="fl" for="percent">
+              Descuento (%)
+            </label>
+            <input
+              type="number"
+              name="percent"
+              id="percent"
+              required
+              min={1}
+              max={100}
+              value={active ? (band.promoPercent ?? "") : ""}
+            />
+          </div>
+          <div>
+            <label class="fl" for="reports">
+              Para cuántos reportes
+            </label>
+            <input
+              type="number"
+              name="reports"
+              id="reports"
+              required
+              min={1}
+              max={20}
+              value={active ? (band.promoReportsLeft ?? 1) : 1}
+            />
+          </div>
+        </div>
+        <div class="field-pair" style="margin-top:14px">
+          <div>
+            <label class="fl" for="promo-until">
+              Para eventos hasta (vacío: sin fecha)
+            </label>
+            <input
+              type="date"
+              name="until"
+              id="promo-until"
+              value={active ? (band.promoUntil ?? "") : ""}
+            />
+          </div>
+          <div>
+            <label class="fl" for="promo-note">
+              De qué es
+            </label>
+            <input
+              type="text"
+              name="note"
+              id="promo-note"
+              required
+              maxlength={TEXT_LIMITS.operatorNote}
+              value={active ? (band.promoNote ?? "") : ""}
+            />
+          </div>
+        </div>
+        <button class="btn" type="submit" style="margin-top:14px">
+          {active ? "Actualizar promo" : "Dar promo"}
+        </button>
+      </form>
+    </>
+  );
+};
 
 const FreePassForm: FC<{ band: Band }> = ({ band }) => (
   <>
@@ -151,6 +259,8 @@ export const OperatorBandPage: FC<{
         bannedAt={band.bannedAt}
         freePassGrantedAt={band.freePassGrantedAt}
         freePassUntil={band.freePassUntil}
+        promoPercent={band.promoPercent}
+        promoReportsLeft={band.promoReportsLeft}
       />
     </p>
     {done && DONE[done] ? <div class="note ok">{DONE[done]}</div> : null}
@@ -161,6 +271,9 @@ export const OperatorBandPage: FC<{
 
     <h2>Pase libre</h2>
     <FreePassForm band={band} />
+
+    <h2>Promo</h2>
+    <PromoForm band={band} />
 
     <h2>Eventos</h2>
     <div class="scroll">

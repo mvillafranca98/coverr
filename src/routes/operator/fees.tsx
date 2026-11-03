@@ -74,12 +74,13 @@ operatorFeeRoutes.get("/cobros", async (c) => {
 operatorFeeRoutes.get("/cobros.csv", async (c) => {
   const month = monthFrom(c.req.query("mes"));
   const { rows } = await ledgerForMonth(c.env.DB, monthBounds(month), { limit: 10_000, offset: 0 });
-  const header = ["fecha", "banda", "evento", "monto", "estado", "factura"];
+  const header = ["fecha", "banda", "evento", "monto", "descuento", "estado", "factura"];
   const csvRows = rows.map((row) => [
     row.paidAt,
     row.bandName,
     row.eventName,
     row.feePaymentId ? formatLpsShort(row.amount) : "",
+    row.discountPercent ? `${row.discountPercent}%` : "",
     row.status ? STATUS_FOR_CSV[row.status] : `gratis (${row.bracket})`,
     row.invoiceNumber ?? "",
   ]);

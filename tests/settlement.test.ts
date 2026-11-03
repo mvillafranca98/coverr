@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   type ChannelTotals,
   computeSettlement,
+  discountedAmount,
   freeFirstEventLastDay,
   freeFirstEventOfferOpen,
   freePassCovers,
@@ -9,6 +10,7 @@ import {
   type MemberInput,
   perHead,
   priceBracket,
+  promoApplies,
   unlockPrice,
 } from "../src/lib/settlement";
 
@@ -310,11 +312,13 @@ describe("what unlocking a report costs", () => {
       bandsFirstUnlock: false,
       eventStartsAt: LATER_GIG,
       freePass: null,
+      promo: null,
     });
     expect(price).toEqual({
       bracket: { bracket: "t300", amount: 150000 },
       amount: 150000,
       waiver: null,
+      discountPercent: null,
     });
   });
 
@@ -324,6 +328,7 @@ describe("what unlocking a report costs", () => {
       bandsFirstUnlock: true,
       eventStartsAt: "2026-12-12T21:00:00-06:00",
       freePass: { until: null },
+      promo: null,
     });
     expect(price.amount).toBe(0);
     expect(price.waiver).toBe("free_pass");
@@ -335,11 +340,13 @@ describe("what unlocking a report costs", () => {
       bandsFirstUnlock: true,
       eventStartsAt: "2026-12-12T21:00:00-06:00",
       freePass: null,
+      promo: null,
     });
     expect(price).toEqual({
       bracket: { bracket: "t60", amount: 50000 },
       amount: 0,
       waiver: "free_first",
+      discountPercent: null,
     });
   });
 
@@ -349,8 +356,89 @@ describe("what unlocking a report costs", () => {
       bandsFirstUnlock: false,
       eventStartsAt: LATER_GIG,
       freePass: { until: "2026-12-31" },
+      promo: null,
     });
     expect(price.amount).toBe(50000);
     expect(price.waiver).toBeNull();
+  });
+});
+
+// A promo is a percentage the operator grants one band, for its next charged
+// reports. It comes after the free pass and the first-event offer, never with them.
+describe("a promo", () => {
+  const LATER_GIG = "2027-03-20T21:00:00-06:00";
+  const charged = (promo: { percent: number; reportsLeft: number; until: string | null } | null) =>
+    unlockPrice({
+      paidTickets: 152,
+      bandsFirstUnlock: false,
+      eventStartsAt: LATER_GIG,
+      freePass: null,
+      promo,
+    });
+
+  it("takes its percentage off the bracket price", () => {
+    const price = charged({ percent: 50, reportsLeft: 1, until: null });
+    expect(price).toEqual({
+      bracket: { bracket: "t300", amount: 150000 },
+      amount: 75000,
+      waiver: null,
+      discountPercent: 50,
+    });
+  });
+
+  it("rounds to a whole lempira, the amount a band can actually type", () => {
+    expect(discountedAmount(100000, 33)).toBe(67000);
+    expect(discountedAmount(50000, 15)).toBe(42500);
+    expect(discountedAmount(150000, 1) % 100).toBe(0);
+  });
+
+  it("makes a report free outright at 100%", () => {
+    const price = charged({ percent: 100, reportsLeft: 1, until: null });
+    expect(price.amount).toBe(0);
+    expect(price.waiver).toBe("promo");
+  });
+
+  it("is not used on a report the free pass or the first-event offer already covers", () => {
+    const promo = { percent: 50, reportsLeft: 1, until: null };
+    const pass = unlockPrice({
+      paidTickets: 152,
+      bandsFirstUnlock: false,
+      eventStartsAt: LATER_GIG,
+      freePass: { until: null },
+      promo,
+    });
+    expect(pass).toMatchObject({ waiver: "free_pass", discountPercent: null });
+    const first = unlockPrice({
+      paidTickets: 152,
+      bandsFirstUnlock: true,
+      eventStartsAt: "2026-12-12T21:00:00-06:00",
+      freePass: null,
+      promo,
+    });
+    expect(first).toMatchObject({ waiver: "free_first", discountPercent: null });
+  });
+
+  it("does nothing once its reports are used up", () => {
+    expect(charged({ percent: 50, reportsLeft: 0, until: null }).amount).toBe(150000);
+  });
+
+  it("covers shows held by its last day, Honduras time, and none after", () => {
+    expect(
+      promoApplies(
+        { percent: 50, reportsLeft: 1, until: "2027-03-20" },
+        "2027-03-20T23:00:00-06:00",
+      ),
+    ).toBe(true);
+    expect(
+      promoApplies(
+        { percent: 50, reportsLeft: 1, until: "2027-03-20" },
+        "2027-03-21T00:00:00-06:00",
+      ),
+    ).toBe(false);
+  });
+
+  it("ignores a percentage outside 1 to 100, whatever the database holds", () => {
+    expect(promoApplies({ percent: 0, reportsLeft: 1, until: null }, LATER_GIG)).toBe(false);
+    expect(promoApplies({ percent: 150, reportsLeft: 1, until: null }, LATER_GIG)).toBe(false);
   });
 });

@@ -86,7 +86,12 @@ export const LedgerPage: FC<{
                     <a href={`/operador/bandas/${row.bandId}`}>{row.bandName}</a>
                   </td>
                   <td>{row.eventName}</td>
-                  <td class="n">{row.feePaymentId ? formatLpsShort(row.amount) : "—"}</td>
+                  <td class="n">
+                    {row.feePaymentId ? formatLpsShort(row.amount) : "—"}
+                    {row.discountPercent ? (
+                      <span class="muted"> (−{row.discountPercent}%)</span>
+                    ) : null}
+                  </td>
                   <td>
                     {row.feePaymentId ? (
                       <a href={`/operador/pagos/${row.feePaymentId}`}>

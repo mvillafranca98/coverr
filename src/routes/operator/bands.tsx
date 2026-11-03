@@ -5,7 +5,9 @@ import {
   banBand,
   bandEventsForOperator,
   endFreePass,
+  endPromo,
   grantFreePass,
+  grantPromo,
   listBands,
   operatorActionsFor,
   unbanBand,
@@ -39,6 +41,22 @@ function backToBand(
     ? `?listo=${outcome.done}`
     : `?error=${encodeURIComponent(outcome.error ?? "")}`;
   return c.redirect(`${bandPath(bandId)}${query}`, 303);
+}
+
+/**
+ * A last day from a date input: YYYY-MM-DD, or null when left blank, which
+ * means no end. Undefined when it is neither, so the caller can say so.
+ */
+function lastDayFrom(value: unknown): string | null | undefined {
+  const day = String(value ?? "").trim();
+  if (!day) return null;
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) && !Number.isNaN(Date.parse(day)) ? day : undefined;
+}
+
+/** A whole number from a form field, when it is one within these bounds. */
+function wholeNumberFrom(value: unknown, min: number, max: number): number | null {
+  const n = Number(String(value ?? "").trim());
+  return Number.isInteger(n) && n >= min && n <= max ? n : null;
 }
 
 /** The note a form sent, trimmed, with the message if it is over the limit. */
@@ -128,16 +146,15 @@ operatorBandRoutes.post("/bandas/:id/pase", async (c) => {
   if (error) return backToBand(c, band.id, { error });
   if (!note) return backToBand(c, band.id, { error: "Escribí para qué es el pase." });
 
-  // A date input sends YYYY-MM-DD or nothing; blank means the pass never ends.
-  const until = String(body["until"] ?? "").trim();
-  if (until && (!/^\d{4}-\d{2}-\d{2}$/.test(until) || Number.isNaN(Date.parse(until)))) {
+  const until = lastDayFrom(body["until"]);
+  if (until === undefined) {
     return backToBand(c, band.id, { error: "Revisá la fecha de fin del pase." });
   }
 
   await grantFreePass(db, {
     bandId: band.id,
     operatorEmail: c.get("operatorEmail"),
-    until: until || null,
+    until,
     note,
     at: nowIso(),
   });
@@ -152,4 +169,53 @@ operatorBandRoutes.post("/bandas/:id/pase/quitar", async (c) => {
 
   await endFreePass(db, { bandId: band.id, operatorEmail: c.get("operatorEmail"), at: nowIso() });
   return backToBand(c, band.id, { done: "sin-pase" });
+});
+
+/** The most reports one promo can cover: a season, not forever. A free pass is for forever. */
+const PROMO_MAX_REPORTS = 20;
+
+operatorBandRoutes.post("/bandas/:id/promo", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const band = await findBand(db, c.req.param("id"));
+  if (!band) return c.notFound();
+
+  const { note, body, error } = await noteFrom(c, "note", "La nota de la promo");
+  if (error) return backToBand(c, band.id, { error });
+  if (!note) return backToBand(c, band.id, { error: "Escribí de qué es la promo." });
+
+  const percent = wholeNumberFrom(body["percent"], 1, 100);
+  if (percent === null) {
+    return backToBand(c, band.id, { error: "El descuento va de 1 a 100 por ciento." });
+  }
+  const reports = wholeNumberFrom(body["reports"], 1, PROMO_MAX_REPORTS);
+  if (reports === null) {
+    return backToBand(c, band.id, {
+      error: `La promo cubre de 1 a ${PROMO_MAX_REPORTS} reportes.`,
+    });
+  }
+  const until = lastDayFrom(body["until"]);
+  if (until === undefined) {
+    return backToBand(c, band.id, { error: "Revisá la fecha de fin de la promo." });
+  }
+
+  await grantPromo(db, {
+    bandId: band.id,
+    operatorEmail: c.get("operatorEmail"),
+    percent,
+    reports,
+    until,
+    note,
+    at: nowIso(),
+  });
+  return backToBand(c, band.id, { done: "promo" });
+});
+
+operatorBandRoutes.post("/bandas/:id/promo/quitar", async (c) => {
+  const db = drizzle(c.env.DB, { schema: s });
+  const band = await findBand(db, c.req.param("id"));
+  if (!band) return c.notFound();
+  if (!band.promoGrantedAt) return backToBand(c, band.id, { done: "sin-promo" });
+
+  await endPromo(db, { bandId: band.id, operatorEmail: c.get("operatorEmail"), at: nowIso() });
+  return backToBand(c, band.id, { done: "sin-promo" });
 });

@@ -23,6 +23,8 @@ export type OperatorBandRow = {
   bannedAt: string | null;
   freePassGrantedAt: string | null;
   freePassUntil: string | null;
+  promoPercent: number | null;
+  promoReportsLeft: number | null;
   events: number;
   paidTickets: number;
   /** The newest of the band's signup, its events and its orders. */
@@ -49,7 +51,7 @@ export async function listBands(
     db
       .prepare(
         `SELECT b.id, b.name, b.contact_email, b.created_at, b.banned_at,
-                b.free_pass_granted_at, b.free_pass_until,
+                b.free_pass_granted_at, b.free_pass_until, b.promo_percent, b.promo_reports_left,
                 (SELECT COUNT(*) FROM events e WHERE e.band_id = b.id) AS events,
                 (SELECT COUNT(*) FROM attendees a
                    JOIN orders o ON o.id = a.order_id
@@ -83,6 +85,9 @@ export async function listBands(
       bannedAt: (row["banned_at"] as string | null) ?? null,
       freePassGrantedAt: (row["free_pass_granted_at"] as string | null) ?? null,
       freePassUntil: (row["free_pass_until"] as string | null) ?? null,
+      promoPercent: row["promo_percent"] === null ? null : Number(row["promo_percent"]),
+      promoReportsLeft:
+        row["promo_reports_left"] === null ? null : Number(row["promo_reports_left"]),
       events: Number(row["events"] ?? 0),
       paidTickets: Number(row["paid_tickets"] ?? 0),
       lastActivity: String(row["last_activity"] ?? row["created_at"]),
@@ -170,7 +175,7 @@ type ActionInput = { bandId: string; operatorEmail: string; at: string };
 function logAction(
   db: DrizzleD1Database<typeof s>,
   input: ActionInput,
-  action: "ban" | "unban" | "free_pass" | "free_pass_end",
+  action: "ban" | "unban" | "free_pass" | "free_pass_end" | "promo" | "promo_end",
   note: string | null,
 ) {
   return db.insert(s.operatorActions).values({
@@ -218,6 +223,45 @@ export async function grantFreePass(
       .set({ freePassGrantedAt: input.at, freePassUntil: input.until, freePassNote: input.note })
       .where(eq(s.bands.id, input.bandId)),
     logAction(db, input, "free_pass", summary),
+  ]);
+}
+
+/** Grants a promo, or replaces the one the band holds, with its own count of reports. */
+export async function grantPromo(
+  db: DrizzleD1Database<typeof s>,
+  input: ActionInput & { percent: number; reports: number; until: string | null; note: string },
+) {
+  const summary =
+    `${input.percent}% en ${input.reports === 1 ? "1 reporte" : `${input.reports} reportes`}` +
+    `${input.until ? `, hasta ${input.until}` : ""} · ${input.note}`;
+  await db.batch([
+    db
+      .update(s.bands)
+      .set({
+        promoGrantedAt: input.at,
+        promoPercent: input.percent,
+        promoReportsLeft: input.reports,
+        promoUntil: input.until,
+        promoNote: input.note,
+      })
+      .where(eq(s.bands.id, input.bandId)),
+    logAction(db, input, "promo", summary),
+  ]);
+}
+
+export async function endPromo(db: DrizzleD1Database<typeof s>, input: ActionInput) {
+  await db.batch([
+    db
+      .update(s.bands)
+      .set({
+        promoGrantedAt: null,
+        promoPercent: null,
+        promoReportsLeft: null,
+        promoUntil: null,
+        promoNote: null,
+      })
+      .where(eq(s.bands.id, input.bandId)),
+    logAction(db, input, "promo_end", null),
   ]);
 }
 

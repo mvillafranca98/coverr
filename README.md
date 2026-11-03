@@ -240,8 +240,8 @@ src/
     admin/         the band's side: sign-in, home, dashboard, orders, an order,
                    manual sales, money, event and band settings
     operator/      Coverr's back office at /operador: operator sign-in, every
-                   band, bans and free passes, Coverr's accounts, fee payments
-                   and the monthly ledger
+                   band, bans, free passes and promos, Coverr's accounts, fee
+                   payments and the monthly ledger
     scan.ts        the scanner's API: attendee list, check-in, cash, stats
     scan-errors.ts where the scanner reports its own failures
   views/           markup only — a view never touches the database
@@ -442,8 +442,9 @@ been run against production:
   unmodified.
 
 **The operator panel** is at `/operador`, signed into by magic link from an address in
-`OPERATOR_EMAILS`. It lists every band and lets the operator suspend one, with a reason, or give
-it a free pass, and it logs who changed what and when. A suspended band cannot sign in or
+`OPERATOR_EMAILS`. It lists every band and lets the operator suspend one, with a reason, give it a
+free pass, or grant it a promo — a percentage off its next reports — and it logs who changed what
+and when. A suspended band cannot sign in or
 create events and its event pages stop selling; tickets it has already sold keep working at
 the ticket page, `/recuperar` and the door. The operator session is its own cookie, sent only to
 `/operador`, and lasts 12 hours.
