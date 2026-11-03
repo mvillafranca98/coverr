@@ -114,58 +114,59 @@ export const MoneyPage: FC<{
       </div>
     ) : null}
 
+    {/* The totals show before the unlock too: the band sees how the night went,
+        and the fee buys who gets paid what. */}
+    <div class="cards">
+      <div class="card">
+        <span>Bruto</span>
+        <b>{formatLpsShort(settlement.gross)}</b>
+      </div>
+      <div class="card">
+        <span>Costos</span>
+        <b>−{formatLpsShort(settlement.costs)}</b>
+      </div>
+      <div class="card">
+        <span>Neto</span>
+        <b>{formatLpsShort(settlement.net)}</b>
+      </div>
+    </div>
+
     {unlocked ? (
-      <>
-        <div class="cards">
-          <div class="card">
-            <span>Bruto</span>
-            <b>{formatLpsShort(settlement.gross)}</b>
-          </div>
-          <div class="card">
-            <span>Costos</span>
-            <b>−{formatLpsShort(settlement.costs)}</b>
-          </div>
-          <div class="card">
-            <span>Neto</span>
-            <b>{formatLpsShort(settlement.net)}</b>
-          </div>
-        </div>
-        <div class="scroll" style="margin-top:12px">
-          <table>
-            <thead>
-              <tr>
-                <th>Integrante</th>
-                <th class="n">%</th>
-                <th class="n">Parte</th>
-                <th class="n">Adelantos</th>
-                <th class="n">A pagar</th>
+      <div class="scroll" style="margin-top:12px">
+        <table>
+          <thead>
+            <tr>
+              <th>Integrante</th>
+              <th class="n">%</th>
+              <th class="n">Parte</th>
+              <th class="n">Adelantos</th>
+              <th class="n">A pagar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {settlement.members.map((m) => (
+              <tr key={m.id}>
+                <td>{m.name}</td>
+                <td class="n">{m.splitPct}%</td>
+                <td class="n">{formatLps(m.share)}</td>
+                <td class="n">{m.advances ? `−${formatLps(m.advances)}` : "—"}</td>
+                <td class="n">
+                  <b>{formatLps(m.payout)}</b>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {settlement.members.map((m) => (
-                <tr key={m.id}>
-                  <td>{m.name}</td>
-                  <td class="n">{m.splitPct}%</td>
-                  <td class="n">{formatLps(m.share)}</td>
-                  <td class="n">{m.advances ? `−${formatLps(m.advances)}` : "—"}</td>
-                  <td class="n">
-                    <b>{formatLps(m.payout)}</b>
-                  </td>
-                </tr>
-              ))}
-              {settlement.unallocated !== 0 ? (
-                <tr class="tot">
-                  <td colspan={4}>Sin asignar</td>
-                  <td class="n">{formatLps(settlement.unallocated)}</td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </>
+            ))}
+            {settlement.unallocated !== 0 ? (
+              <tr class="tot">
+                <td colspan={4}>Sin asignar</td>
+                <td class="n">{formatLps(settlement.unallocated)}</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
     ) : (
       <div class="note warn">
-        <b>El reporte de reparto está bloqueado.</b>
+        <b>Lo que le toca a cada integrante está bloqueado.</b>
         <p style="margin:8px 0 0">
           Todo lo demás — preventa, códigos QR, entrada, ventas en efectivo, el resumen en vivo — es
           gratis y siempre lo va a ser. El reparto final de este evento cuesta{" "}
