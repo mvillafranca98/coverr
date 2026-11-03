@@ -240,7 +240,8 @@ src/
     admin/         the band's side: sign-in, home, dashboard, orders, an order,
                    manual sales, money, event and band settings
     operator/      Coverr's back office at /operador: operator sign-in, every
-                   band, bans and free passes
+                   band, bans and free passes, Coverr's accounts, fee payments
+                   and the monthly ledger
     scan.ts        the scanner's API: attendee list, check-in, cash, stats
     scan-errors.ts where the scanner reports its own failures
   views/           markup only — a view never touches the database
@@ -334,7 +335,8 @@ Secrets, set in production with `npx wrangler secret put <NAME>`:
 | `RESEND_API_KEY` | For email | Sends email through Resend |
 | `ANTHROPIC_API_KEY` | For receipt reading | The vision call. Without it, orders still sell |
 
-A cron trigger runs every day at 03:00 UTC: it deletes payment proofs 30 days after their
+A cron trigger runs every day at 03:00 UTC: it deletes fee screenshots 90 days after the payment
+unless it is still in question, and it deletes payment proofs 30 days after their
 event and error-log rows after 90 days.
 
 ### Switches you can flip without deploying
@@ -445,6 +447,15 @@ it a free pass, and it logs who changed what and when. A suspended band cannot s
 create events and its event pages stop selling; tickets it has already sold keep working at
 the ticket page, `/recuperar` and the door. The operator session is its own cookie, sent only to
 `/operador`, and lasts 12 hours.
+
+**Fees.** With billing on, a report that is not free shows the band Coverr's account — one at the
+band's own bank if there is one, else the main one, both entered at `/operador/cuentas` — and asks
+for the transfer screenshot. The report opens on the upload. The screenshot is read afterwards with
+the buyers' rules; anything off emails every operator, and the payment waits at
+`/operador/pagos/<id>`. An operator can mark it unpaid, with a note, which stops that band creating
+events until it is marked paid; nothing already on sale or unlocked closes. `/operador/cobros`
+totals each month from the records and exports a CSV with the invoice number sent for each
+payment.
 
 Crashes reach the operator on their own. Unhandled errors in requests and the nightly jobs,
 and JavaScript errors in the browser — the door scanner and every other page — are written to

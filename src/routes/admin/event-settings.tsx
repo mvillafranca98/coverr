@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug, uniqueEventSlug } from "../../db/queries/events";
+import { unpaidFeeFor } from "../../db/queries/fees";
 import { confirmedTicketCount } from "../../db/queries/orders";
 import * as s from "../../db/schema";
 import { newId, newStaffToken, nowIso } from "../../lib/core";
@@ -100,7 +101,13 @@ eventSettingsRoutes.get("/nuevo", async (c) => {
   const band = await findBand(db, c.get("bandId"));
   if (!band) return c.redirect("/admin/salir", 302);
 
-  return c.html(<NewEventPage bandName={band.name} error={c.req.query("error") ?? undefined} />);
+  return c.html(
+    <NewEventPage
+      bandName={band.name}
+      error={c.req.query("error") ?? undefined}
+      owed={await unpaidFeeFor(db, band.id)}
+    />,
+  );
 });
 
 eventSettingsRoutes.post("/nuevo", async (c) => {
@@ -108,6 +115,10 @@ eventSettingsRoutes.post("/nuevo", async (c) => {
   const bandId = c.get("bandId");
   const band = await findBand(db, bandId);
   if (!band) return c.redirect("/admin/salir", 302);
+
+  // Enforced here, not only by hiding the form: the page may predate the mark.
+  const owed = await unpaidFeeFor(db, bandId);
+  if (owed) return c.html(<NewEventPage bandName={band.name} owed={owed} />, 403);
 
   const parsed = readEventForm(await c.req.parseBody());
   if (!parsed.ok) {

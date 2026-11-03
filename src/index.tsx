@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { secureHeaders } from "hono/secure-headers";
 import { purgeOldErrors } from "./jobs/purge-errors";
+import { purgeExpiredFeeProofs } from "./jobs/purge-fee-proofs";
 import { purgeExpiredProofs } from "./jobs/purge-proofs";
 import { reportError } from "./jobs/report-error";
 import { sweepExpiredProofFiles } from "./jobs/sweep-proof-files";
@@ -182,6 +183,7 @@ export default {
       );
 
     sweep("purge-proofs", purgeExpiredProofs(env));
+    sweep("purge-fee-proofs", purgeExpiredFeeProofs(env));
     sweep("sweep-proof-files", sweepExpiredProofFiles(env));
     sweep("purge-errors", purgeOldErrors(env));
   },

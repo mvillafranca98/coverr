@@ -23,7 +23,7 @@ export const BandListPage: FC<{
 }> = ({ rows, total, page, pageSize, search }) => {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   return (
-    <OperatorLayout title="Bandas — Coverr operación" signedIn>
+    <OperatorLayout title="Bandas — Coverr operación" signedIn active="bands">
       <h1>Bandas</h1>
       <p class="sub">
         {total} {total === 1 ? "banda" : "bandas"}
@@ -99,7 +99,7 @@ export const BandListPage: FC<{
       </div>
 
       {pages > 1 ? (
-        <nav class="inline" aria-label="Páginas" style="margin-top:16px">
+        <nav class="toolbar" aria-label="Páginas" style="margin-top:16px">
           {page > 1 ? (
             <a class="btn sm ghost" href={pageHref(search, page - 1)}>
               Anteriores

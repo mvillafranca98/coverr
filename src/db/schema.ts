@@ -46,7 +46,7 @@ export const operatorActions = sqliteTable(
       .notNull()
       .references(() => bands.id, { onDelete: "cascade" }),
     operatorEmail: text("operator_email").notNull(),
-    /** ban | unban | free_pass | free_pass_end */
+    /** ban | unban | free_pass | free_pass_end | fee_resolved | fee_unpaid */
     action: text("action").notNull(),
     note: text("note"),
     createdAt: text("created_at").notNull(),
@@ -399,19 +399,94 @@ export const contacts = sqliteTable(
 );
 
 /** Billing. The settlement report is the paywall; history stays free forever. */
-export const eventUnlocks = sqliteTable("event_unlocks", {
+export const eventUnlocks = sqliteTable(
+  "event_unlocks",
+  {
+    id: text("id").primaryKey(),
+    eventId: text("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" })
+      .unique(),
+    /** free_first | free_pass | t60 | t150 | t300 | t301plus */
+    bracket: text("bracket").notNull(),
+    amount: integer("amount").notNull(),
+    paidAt: text("paid_at"),
+    /** free_first_event | free_pass | transfer (a fee_payments row holds the proof) */
+    method: text("method"),
+    reference: text("reference"),
+  },
+  // The fees ledger reads one month of unlocks at a time.
+  (t) => [index("idx_unlocks_paid").on(t.paidAt)],
+);
+
+/**
+ * The accounts Coverr collects its settlement fee into. The operator enters
+ * them in the panel and nothing else ever writes them, so no account number
+ * lives in the code. A band sees one only on the fee page.
+ */
+export const platformAccounts = sqliteTable("platform_accounts", {
   id: text("id").primaryKey(),
-  eventId: text("event_id")
-    .notNull()
-    .references(() => events.id, { onDelete: "cascade" })
-    .unique(),
-  /** free_first | free_pass | t60 | t150 | t300 | t301plus */
-  bracket: text("bracket").notNull(),
-  amount: integer("amount").notNull(),
-  paidAt: text("paid_at"),
-  method: text("method"),
-  reference: text("reference"),
+  /** One of the codes in lib/core.ts BANKS. */
+  bank: text("bank").notNull(),
+  holderName: text("holder_name").notNull(),
+  accountNumber: text("account_number").notNull(),
+  /** Shown to a band whose own bank has no Coverr account. Exactly one should be. */
+  isMain: integer("is_main").notNull().default(0),
+  active: integer("active").notNull().default(1),
+  createdAt: text("created_at").notNull(),
 });
+
+/**
+ * A band's transfer for one report: the screenshot it uploaded, what was read
+ * from it, and where the operator's review stands. The report unlocked when
+ * this row was written — nothing here holds a band waiting.
+ */
+export const feePayments = sqliteTable(
+  "fee_payments",
+  {
+    id: text("id").primaryKey(),
+    unlockId: text("unlock_id")
+      .notNull()
+      .unique()
+      .references(() => eventUnlocks.id, { onDelete: "cascade" }),
+    bandId: text("band_id")
+      .notNull()
+      .references(() => bands.id, { onDelete: "cascade" }),
+    /** Centavos the band was asked to transfer. */
+    amount: integer("amount").notNull(),
+    /** R2 key under fees/. Null once the image has been purged. */
+    fileKey: text("file_key"),
+    contentType: text("content_type").notNull(),
+    fileSize: integer("file_size").notNull(),
+    sha256: text("sha256").notNull(),
+    uploadedAt: text("uploaded_at").notNull(),
+    /** 90 days after upload. The image goes then unless the payment is still in question. */
+    purgeAfter: text("purge_after").notNull(),
+    purgedAt: text("purged_at"),
+    /** checking | ok | flagged | resolved | unpaid */
+    status: text("status").notNull().default("checking"),
+    /** JSON array of { code, severity, detail }: what the checks raised. */
+    flags: text("flags"),
+    /** What was read off the screenshot. Kept for good; the image is not. */
+    xAmount: integer("x_amount"),
+    xDestAccount: text("x_dest_account"),
+    xReference: text("x_reference"),
+    xDatetime: text("x_datetime"),
+    xSenderName: text("x_sender_name"),
+    xBank: text("x_bank"),
+    reviewNote: text("review_note"),
+    reviewedBy: text("reviewed_by"),
+    reviewedAt: text("reviewed_at"),
+    /** The invoice sent by hand for this payment, so the ledger shows which still need one. */
+    invoiceNumber: text("invoice_number"),
+  },
+  (t) => [
+    index("idx_fee_payments_band").on(t.bandId, t.status),
+    index("idx_fee_payments_uploaded").on(t.uploadedAt),
+    index("idx_fee_payments_sha").on(t.sha256),
+    index("idx_fee_payments_ref").on(t.xReference),
+  ],
+);
 
 /**
  * The switches that can be thrown without a deploy.

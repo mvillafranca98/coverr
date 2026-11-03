@@ -16,6 +16,20 @@ export function proofObjectKey(eventId: string, orderId: string): string {
 }
 
 /**
+ * Every screenshot a band uploaded to pay Coverr's fee sits under this prefix.
+ * Apart from the buyers' proofs on purpose: the nightly sweep empties an
+ * event's prefix 30 days after the show, and a fee screenshot is kept 90.
+ */
+export function feeProofPrefix(bandId: string): string {
+  return `fees/${bandId}/`;
+}
+
+/** The key one fee payment's screenshot is stored under. */
+export function feeProofObjectKey(bandId: string, feePaymentId: string): string {
+  return `${feeProofPrefix(bandId)}${feePaymentId}`;
+}
+
+/**
  * Runs the writes that make a stored proof belong to an order, and deletes
  * the proof if they fail.
  *
@@ -62,17 +76,29 @@ const R2_BATCH = 1000;
  */
 export async function deleteProofsForEvents(bucket: R2Bucket, eventIds: string[]): Promise<number> {
   let deleted = 0;
-  for (const eventId of eventIds) {
-    let cursor: string | undefined;
-    do {
-      const page = await bucket.list({ prefix: proofPrefix(eventId), cursor, limit: R2_BATCH });
-      const keys = page.objects.map((object) => object.key);
-      if (keys.length > 0) {
-        await bucket.delete(keys);
-        deleted += keys.length;
-      }
-      cursor = page.truncated ? page.cursor : undefined;
-    } while (cursor);
-  }
+  for (const eventId of eventIds) deleted += await deleteUnderPrefix(bucket, proofPrefix(eventId));
+  return deleted;
+}
+
+/**
+ * Deletes every fee screenshot a band uploaded, for the same reason and in the
+ * same way as its buyers' proofs: from the bucket's listing, not from rows.
+ */
+export async function deleteFeeProofsForBand(bucket: R2Bucket, bandId: string): Promise<number> {
+  return deleteUnderPrefix(bucket, feeProofPrefix(bandId));
+}
+
+async function deleteUnderPrefix(bucket: R2Bucket, prefix: string): Promise<number> {
+  let deleted = 0;
+  let cursor: string | undefined;
+  do {
+    const page = await bucket.list({ prefix, cursor, limit: R2_BATCH });
+    const keys = page.objects.map((object) => object.key);
+    if (keys.length > 0) {
+      await bucket.delete(keys);
+      deleted += keys.length;
+    }
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
   return deleted;
 }

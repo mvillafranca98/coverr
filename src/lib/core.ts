@@ -185,6 +185,12 @@ export function formatEventDate(iso: string): string {
   return `${days[local.getUTCDay()]} ${local.getUTCDate()} de ${MONTHS[local.getUTCMonth()]}`;
 }
 
+/** "noviembre de 2026", from a YYYY-MM month. */
+export function formatMonthYear(month: string): string {
+  const [year, monthNumber] = month.split("-").map(Number) as [number, number];
+  return `${MONTHS[monthNumber - 1] ?? month} de ${year}`;
+}
+
 /**
  * "31 de enero", or "31 de enero de 2027" with `year`: a day in Honduras, for
  * copy that names a deadline rather than a gig.

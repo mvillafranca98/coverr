@@ -1,5 +1,10 @@
 import type { FC } from "hono/jsx";
-import { CONTACT_EMAIL, PRIVACY_UPDATED, PROOF_RETENTION_DAYS } from "./constants";
+import {
+  CONTACT_EMAIL,
+  FEE_PROOF_RETENTION_DAYS,
+  PRIVACY_UPDATED,
+  PROOF_RETENTION_DAYS,
+} from "./constants";
 import { LegalDoc } from "./doc";
 
 /**
@@ -70,6 +75,11 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
         producto, pero conviene saberlo antes de escribirlas.
       </li>
       <li>Tus integrantes, sus porcentajes de reparto, los costos del evento y los adelantos.</li>
+      <li>
+        Si pagás un reporte de reparto por transferencia, <b>la captura de esa transferencia</b> —
+        con los datos bancarios de quien la hizo — y lo que leemos de ella: el monto, la referencia
+        y la fecha, que quedan como registro del pago.
+      </li>
     </ul>
 
     <h3>Lo que se guarda solo</h3>
@@ -134,14 +144,15 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
         <strong>Cloudflare — R2</strong>
         <span>
           Guarda la imagen de tu comprobante, privada, hasta que se borra {PROOF_RETENTION_DAYS}{" "}
-          días después del evento.
+          días después del evento, y la captura con que una banda paga su reporte, hasta{" "}
+          {FEE_PROOF_RETENTION_DAYS} días después del pago.
         </span>
       </li>
       <li>
         <strong>Anthropic</strong>
         <span>
           Recibe la imagen del comprobante para leer sus campos por etiqueta, y por lo tanto los
-          datos bancarios que aparecen en ella.
+          datos bancarios que aparecen en ella. Lo mismo con la captura del pago de un reporte.
         </span>
       </li>
       <li>
@@ -176,6 +187,14 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       <li>
         <strong>Comprobantes: la imagen y los datos bancarios que trae</strong>
         <span>{PROOF_RETENTION_DAYS} días después del evento, y se borran solos.</span>
+      </li>
+      <li>
+        <strong>Capturas del pago de un reporte</strong>
+        <span>
+          {FEE_PROOF_RETENTION_DAYS} días después del pago, y se borran solas — salvo que el pago
+          esté en revisión, que se guardan hasta resolverlo. El monto, la referencia y la fecha
+          quedan como registro del pago mientras la banda tenga su cuenta.
+        </span>
       </li>
       <li>
         <strong>Órdenes, boletos y registros de entrada</strong>

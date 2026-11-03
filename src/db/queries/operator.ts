@@ -104,6 +104,8 @@ export type OperatorEventRow = {
   unlockBracket: string | null;
   unlockAmount: number | null;
   unlockMethod: string | null;
+  feePaymentId: string | null;
+  feeStatus: string | null;
 };
 
 /**
@@ -121,9 +123,10 @@ export async function bandEventsForOperator(
               (SELECT COUNT(*) FROM attendees a
                  JOIN orders o ON o.id = a.order_id
                 WHERE o.event_id = e.id AND ${PAID_TICKET}) AS paid_tickets,
-              u.bracket, u.amount, u.method
+              u.bracket, u.amount, u.method, f.id AS fee_id, f.status AS fee_status
          FROM events e
          LEFT JOIN event_unlocks u ON u.event_id = e.id
+         LEFT JOIN fee_payments f ON f.unlock_id = u.id
         WHERE e.band_id = ?1
         ORDER BY e.starts_at DESC
         LIMIT 500`,
@@ -142,6 +145,8 @@ export async function bandEventsForOperator(
       unlockBracket: (row["bracket"] as string | null) ?? null,
       unlockAmount: row["amount"] === null ? null : Number(row["amount"]),
       unlockMethod: (row["method"] as string | null) ?? null,
+      feePaymentId: (row["fee_id"] as string | null) ?? null,
+      feeStatus: (row["fee_status"] as string | null) ?? null,
     };
   });
 }

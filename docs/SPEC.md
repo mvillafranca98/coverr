@@ -87,16 +87,21 @@ what a band or a buyer can do, except where a row says so.
 | F13 | Every band | One list of all bands, newest first and paginated: name, contact email, signup date, events, paid tickets, last activity, status and fees paid. Searchable by name or email. Each band opens to its events and its fee history | live since 2026-11-03 |
 | F14 | Ban a band | The operator bans a band with a written reason, and can lift it. A banned band cannot sign in or create events, and its event pages stop taking new purchases. Tickets already sold keep working everywhere — ticket page, `/recuperar`, door scanner — because those buyers have paid the band. Every ban and unban is logged with who did it and when | live since 2026-11-03 |
 | F15 | Free pass | The operator gives a band free reports, permanently or until a date, with a note ("la banda del operador"). An unlock under a pass costs nothing and records bracket `free_pass`; one outside its dates is charged normally | live since 2026-11-03 |
-| F16 | Paying the fee | With billing on, a report that is not free shows the exact amount and Coverr's main account (or a fallback at the band's own bank, if there is one, so nobody pays the interbank fee). The band uploads its transfer screenshot and the report unlocks on that response. Extraction and the rules in `lib/verify.ts` run afterwards against all of Coverr's accounts and the amount due; any flag emails every operator with the band, the event, the reason and a link | planned |
-| F17 | Fees ledger | Fees by month: charged, received, flagged, unpaid and waived (free first event, free pass, promo), each total built from records and each row linking to its band and event. Each payment shows the invoice number sent for it, or that none has been. Paginated, with a CSV export | planned |
+| F16 | Paying the fee | With billing on, a report that is not free shows the exact amount and Coverr's main account (or a fallback at the band's own bank, if there is one, so nobody pays the interbank fee). The band uploads its transfer screenshot and the report unlocks on that response. Extraction and the rules in `lib/verify.ts` run afterwards against all of Coverr's accounts and the amount due; any flag emails every operator with the band, the event, the reason and a link | built 2026-11-03, deploy pending (migration 0011) |
+| F17 | Fees ledger | Fees by month: charged, received, flagged, unpaid and waived (free first event, free pass, promo), each total built from records and each row linking to its band and event. Each payment shows the invoice number sent for it, or that none has been. Paginated, with a CSV export | built 2026-11-03, deploy pending (migration 0011) |
 | F18 | Promo | The operator grants one band a percentage off (1 to 100) on its next one or more reports, optionally until a date, with a note ("50% en su primer toque"). It applies by itself when the band unlocks, and the unlock records the discount. It never stacks: a report that is already free (first event, free pass) uses no promo | planned |
-| F19 | An unpaid fee | After contacting the band, the operator marks a fee unpaid, with a note, and can mark it paid later. While any fee is unpaid the band cannot create a new event: the new-event page says which report is owed and to write to `hola@coverr.live`. Events already on sale keep selling, and every report already unlocked stays open — history is never gated | planned |
+| F19 | An unpaid fee | After contacting the band, the operator marks a fee unpaid, with a note, and can mark it paid later. While any fee is unpaid the band cannot create a new event: the new-event page says which report is owed and to write to `hola@coverr.live`. Events already on sale keep selling, and every report already unlocked stays open — history is never gated | built 2026-11-03, deploy pending (migration 0011) |
 
 **Still to settle:**
 
-1. **Is the associate an operator?** If so, their address joins `OPERATOR_EMAILS`. `hola@` already
-   forwards to the operator's Gmail, so listing both would send every alert twice.
-2. **SAR invoicing** — see above; needed before billing goes on, not before building.
+1. **SAR invoicing** — see above; needed before billing goes on, not before building.
+2. **Macawly's BAC account** as the main one. The two personal BAC accounts are the fallbacks; all
+   three are entered by an operator at `/operador/cuentas`, never in the code.
+3. **A deleted band's fee history.** Deleting an account deletes its fee payments and their
+   screenshots with everything else, so the ledger loses them. Fine for privacy; check it suits
+   the accountant.
+
+The associate, Alexis, is an operator: both addresses are in `OPERATOR_EMAILS`.
 
 **Out of scope for this phase:** roles inside a band; levels among operators; automatic bank
 reconciliation; anything that lets the operator see or move a band's ticket money, which never

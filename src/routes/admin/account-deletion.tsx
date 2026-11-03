@@ -13,7 +13,7 @@ import {
   deletionBlockers,
 } from "../../lib/account-deletion";
 import { clearCookie } from "../../lib/auth";
-import { deleteProofsForEvents } from "../../lib/proof-storage";
+import { deleteFeeProofsForBand, deleteProofsForEvents } from "../../lib/proof-storage";
 import { AccountDeletedPage, DeleteAccountPage } from "../../views/setup/delete-account";
 import type { AdminContext, AdminEnv } from "./context";
 
@@ -80,10 +80,11 @@ accountDeletionRoutes.post("/banda/borrar", async (c) => {
     return renderPage(c, { bandName: band.name, state, blockers, error: NAME_MISMATCH }, 400);
   }
 
-  const proofFiles = await deleteProofsForEvents(
-    c.env.PROOFS,
-    state.events.map((event) => event.id),
-  );
+  const proofFiles =
+    (await deleteProofsForEvents(
+      c.env.PROOFS,
+      state.events.map((event) => event.id),
+    )) + (await deleteFeeProofsForBand(c.env.PROOFS, band.id));
   await deleteBandRows(db, band.id);
 
   // An opaque id and counts, nothing that names anyone: the operator needs to

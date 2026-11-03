@@ -10,11 +10,13 @@ import { ErrorReporter } from "../error-reporter";
  * of its own, so nobody signed in as both ever mistakes one for the other.
  * Nothing a band or a buyer sees links here.
  */
-export const OperatorLayout: FC<PropsWithChildren<{ title: string; signedIn?: boolean }>> = ({
-  title,
-  signedIn,
-  children,
-}) => (
+export const OperatorLayout: FC<
+  PropsWithChildren<{
+    title: string;
+    signedIn?: boolean;
+    active?: "bands" | "fees" | "accounts";
+  }>
+> = ({ title, signedIn, active, children }) => (
   <html lang="es">
     <head>
       <meta charset="utf-8" />
@@ -43,8 +45,14 @@ export const OperatorLayout: FC<PropsWithChildren<{ title: string; signedIn?: bo
                 Coverr · operación
               </span>
               <span class="band-links">
-                <a href="/operador" class="on">
+                <a href="/operador" class={active === "bands" ? "on" : ""}>
                   Bandas
+                </a>
+                <a href="/operador/cobros" class={active === "fees" ? "on" : ""}>
+                  Cobros
+                </a>
+                <a href="/operador/cuentas" class={active === "accounts" ? "on" : ""}>
+                  Cuentas
                 </a>
                 <a href="/operador/salir">Salir</a>
               </span>

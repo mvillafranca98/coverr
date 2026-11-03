@@ -113,7 +113,9 @@ export async function deleteBandRows(
          + (SELECT count(*) FROM ${s.bandMembers} WHERE ${s.bandMembers.bandId} = ${bandId})
          + (SELECT count(*) FROM ${s.bankAccounts} WHERE ${s.bankAccounts.bandId} = ${bandId})
          + (SELECT count(*) FROM ${s.advances} WHERE ${s.advances.bandId} = ${bandId})
-         + (SELECT count(*) FROM ${s.contacts} WHERE ${s.contacts.bandId} = ${bandId}) AS remaining`);
+         + (SELECT count(*) FROM ${s.contacts} WHERE ${s.contacts.bandId} = ${bandId})
+         + (SELECT count(*) FROM ${s.feePayments} WHERE ${s.feePayments.bandId} = ${bandId})
+         + (SELECT count(*) FROM ${s.operatorActions} WHERE ${s.operatorActions.bandId} = ${bandId}) AS remaining`);
   const remaining = Number(leftover?.remaining ?? 0);
   if (remaining > 0) {
     throw new Error(

@@ -10,8 +10,11 @@ import * as schema from "../src/db/schema";
  * notices.
  */
 
-/** Tables that belong to no band, and so are not deleted with one. */
-const BELONGS_TO_NO_BAND = new Set(["error_log", "platform_flags"]);
+/**
+ * Tables that belong to no band, and so are not deleted with one.
+ * `platform_accounts` is Coverr's own: where bands pay it, not anything a band owns.
+ */
+const BELONGS_TO_NO_BAND = new Set(["error_log", "platform_flags", "platform_accounts"]);
 
 const tables = Object.values(schema).filter(
   (value): value is SQLiteTable =>

@@ -10,6 +10,7 @@ import { moneyRoutes } from "./money";
 import { orderRoutes } from "./order";
 import { ordersRoutes } from "./orders";
 import { requireSession, sessionRoutes } from "./session";
+import { unlockRoutes } from "./unlock";
 
 /**
  * The band-facing app, mounted at /admin.
@@ -30,6 +31,7 @@ admin.route("/", dashboardRoutes);
 admin.route("/", ordersRoutes);
 admin.route("/", orderRoutes);
 admin.route("/", moneyRoutes);
+admin.route("/", unlockRoutes);
 admin.route("/", eventSettingsRoutes);
 admin.route("/", bandSettingsRoutes);
 admin.route("/", accountDeletionRoutes);

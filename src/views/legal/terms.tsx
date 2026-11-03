@@ -132,6 +132,12 @@ export const TermsPage: FC<{ origin: string; billingEnabled: boolean }> = ({
       gratis, sin importar su tamaño, si se realiza a más tardar el{" "}
       {freeFirstEventLastDay({ year: true })}. Las cortesías no cuentan para el tramo.
     </p>
+    <p>
+      El reporte se paga por transferencia a la cuenta de Coverr que muestra la página, subiendo la
+      captura. El reporte se abre en cuanto se sube y no se vuelve a cerrar. Si después la
+      transferencia no aparece y no se resuelve hablándolo, la banda no puede crear eventos nuevos
+      hasta pagarlo; los que ya están a la venta siguen vendiendo.
+    </p>
     <ul class="rows">
       {REPORT_TIERS.map((tier) => (
         <li key={tier.range}>

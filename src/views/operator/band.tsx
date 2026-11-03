@@ -1,7 +1,9 @@
 import type { FC } from "hono/jsx";
 import type { OperatorEventRow } from "../../db/queries/operator";
-import { formatDayMonth, formatLpsShort } from "../../lib/core";
+import { formatDayMonth } from "../../lib/core";
+import type { FeeStatus } from "../../lib/fees";
 import { TEXT_LIMITS } from "../../lib/text-limits";
+import { FeeStatusChip } from "./fee-status";
 import { OperatorLayout } from "./layout";
 import { passLastDay, StandingChips } from "./standing";
 
@@ -38,15 +40,9 @@ const ACTION_LABEL: Record<string, string> = {
   unban: "Reactivada",
   free_pass: "Pase libre",
   free_pass_end: "Pase quitado",
+  fee_resolved: "Pago revisado",
+  fee_unpaid: "Pago no pagado",
 };
-
-/** How an event's report was unlocked, or a dash while it is still locked. */
-function reportLabel(event: OperatorEventRow): string {
-  if (event.unlockMethod === null) return "—";
-  if (event.unlockBracket === "free_first") return "Gratis · primer evento";
-  if (event.unlockBracket === "free_pass") return "Gratis · pase libre";
-  return `${formatLpsShort(event.unlockAmount ?? 0)} · por cobrar`;
-}
 
 const SuspendForm: FC<{ band: Band }> = ({ band }) =>
   band.bannedAt ? (
@@ -144,7 +140,7 @@ export const OperatorBandPage: FC<{
   done?: string;
   error?: string;
 }> = ({ band, events, actions, done, error }) => (
-  <OperatorLayout title={`${band.name} — Coverr operación`} signedIn>
+  <OperatorLayout title={`${band.name} — Coverr operación`} signedIn active="bands">
     <p class="sub">
       <a href="/operador">← Bandas</a>
     </p>
@@ -192,7 +188,20 @@ export const OperatorBandPage: FC<{
                 <td>{formatDayMonth(event.startsAt, { year: true })}</td>
                 <td class="muted">{event.status}</td>
                 <td class="n">{event.paidTickets}</td>
-                <td>{reportLabel(event)}</td>
+                <td>
+                  {event.unlockBracket === null ? (
+                    "—"
+                  ) : event.feePaymentId ? (
+                    <a href={`/operador/pagos/${event.feePaymentId}`}>
+                      <FeeStatusChip
+                        status={event.feeStatus as FeeStatus}
+                        bracket={event.unlockBracket}
+                      />
+                    </a>
+                  ) : (
+                    <FeeStatusChip status={null} bracket={event.unlockBracket} />
+                  )}
+                </td>
               </tr>
             ))
           )}

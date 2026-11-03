@@ -287,6 +287,56 @@ export function suspendedEmailText(i: SuspendedEmailInput): string {
 
 export const SUSPENDED_EMAIL_SUBJECT = "Tu cuenta de Coverr está suspendida";
 
+// ------------------------------------------------------- fee needs a review
+
+type FeeAlertInput = {
+  band: { name: string; contactEmail: string };
+  event: { name: string };
+  amount: number;
+  flags: { code: string; detail: string }[];
+  /** The payment's page in the operator panel. */
+  url: string;
+};
+
+/**
+ * To every operator, when a band's fee screenshot does not pass the checks.
+ * The report is already open; this asks a person to look and, if need be,
+ * write to the band — a reply goes straight to the band's contact address.
+ */
+export function feeAlertEmailHtml(i: FeeAlertInput): string {
+  const rows = i.flags
+    .map(
+      (f) =>
+        `<tr><td style="background:${CRIT_BG};border:3px solid ${INK};border-radius:12px;padding:14px 16px;font:400 15px/1.6 ${SANS};color:${INK}">
+<b style="color:${CRIT};font:700 12px/1.4 ${MONO};letter-spacing:.08em">${escapeHtml(f.code)}</b><br>
+${escapeHtml(f.detail)}
+</td></tr><tr><td style="height:10px"></td></tr>`,
+    )
+    .join("");
+
+  return `<!doctype html><html lang="es"><body style="margin:0;background:${CREAM};padding:26px 14px;font-family:${SANS}">
+<table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:460px;text-align:left">
+<tr><td style="${HEADING};padding-bottom:12px">Un pago de reporte necesita revisión</td></tr>
+<tr><td style="${BODY_TEXT};padding-bottom:16px">
+<b style="color:${INK}">Banda:</b> ${escapeHtml(i.band.name)} (${escapeHtml(i.band.contactEmail)})<br>
+<b style="color:${INK}">Evento:</b> ${escapeHtml(i.event.name)}<br>
+<b style="color:${INK}">Monto:</b> ${formatLpsShort(i.amount)}
+</td></tr>
+${rows}
+<tr><td style="padding-top:12px"><a href="${i.url}" style="${BUTTON}">Ver el pago</a></td></tr>
+<tr><td style="${FINE_PRINT};padding-top:26px">El reporte ya está abierto para la banda. Respondé este correo para escribirle.</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export function feeAlertEmailText(i: FeeAlertInput): string {
+  const lines = i.flags.map((f) => `- ${f.code}: ${f.detail}`).join("\n");
+  return `Un pago de reporte necesita revisión\n\nBanda: ${i.band.name} (${i.band.contactEmail})\nEvento: ${i.event.name}\nMonto: ${formatLpsShort(i.amount)}\n\n${lines}\n\nVer el pago: ${i.url}`;
+}
+
+export function feeAlertEmailSubject(i: FeeAlertInput): string {
+  return `Pago por revisar — ${i.band.name}`;
+}
+
 // ------------------------------------------------------------ refund request
 
 type FlagAlertInput = {

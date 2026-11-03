@@ -10,6 +10,8 @@ export type Bindings = {
   EMAIL_FROM?: string;
   SESSION_SECRET?: string;
   ANTHROPIC_API_KEY?: string;
+  /** Who may sign in to /operador, and who is told about a fee to review. See `lib/operator.ts`. */
+  OPERATOR_EMAILS?: string[];
   /** Rate limiters. Optional: `unsafe` bindings may be absent in local dev. */
   PURCHASE_LIMIT?: Limiter;
   EMAIL_LIMIT?: Limiter;

@@ -78,6 +78,13 @@
       "when": 1793746344903,
       "tag": "0010_operator_panel",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1793747999715,
+      "tag": "0011_fee_payments",
+      "breakpoints": true
     }
   ]
 }

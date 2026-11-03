@@ -1,6 +1,8 @@
 import { Hono } from "hono";
+import { operatorAccountRoutes } from "./accounts";
 import { operatorBandRoutes } from "./bands";
 import type { OperatorEnv } from "./context";
+import { operatorFeeRoutes } from "./fees";
 import { operatorSessionRoutes, requireOperator } from "./session";
 
 /**
@@ -17,3 +19,5 @@ operator.use("*", requireOperator);
 
 operator.route("/", operatorSessionRoutes);
 operator.route("/", operatorBandRoutes);
+operator.route("/", operatorFeeRoutes);
+operator.route("/", operatorAccountRoutes);

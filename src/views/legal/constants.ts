@@ -1,5 +1,6 @@
 import { PROOF_RETENTION_DAYS } from "../../lib/core";
 
+export { FEE_PROOF_RETENTION_DAYS } from "../../lib/fees";
 /**
  * The few values both legal documents quote. They live here so the two pages
  * cannot disagree with each other, and the retention window is re-exported

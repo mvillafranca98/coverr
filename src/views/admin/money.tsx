@@ -2,6 +2,7 @@ import type { FC } from "hono/jsx";
 import { formatLps, formatLpsShort } from "../../lib/core";
 import type { Settlement, UnlockPrice } from "../../lib/settlement";
 import { AdminLayout } from "./layout";
+import { type FeeAccount, ReportLock } from "./report-lock";
 
 export const MoneyPage: FC<{
   bandName: string;
@@ -12,8 +13,12 @@ export const MoneyPage: FC<{
   unlocked: boolean;
   /** What unlocking costs, and why it is free when it is. */
   price: UnlockPrice;
+  /** Where to transfer a charged fee; null when it is free or Coverr has no account yet. */
+  feeAccount: FeeAccount | null;
+  /** The band has just uploaded its fee screenshot and the report opened. */
+  justPaid?: boolean;
   error?: string;
-}> = ({ bandName, event, expenses, settlement, unlocked, price, error }) => (
+}> = ({ bandName, event, expenses, settlement, unlocked, price, feeAccount, justPaid, error }) => (
   <AdminLayout
     title={`Dinero — ${event.name}`}
     bandName={bandName}
@@ -24,6 +29,12 @@ export const MoneyPage: FC<{
     <h1>Dinero</h1>
     <p class="sub">{event.name}</p>
     {error ? <div class="note crit">{error}</div> : null}
+    {justPaid ? (
+      <div class="note ok">
+        Recibimos la captura de tu pago y el reporte ya está abierto. Si algo no cuadra con la
+        transferencia, te escribimos.
+      </div>
+    ) : null}
 
     <h2>Costos</h2>
     <div class="scroll">
@@ -164,27 +175,7 @@ export const MoneyPage: FC<{
         </table>
       </div>
     ) : (
-      <div class="note warn">
-        <b>Lo que le toca a cada integrante está bloqueado.</b>
-        <p style="margin:8px 0 0">
-          Todo lo demás — preventa, códigos QR, entrada, ventas en efectivo, el resumen en vivo — es
-          gratis y siempre lo va a ser. El reparto final de este evento cuesta{" "}
-          <b>{formatLpsShort(price.bracket.amount)}</b>
-          {price.waiver === "free_pass" ? " (pero tenés pase libre, así que no pagás)" : ""}
-          {price.waiver === "free_first" ? " (pero tu primer evento es gratis)" : ""}.
-        </p>
-        <form
-          method="post"
-          action={`/admin/e/${event.slug}/dinero/desbloquear`}
-          style="margin-top:12px"
-        >
-          <button class="btn" type="submit">
-            {price.waiver
-              ? "Desbloquear gratis"
-              : `Desbloquear por ${formatLpsShort(price.amount)}`}
-          </button>
-        </form>
-      </div>
+      <ReportLock slug={event.slug} price={price} feeAccount={feeAccount} />
     )}
   </AdminLayout>
 );

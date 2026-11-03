@@ -403,6 +403,16 @@ tr.tot td:first-child {
   color: var(--muted);
 }
 
+/* A row of links and buttons above or below a table: the month bar and the
+   pagers on the operator pages. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
 form.inline {
   display: flex;
   flex-wrap: wrap;
@@ -616,6 +626,26 @@ select:focus {
 .right {
   text-align: right;
 }
+/* Where a band pays its report fee: the account and the upload, on the
+   page's own surface so the band greys stay legible. */
+.fee-pay {
+  margin-top: 12px;
+  padding: 16px 18px;
+  border: var(--edge);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+input[type="file"] {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 2px dashed var(--line-2);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-size: 16px;
+}
+
 .copyline {
   display: flex;
   flex-wrap: wrap;

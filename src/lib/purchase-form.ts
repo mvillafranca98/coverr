@@ -2,7 +2,7 @@ import { BANKS, isShortCode } from "./core";
 import { type ProofMediaType, sniffProof } from "./file-type";
 import { TEXT_LIMITS, tooLong } from "./text-limits";
 
-const MAX_PROOF_BYTES = 10 * 1024 * 1024;
+export const MAX_PROOF_BYTES = 10 * 1024 * 1024;
 const MAX_TICKETS = 10;
 
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
