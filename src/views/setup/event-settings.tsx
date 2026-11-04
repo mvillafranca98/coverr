@@ -12,7 +12,8 @@ export const EventSettingsPage: FC<{
     staffToken: string | null;
     startsAt: string;
   };
-  values: EventFormValues;
+  /** Partial because a refused save shows what was typed, blanks included. */
+  values: Partial<EventFormValues>;
   origin: string;
   soldCount: number;
   error?: string;

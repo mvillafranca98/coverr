@@ -7,7 +7,12 @@ import { unpaidFeeFor } from "../../db/queries/fees";
 import { confirmedTicketCount } from "../../db/queries/orders";
 import * as s from "../../db/schema";
 import { newId, newStaffToken, nowIso } from "../../lib/core";
-import { type EventInput, REFUND_TEXT, readEventForm } from "../../lib/event-form";
+import {
+  type EventInput,
+  REFUND_TEXT,
+  readEventForm,
+  typedEventValues,
+} from "../../lib/event-form";
 import { EventSettingsPage } from "../../views/setup/event-settings";
 import { NewEventPage } from "../../views/setup/new-event";
 import type { AdminContext, AdminEnv } from "./context";
@@ -16,7 +21,10 @@ export const eventSettingsRoutes = new Hono<AdminEnv>();
 
 const settingsPath = (slug: string) => `/admin/e/${slug}/ajustes?saved=1`;
 
-async function renderSettings(c: AdminContext, opts: { error?: string; saved?: boolean } = {}) {
+async function renderSettings(
+  c: AdminContext,
+  opts: { error?: string; saved?: boolean; typed?: Partial<EventInput> } = {},
+) {
   const db = drizzle(c.env.DB, { schema: s });
   const bandId = c.get("bandId");
   const slug = c.req.param("slug");
@@ -55,6 +63,7 @@ async function renderSettings(c: AdminContext, opts: { error?: string; saved?: b
         presaleAmount: rules[0]?.amount ?? 20000,
         presaleMaxQty: rules[0]?.maxQty ?? null,
         doorAmount: rules[1]?.amount ?? 25000,
+        ...opts.typed,
       }}
     />,
   );
@@ -120,9 +129,13 @@ eventSettingsRoutes.post("/nuevo", async (c) => {
   const owed = await unpaidFeeFor(db, bandId);
   if (owed) return c.html(<NewEventPage bandName={band.name} owed={owed} />, 403);
 
-  const parsed = readEventForm(await c.req.parseBody());
+  const body = await c.req.parseBody();
+  const parsed = readEventForm(body);
   if (!parsed.ok) {
-    return c.html(<NewEventPage bandName={band.name} error={parsed.message} />, 400);
+    return c.html(
+      <NewEventPage bandName={band.name} error={parsed.message} typed={typedEventValues(body)} />,
+      400,
+    );
   }
   const values = parsed.values;
 
@@ -169,8 +182,10 @@ eventSettingsRoutes.post("/e/:slug/ajustes", async (c) => {
   const event = await findEventBySlug(db, c.get("bandId"), c.req.param("slug"));
   if (!event) return c.notFound();
 
-  const parsed = readEventForm(await c.req.parseBody());
-  if (!parsed.ok) return renderSettings(c, { error: parsed.message });
+  const body = await c.req.parseBody();
+  const parsed = readEventForm(body);
+  if (!parsed.ok)
+    return renderSettings(c, { error: parsed.message, typed: typedEventValues(body) });
   const values = parsed.values;
 
   await db

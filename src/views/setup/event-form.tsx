@@ -116,9 +116,10 @@ export const Fields: FC<{
           name="presale_amount"
           id="presale_amount"
           step="1"
-          min="0"
+          min="1"
           required
-          value={v.presaleAmount != null ? String(v.presaleAmount / 100) : "200"}
+          value={v.presaleAmount != null ? String(v.presaleAmount / 100) : ""}
+          placeholder="200"
         />
       </div>
       <div>
@@ -130,9 +131,10 @@ export const Fields: FC<{
           name="door_amount"
           id="door_amount"
           step="1"
-          min="0"
+          min="1"
           required
-          value={v.doorAmount != null ? String(v.doorAmount / 100) : "250"}
+          value={v.doorAmount != null ? String(v.doorAmount / 100) : ""}
+          placeholder="250"
         />
       </div>
     </div>

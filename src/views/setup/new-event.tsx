@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { formatLpsShort } from "../../lib/core";
+import type { EventInput } from "../../lib/event-form";
 import { AdminLayout } from "../admin/layout";
 import { CONTACT_EMAIL } from "../legal/constants";
 import { Fields } from "./event-form";
@@ -7,12 +8,14 @@ import { Fields } from "./event-form";
 export const NewEventPage: FC<{
   bandName: string;
   error?: string;
+  /** What was typed before a refusal, so the form comes back filled in. */
+  typed?: Partial<EventInput>;
   /**
    * A report fee an operator has marked unpaid. While there is one the band
    * cannot create events — the ones already on sale keep selling.
    */
   owed?: { eventName: string; amount: number } | null;
-}> = ({ bandName, error, owed }) => (
+}> = ({ bandName, error, typed, owed }) => (
   <AdminLayout title={`Nuevo evento — ${bandName}`} bandName={bandName}>
     <h1>Nuevo evento</h1>
     {owed ? (
@@ -30,7 +33,7 @@ export const NewEventPage: FC<{
         <p class="sub">Se crea como borrador. Nadie puede comprar hasta que lo publiqués.</p>
         {error ? <div class="note crit">{error}</div> : null}
         <form method="post" action="/admin/nuevo" style="max-width:620px">
-          <Fields v={{}} />
+          <Fields v={typed ?? {}} />
           <button class="btn" type="submit" style="margin-top:22px">
             Crear evento
           </button>

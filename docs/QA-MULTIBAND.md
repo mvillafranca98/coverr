@@ -339,8 +339,9 @@ The runbook notes this has never been thrown in production. A quiet test window 
     used up in 7.3).
 - [ ] **9.2 Delete both test bands**
   - **Do:**
-    1. Each band: event → **Ajustes** → set **Empieza** to **yesterday** → **Guardar cambios**.
-       An upcoming event with tickets blocks deletion.
+    1. Each band: event → **Ajustes** → set **Empieza** to **yesterday**, and **Puertas** to
+       yesterday too (or clear it) → **Guardar cambios**. An upcoming event with tickets blocks
+       deletion, and doors can't be more than 12 hours before the start.
     2. Then **Banda** → **Borrar la cuenta…** → type the band's name to confirm → delete.
   - **See:** a page confirming the account is gone. Opening an old sign-in link only leads back
     to the sign-in page.
