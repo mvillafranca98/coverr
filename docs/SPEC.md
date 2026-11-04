@@ -1,6 +1,6 @@
 # Coverr: spec
 
-Status: v1 agreed; the operator panel is a draft · Last updated: 2026-11-03
+Status: v1 agreed; the operator panel is live; several bands per email is planned · Last updated: 2026-11-04
 
 The long-form product specification lives in `coverr-spec.html` at the repo root — it carries the
 reasoning, the baseline event ledger and the decisions that are closed. This file is the short
@@ -107,6 +107,41 @@ one since 2026-11-04, the two personal BAC accounts as fallbacks.
 **Out of scope for this phase:** roles inside a band; levels among operators; automatic bank
 reconciliation; anything that lets the operator see or move a band's ticket money, which never
 passes through Coverr.
+
+## Next: one email, several bands (planned)
+
+Musicians play in more than one band, and a manager may run several. Today one email is one band:
+signing up again with the same address only sends a sign-in link to the band it already has.
+Planned for after the multi-band test, before launch.
+
+**Decided on 2026-11-04:**
+
+- **One email can run several bands, each kept apart in everything:** events, accounts, members,
+  money, fees, bans, passes and promos. Each band still has one login, its contact email. This is
+  not roles inside a band, and not several logins for one band.
+- **The free first event stays once per band**, not once per email. It only covers events held
+  by 31 January 2027, so a person with three bands getting three is a bounded cost.
+- **An unpaid fee blocks new events on every band of that email.** Otherwise starting a new band
+  gets around it.
+- **A band is created only when its link is opened.** Today `/registro` writes the band before
+  the address is confirmed, so anyone can create bands under someone else's email. With several
+  per email that matters more, so it changes for the first band too.
+
+| # | Feature | Acceptance criteria (testable) | Status |
+|---|---|---|---|
+| F20 | Another band, same email | `/registro` with an address that already runs a band, under a new name, emails a "Crear <banda>" link; the band exists only once that link is opened. The same name as one of that email's bands (ignoring case and accents) sends a sign-in link to it instead. The page answers identically in every case, so it reveals nothing about which addresses run a band | planned |
+| F21 | Choosing a band | Signing in with an address that runs several bands opens a page listing them; the panel's top bar gets **Cambiar de banda**. A session holds one band at a time, and switching is checked on the server: the band's contact email must still be the session's | planned |
+| F22 | Owed across bands | While any band of an email has a fee marked unpaid, none of that email's bands can create an event, and the new-event page names the band and the report owed. Events on sale keep selling and unlocked reports stay open, as in F19 | planned |
+
+**What it touches:** the unique index on `bands.contact_email` goes (a migration); the sign-in
+link and session carry the email as well as the band; `findBandByEmail` becomes a list; the
+operator's band list shows when an email runs more than one band.
+
+**Still to settle:**
+
+1. **Does a ban follow the person?** Today it is per band. Proposed: a signup from an email with
+   a banned band gets the suspension notice instead of a new band; that email's other bands keep
+   working unless banned themselves.
 
 ## Success metrics
 
