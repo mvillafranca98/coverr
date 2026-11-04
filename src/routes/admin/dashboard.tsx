@@ -47,8 +47,10 @@ dashboardRoutes.get("/e/:slug", async (c) => {
     )
     .groupBy(s.orders.bankSelected);
 
+  // Orders, not flags: the banner says "comprobantes", and one recycled receipt
+  // raises two flags (same file, same reference).
   const [openFlags] = await db
-    .select({ n: sql<number>`count(*)` })
+    .select({ n: sql<number>`count(distinct ${s.verificationFlags.orderId})` })
     .from(s.verificationFlags)
     .innerJoin(s.orders, eq(s.verificationFlags.orderId, s.orders.id))
     .where(
