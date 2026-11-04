@@ -19,15 +19,17 @@ only knows its own event, and that the operator's switches act on the right band
 
 | Role | Who | Email | Bank account |
 |---|---|---|---|
-| **Banda A** — "Prueba A" | Armando | `mvillafranca98+bandaa@gmail.com` | Armando's BAC |
+| **Banda A** — "Prueba A" | Armando | `mvillafranca98+bandaa@gmail.com` | Alexis's BAC |
 | **Banda B** — "Prueba B" | Alexis | `a.mencias99+bandab@gmail.com` | Alexis's BAC |
-| Buyer of Banda A | Alexis | `a.mencias99+compra@gmail.com` | pays from Alexis's BAC |
-| Buyer of Banda B | Armando | `mvillafranca98+compra@gmail.com` | pays from Armando's BAC |
+| Buyer of Banda A | Armando | `mvillafranca98+compraa@gmail.com` | pays from Armando's BAC |
+| Buyer of Banda B | Armando | `mvillafranca98+comprab@gmail.com` | pays from Armando's BAC |
 | Door staff, Banda A | whoever has the spare phone | — | — |
 | Operator | Armando, on the laptop | `mvillafranca98@gmail.com` at `/operador` | — |
 
 A `+something` alias lands in the same Gmail inbox but counts as a different address to Coverr,
-which is what lets one person run a band and buy from another.
+which is what lets one person run a band and buy from another. Both bands collect into Alexis's
+BAC account, so every buyer transfer goes from Armando's BAC to Alexis's, and Armando buys from
+both bands with a different alias for each.
 
 **Three habits for the whole test:**
 
@@ -72,8 +74,8 @@ which is what lets one person run a band and buy from another.
 - [ ] **1.3 Bank account and members**
   - **Where:** **Banda** in the top bar.
   - **Do:**
-    - Under **Cuentas bancarias**: Banco "BAC Credomatic", your own **Número de cuenta**, your
-      name as **Titular** → **Agregar**.
+    - Under **Cuentas bancarias**: Banco "BAC Credomatic", **Alexis's** account number and name
+      on both bands, so buyer transfers go from Armando's BAC to Alexis's → **Agregar**.
     - Under **Integrantes y reparto**: one member at 60 and one at 40 in the empty rows →
       **Guardar reparto**. Try 60 and 30 first: it's refused with "Los porcentajes suman 90%…"
       and the rows keep what you typed.
@@ -96,8 +98,9 @@ which is what lets one person run a band and buy from another.
 
 ## Part 2 — Buying (buyers on their phones)
 
-Alexis buys from **Banda A** with Banda A's link; Armando buys from **Banda B** with Banda B's
-link. Do 2.1 to 2.3 **for both bands**; 2.4 and 2.5 only on Banda A.
+Armando buys from both bands, each with its own link and its own buyer alias from the Cast
+table, paying from Armando's BAC into Alexis's account. Do 2.1 to 2.3 **for both bands**; 2.4
+and 2.5 only on Banda A.
 
 - [ ] **2.1 A normal purchase**
   - **Where:** the sale link from 1.4.
