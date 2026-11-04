@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { settlementFor } from "../../db/queries/event-totals";
 import { findEventBySlug } from "../../db/queries/events";
-import { feeAccountForBand } from "../../db/queries/fees";
+import { feeAccountForBand, unpaidFeeFor } from "../../db/queries/fees";
 import { readFlags } from "../../db/queries/flags";
 import { priceToUnlock, unlockForEvent } from "../../db/queries/unlocks";
 import * as s from "../../db/schema";
@@ -37,6 +37,8 @@ moneyRoutes.get("/e/:slug/dinero", async (c) => {
   // Comps are free tickets; charging for them would be indefensible.
   const price = await priceToUnlock(db, { band, event, paidTickets: counts.sold - counts.comp });
   const account = price.waiver ? null : await feeAccountForBand(db, bandId);
+  // Asked only when it could matter: a paid report still locked.
+  const owed = price.waiver || unlock || !flags.billing ? null : await unpaidFeeFor(db, bandId);
 
   return c.html(
     <MoneyPage
@@ -56,6 +58,7 @@ moneyRoutes.get("/e/:slug/dinero", async (c) => {
             }
           : null
       }
+      owed={owed}
       justPaid={c.req.query("pagado") === "1" && !!unlock}
       error={c.req.query("error") ?? undefined}
     />,

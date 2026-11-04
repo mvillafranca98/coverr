@@ -28,7 +28,8 @@ type Payment = {
 
 const DONE: Record<string, string> = {
   revisado: "Marcado como revisado: el pago está bien.",
-  "no-pagado": "Marcado como no pagado. La banda no puede crear eventos hasta que se resuelva.",
+  "no-pagado":
+    "Marcado como no pagado. La banda no puede crear ni publicar eventos, ni abrir otro reporte pagado, hasta que se resuelva.",
   factura: "Factura guardada.",
 };
 
@@ -153,8 +154,9 @@ export const FeePaymentPage: FC<{
       )}
     </div>
     <p class="muted">
-      Marcarlo no pagado no cierra el reporte: la banda deja de poder crear eventos hasta que lo
-      resuelvan. Para escribirle: {band.contactEmail}.
+      Marcarlo no pagado no cierra el reporte: la banda deja de poder crear o publicar eventos, y de
+      abrir otro reporte pagado, hasta que lo resuelvan. Lo que ya está a la venta sigue vendiendo.
+      Para escribirle: {band.contactEmail}.
     </p>
 
     <h2>Factura</h2>

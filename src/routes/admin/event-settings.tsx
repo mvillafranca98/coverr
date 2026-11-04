@@ -13,6 +13,8 @@ import {
   readEventForm,
   typedEventValues,
 } from "../../lib/event-form";
+import { owedFeeMessage } from "../../lib/fees";
+import { CONTACT_EMAIL } from "../../views/legal/constants";
 import { EventSettingsPage } from "../../views/setup/event-settings";
 import { NewEventPage } from "../../views/setup/new-event";
 import type { AdminContext, AdminEnv } from "./context";
@@ -242,6 +244,18 @@ eventSettingsRoutes.post("/e/:slug/ajustes/estado", async (c) => {
 
   const wanted = String((await c.req.parseBody())["status"] ?? "");
   const status = wanted === "live" ? "live" : wanted === "closed" ? "closed" : event.status;
+
+  if (status === "live" && event.status !== "live") {
+    // Opening a sale counts as much as creating an event: without this, drafts
+    // made before a fee was marked unpaid could be published to get around it.
+    // A sale already open is left alone.
+    const owed = await unpaidFeeFor(db, bandId);
+    if (owed) {
+      return renderSettings(c, {
+        error: owedFeeMessage(owed, "publicar eventos ni volver a abrir una venta", CONTACT_EMAIL),
+      });
+    }
+  }
 
   if (status === "live") {
     // Publishing with no bank account would show a buyer a page they cannot

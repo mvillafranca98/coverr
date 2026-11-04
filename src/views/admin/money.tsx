@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { formatLps, formatLpsShort } from "../../lib/core";
+import type { OwedFee } from "../../lib/fees";
 import type { Settlement, UnlockPrice } from "../../lib/settlement";
 import { COST_CATEGORY_LABEL, costCategoryLabel } from "./cost-category";
 import { AdminLayout } from "./layout";
@@ -16,10 +17,23 @@ export const MoneyPage: FC<{
   price: UnlockPrice;
   /** Where to transfer a charged fee; null when it is free or Coverr has no account yet. */
   feeAccount: FeeAccount | null;
+  /** An earlier report marked unpaid: until it is settled this one cannot be paid for. */
+  owed?: OwedFee | null;
   /** The band has just uploaded its fee screenshot and the report opened. */
   justPaid?: boolean;
   error?: string;
-}> = ({ bandName, event, expenses, settlement, unlocked, price, feeAccount, justPaid, error }) => (
+}> = ({
+  bandName,
+  event,
+  expenses,
+  settlement,
+  unlocked,
+  price,
+  feeAccount,
+  owed,
+  justPaid,
+  error,
+}) => (
   <AdminLayout
     title={`Dinero — ${event.name}`}
     bandName={bandName}
@@ -172,7 +186,7 @@ export const MoneyPage: FC<{
         </table>
       </div>
     ) : (
-      <ReportLock slug={event.slug} price={price} feeAccount={feeAccount} />
+      <ReportLock slug={event.slug} price={price} feeAccount={feeAccount} owed={owed ?? null} />
     )}
   </AdminLayout>
 );

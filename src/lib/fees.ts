@@ -1,4 +1,4 @@
-import { HN_OFFSET } from "./core";
+import { formatLpsShort, HN_OFFSET } from "./core";
 import { MAX_PROOF_BYTES } from "./purchase-form";
 import type { Flag } from "./verify";
 
@@ -24,6 +24,19 @@ export const FEE_PROOF_RETENTION_DAYS = 90;
  * - unpaid: an operator, after talking to the band, says it was not paid
  */
 export type FeeStatus = "checking" | "ok" | "flagged" | "resolved" | "unpaid";
+
+/** A report fee an operator has marked unpaid: what stands between a band and the next step. */
+export type OwedFee = { eventName: string; amount: number };
+
+/**
+ * What a band that owes is told when it tries something an unpaid fee blocks:
+ * creating or publishing an event, or opening another paid report. Sales
+ * already open keep selling, which is said every time so nobody panics about
+ * a show that is already selling.
+ */
+export function owedFeeMessage(owed: OwedFee, blocked: string, contactEmail: string): string {
+  return `Tenés un pago pendiente: el reporte de ${owed.eventName} (${formatLpsShort(owed.amount)}) todavía no está pagado, así que por ahora no podés ${blocked}. Los eventos que ya están a la venta siguen vendiendo. Escribinos a ${contactEmail} y lo resolvemos.`;
+}
 
 /** The screenshot a band sent with its fee, or what to tell it when there is none fit to keep. */
 export function readFeeProofFile(

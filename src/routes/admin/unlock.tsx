@@ -3,13 +3,13 @@ import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { settlementFor } from "../../db/queries/event-totals";
 import { findEventBySlug } from "../../db/queries/events";
-import { feeAccountForBand, unlockByTransfer } from "../../db/queries/fees";
+import { feeAccountForBand, unlockByTransfer, unpaidFeeFor } from "../../db/queries/fees";
 import { readFlags } from "../../db/queries/flags";
 import { priceToUnlock, unlockForEvent, unlockWithoutCharge } from "../../db/queries/unlocks";
 import * as s from "../../db/schema";
 import { runFeeVerification } from "../../jobs/verify-fee";
 import { newId, nowIso, sha256Hex } from "../../lib/core";
-import { feeProofPurgeAfter, readFeeProofFile } from "../../lib/fees";
+import { feeProofPurgeAfter, owedFeeMessage, readFeeProofFile } from "../../lib/fees";
 import { feeProofObjectKey, removeProofIfWriteFails } from "../../lib/proof-storage";
 import { checkProofBytes } from "../../lib/purchase-form";
 import { TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
@@ -66,6 +66,11 @@ unlockRoutes.post("/e/:slug/dinero/desbloquear", async (c) => {
     });
     return c.redirect(moneyPath(event.slug), 303);
   }
+
+  // An unpaid fee blocks the next paid report: otherwise a second screenshot
+  // that never pays opens a second report. Free ones above still open.
+  const owed = await unpaidFeeFor(db, bandId);
+  if (owed) return back(owedFeeMessage(owed, "abrir otro reporte pagado", CONTACT_EMAIL));
 
   // Each upload is a paid vision call, so it shares the re-read's ceiling.
   if (!(await withinLimit(c.env.EXTRACT_LIMIT, `fee:${bandId}`))) return back(TOO_MANY_REQUESTS);

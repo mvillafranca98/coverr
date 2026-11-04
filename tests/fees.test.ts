@@ -8,6 +8,7 @@ import {
   isMonth,
   monthBounds,
   monthOf,
+  owedFeeMessage,
   readFeeProofFile,
   shiftMonth,
 } from "../src/lib/fees";
@@ -140,5 +141,16 @@ describe("the ledger's months", () => {
     expect(isMonth("2026-13")).toBe(false);
     expect(isMonth("2026-1")).toBe(false);
     expect(isMonth("'; DROP TABLE")).toBe(false);
+  });
+});
+
+describe("owedFeeMessage", () => {
+  const owed = { eventName: "Evento 2", amount: 500 };
+
+  it("names the report owed, what is blocked, and that open sales keep selling", () => {
+    const message = owedFeeMessage(owed, "publicar eventos", "hola@coverr.live");
+    expect(message).toBe(
+      "Tenés un pago pendiente: el reporte de Evento 2 (L5) todavía no está pagado, así que por ahora no podés publicar eventos. Los eventos que ya están a la venta siguen vendiendo. Escribinos a hola@coverr.live y lo resolvemos.",
+    );
   });
 });

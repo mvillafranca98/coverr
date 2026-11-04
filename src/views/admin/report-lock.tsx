@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { formatLpsShort } from "../../lib/core";
+import { type OwedFee, owedFeeMessage } from "../../lib/fees";
 import type { UnlockPrice } from "../../lib/settlement";
 import { CONTACT_EMAIL } from "../legal/constants";
 import { CopyLink } from "./copy-link";
@@ -20,7 +21,9 @@ export const ReportLock: FC<{
   slug: string;
   price: UnlockPrice;
   feeAccount: FeeAccount | null;
-}> = ({ slug, price, feeAccount }) => {
+  /** An earlier report marked unpaid, which has to be settled before this one is paid for. */
+  owed: OwedFee | null;
+}> = ({ slug, price, feeAccount, owed }) => {
   const action = `/admin/e/${slug}/dinero/desbloquear`;
   return (
     <>
@@ -50,7 +53,13 @@ export const ReportLock: FC<{
         ) : null}
       </div>
 
-      {price.waiver ? null : feeAccount ? (
+      {/* Said before any transfer: paying this one would not open it while the
+          other is owed, and the band would be out the money for nothing. */}
+      {price.waiver ? null : owed ? (
+        <div class="note crit" style="margin-top:12px">
+          {owedFeeMessage(owed, "abrir otro reporte pagado", CONTACT_EMAIL)}
+        </div>
+      ) : feeAccount ? (
         <div class="fee-pay">
           <p style="margin-top:0">
             Transferí <b>{formatLpsShort(price.amount)}</b> a esta cuenta y subí la captura. El
