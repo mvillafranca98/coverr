@@ -102,8 +102,10 @@
     // Who may sign in to /operador, Coverr's back office (lib/operator.ts).
     // Checked on every request, so removing an address ends that person's
     // access on their next click. Addresses, not secrets: in the open on
-    // purpose, like ALERT_EMAIL below.
-    "OPERATOR_EMAILS": ["mvillafranca98@gmail.com", "a.mencias99@gmail.com"],
+    // purpose, like ALERT_EMAIL below. hola@ is a shared inbox: its sign-in
+    // links reach whoever Email Routing forwards it to, so adding a forwarding
+    // destination there makes that person an operator too.
+    "OPERATOR_EMAILS": ["hola@coverr.live", "mvillafranca98@gmail.com", "a.mencias99@gmail.com"],
 
     // Who hears about a crash. The operator, not a band: a band can do nothing
     // about a stack trace. Not a secret — an address, in the open on purpose so

@@ -46,10 +46,12 @@ which is what lets one person run a band and buy from another.
 - [ ] **0.1 Coverr's accounts are ready**
   - **Where:** `coverr.live/operador/acceso` → type `mvillafranca98@gmail.com` → **Enviar
     enlace** → open the email "Entrar a Coverr" → **Entrar**. Then **Cuentas** in the top bar.
-  - **Do:** make sure both BAC accounts are listed. If Armando's doesn't say **PRINCIPAL**, tap
-    **Hacer principal** on it.
-  - **See:** two rows, and Armando's marked **PRINCIPAL**. This matters in Part 7: Banda B
-    (Alexis) must be shown Armando's account, because Alexis can't pay into Alexis's own account.
+  - **Do:** make sure all three accounts are listed: the company's (INVERSIONES ALFRAM S. DE
+    R.L.), Armando's and Alexis's. If the company's doesn't say **PRINCIPAL**, tap **Hacer
+    principal** on it.
+  - **See:** three rows, the company's marked **PRINCIPAL**. This matters in Part 7: a band is
+    shown the Coverr account at its own bank, and with several there, the main one. Banda B
+    banks at BAC, so it must be shown the company's account, not Alexis's own.
 - [ ] **0.2 Billing is off**
   - **Where:** `coverr.live/terminos`, section **Qué cuesta**.
   - **See:** a paragraph starting "**Hoy el cobro está desactivado**". Leave it off until Part 7.
@@ -279,8 +281,9 @@ them to Armando:
 - [ ] **7.3 Banda B pays L5**
   - **Where:** Banda B → event → **Dinero**.
   - **See:** the yellow box: "…cuesta L500 — con tu promo del 99%, **L5**". Under it, "Transferí
-    L5 a esta cuenta y subí la captura", with **Banco** BAC Credomatic, **A nombre de** Armando,
-    **Monto** L5, and Armando's account number with **Copiar**.
+    L5 a esta cuenta y subí la captura", with **Banco** BAC Credomatic, **A nombre de**
+    INVERSIONES ALFRAM S. DE R.L., **Monto** L5, and the company's account number with
+    **Copiar**.
   - **Do:** Alexis transfers **L5** to that account, then **Captura de la transferencia** → the
     screenshot → **Subir y desbloquear**.
   - **See:** the member table opens straight away, under a green note "Recibimos la captura de
@@ -290,11 +293,11 @@ them to Armando:
   - **See:**
     - Banda B's row reads **L5 (−99%)**; Banda A's row reads "Gratis · pase libre".
     - Within two minutes, Banda B's status is either **RECIBIDO** (the receipt checked out) or
-      **POR REVISAR**, with an email "Pago por revisar — Prueba B" to both of you naming the
-      reason. Write down which one, and the reason if any.
+      **POR REVISAR**, with an email "Pago por revisar — Prueba B" to every operator naming the
+      reason (Armando gets it twice: once directly and once through `hola@`). Write down which one, and the reason if any.
 - [ ] **7.5 The payment's own page**
   - **Do:** tap Banda B's status chip.
-  - **See:** under "Lo que se leyó", the amount L5, Armando's account, a reference and the date;
+  - **See:** under "Lo que se leyó", the amount L5, the company's account, a reference and the date;
     under "Captura", the screenshot itself. Type an invoice number under **Factura** →
     **Guardar** → "Factura guardada." Back on **Cobros**, **Descargar CSV** contains that number.
 - [ ] **7.6 Marking it unpaid, then paid**

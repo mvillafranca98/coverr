@@ -95,13 +95,14 @@ what a band or a buyer can do, except where a row says so.
 **Still to settle:**
 
 1. **SAR invoicing** — see above; needed before billing goes on, not before building.
-2. **Macawly's BAC account** as the main one. The two personal BAC accounts are the fallbacks; all
-   three are entered by an operator at `/operador/cuentas`, never in the code.
-3. **A deleted band's fee history.** Deleting an account deletes its fee payments and their
+2. **A deleted band's fee history.** Deleting an account deletes its fee payments and their
    screenshots with everything else, so the ledger loses them. Fine for privacy; check it suits
    the accountant.
 
-The associate, Alexis, is an operator: both addresses are in `OPERATOR_EMAILS`.
+The operators are Armando, the associate Alexis, and the shared `hola@coverr.live` inbox: all
+three addresses are in `OPERATOR_EMAILS`. Coverr's three accounts are entered at
+`/operador/cuentas`, never in the code: the company's (INVERSIONES ALFRAM S. DE R.L.) as the main
+one since 2026-11-04, the two personal BAC accounts as fallbacks.
 
 **Out of scope for this phase:** roles inside a band; levels among operators; automatic bank
 reconciliation; anything that lets the operator see or move a band's ticket money, which never

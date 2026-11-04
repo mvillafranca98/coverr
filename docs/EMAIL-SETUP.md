@@ -20,6 +20,10 @@ Who a reply reaches depends on the email. A ticket email replies to the band's c
 and a band notification (a flagged order, a refund request) replies to the buyer. `hola@` gets
 replies to sign-in emails and crash alerts, and anything people write from the legal pages.
 
+`hola@` is also on `OPERATOR_EMAILS`, so it can sign in to `/operador`, and it gets the fee
+alerts every operator gets. Whoever Email Routing forwards `hola@` to receives those sign-in
+links: adding a destination there makes that person an operator.
+
 ---
 
 ## The DNS records
