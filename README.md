@@ -503,6 +503,7 @@ The live, itemised status of security, privacy, performance and launch readiness
 | [`docs/RUNBOOK.md`](docs/RUNBOOK.md) | Something is wrong in production, or before a backup, restore or rollback |
 | [`docs/EMAIL-SETUP.md`](docs/EMAIL-SETUP.md) | Changing `EMAIL_FROM` or the Resend key |
 | [`docs/QA-FINDINGS.md`](docs/QA-FINDINGS.md) | You want the history of a bug and how it was fixed |
+| [`docs/QA-MULTIBAND.md`](docs/QA-MULTIBAND.md) | Testing on production with two bands, two buyers, the door and the operator |
 
 ## License
 
