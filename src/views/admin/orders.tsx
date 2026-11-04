@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
 import { formatLpsShort } from "../../lib/core";
 import { AdminLayout } from "./layout";
-import { CHANNEL_LABEL, type OrderRow } from "./order-row";
+import { CHANNEL_LABEL, ORDER_STATUS_LABEL, type OrderRow } from "./order-row";
 
 export const OrdersPage: FC<{
   bandName: string;
@@ -115,7 +115,7 @@ export const OrdersPage: FC<{
                 <td class="n">{formatLpsShort(o.expectedAmount)}</td>
                 <td>
                   {o.status !== "confirmed" ? (
-                    <span class="chip crit">{o.status}</span>
+                    <span class="chip crit">{ORDER_STATUS_LABEL[o.status] ?? o.status}</span>
                   ) : o.flag ? (
                     <span class="chip warn">revisar</span>
                   ) : (

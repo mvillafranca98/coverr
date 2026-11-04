@@ -202,7 +202,7 @@ export function ticketEmailText(i: TicketEmailInput): string {
 }
 
 export function ticketEmailSubject(i: TicketEmailInput): string {
-  return `Tus ${i.order.quantity === 1 ? "boleto" : `${i.order.quantity} boletos`} — ${i.event.name}`;
+  return `${i.order.quantity === 1 ? "Tu boleto" : `Tus ${i.order.quantity} boletos`} — ${i.event.name}`;
 }
 
 // ------------------------------------------------------------ admin sign-in

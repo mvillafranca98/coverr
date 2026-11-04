@@ -28,6 +28,12 @@ export type OrderRow = {
   flag: string | null;
 };
 
+/** How an order that is no longer confirmed reads. A confirmed one shows its check instead. */
+export const ORDER_STATUS_LABEL: Record<string, string> = {
+  refunded: "reembolsada",
+  void: "anulada",
+};
+
 export const CHANNEL_LABEL: Record<string, string> = {
   online: "Preventa",
   door_online: "Taquilla",

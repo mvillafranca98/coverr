@@ -42,6 +42,14 @@ const DONE: Record<string, string> = {
   "sin-promo": "Promo quitada.",
 };
 
+/** An event's status as the operator reads it. */
+const EVENT_STATUS_LABEL: Record<string, string> = {
+  draft: "borrador",
+  live: "a la venta",
+  closed: "venta cerrada",
+  settled: "liquidado",
+};
+
 const ACTION_LABEL: Record<string, string> = {
   ban: "Suspendida",
   unban: "Reactivada",
@@ -299,7 +307,7 @@ export const OperatorBandPage: FC<{
               <tr key={event.id}>
                 <td>{event.name}</td>
                 <td>{formatDayMonth(event.startsAt, { year: true })}</td>
-                <td class="muted">{event.status}</td>
+                <td class="muted">{EVENT_STATUS_LABEL[event.status] ?? event.status}</td>
                 <td class="n">{event.paidTickets}</td>
                 <td>
                   {event.unlockBracket === null ? (
