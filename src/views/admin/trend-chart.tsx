@@ -57,7 +57,8 @@ export const TrendChart: FC<{
           x2={WIDTH}
           y1={PLOT_TOP + layout.baselineY}
           y2={PLOT_TOP + layout.baselineY}
-        />        <g transform={`translate(0 ${PLOT_TOP})`}>
+        />
+        <g transform={`translate(0 ${PLOT_TOP})`}>
           {layout.columns.map((column, index) => (
             <path
               key={points[index]?.date ?? index}
