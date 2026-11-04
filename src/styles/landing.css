@@ -1214,9 +1214,11 @@ b {
   text-transform: uppercase;
   color: var(--ink);
 }
+/* Three to a row, so six tiers sit as two even rows: squeezed into one row of
+   six, the four-digit prices ran past their cards. Two to a row on a phone. */
 .tiers {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin: 16px 0 0;
   padding: 0;
@@ -1282,6 +1284,9 @@ b {
   letter-spacing: 0;
 }
 @media (max-width: 640px) {
+  .tiers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .tier {
     min-height: 150px;
     gap: 28px;
