@@ -44,6 +44,7 @@ Two numbers from the baseline event (Jungla, 01/08 — 229 people, L52,650) shap
 | F9 | Settlement | Gross − costs = net, split by member percentage, less dated advances that carry across events. The members table is edited and saved whole, and refuses to save unless it totals exactly 100; a fund the band keeps is a row of its own ("Fondo de la banda"). Removing a member who has advances is refused until those are cleared. Changed 2026-11-04 from "warn, never block". The unlocked report shows the split as one bar, a part per member, above the table | live |
 | F10 | Band home | Every event the band has run, with cost trends by category and a fan view built from normalised email and phone. With two or more events played, four small charts (personas, bruto, costos, neto) over the last 12. Never gated | live; charts since 2026-11-04 |
 | F11 | Refunds | A buyer can request one inside the policy frozen on their order; approving voids the QR and drops the order from every total | live |
+| F11b | Guides | A public guide for bands at `/guia`, linked as **Ayuda** from the band panel and listed in the sitemap, covering every screen a band uses in the order it meets them; prices and the billing line are read from the live rules, not typed. An operator guide at `/operador/guia`, behind the operator sign-in, covers the back office, the switches and the usual conversations with bands | live since 2026-11-04 |
 
 ## Out of scope for v1
 

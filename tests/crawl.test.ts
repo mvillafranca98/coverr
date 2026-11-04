@@ -86,7 +86,12 @@ describe("the sitemap", () => {
   it("lists every indexable page as an absolute production URL", () => {
     const xml = sitemapXml(PRODUCTION);
     const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-    expect(locs).toEqual([`${PRODUCTION}/`, `${PRODUCTION}/privacidad`, `${PRODUCTION}/terminos`]);
+    expect(locs).toEqual([
+      `${PRODUCTION}/`,
+      `${PRODUCTION}/privacidad`,
+      `${PRODUCTION}/terminos`,
+      `${PRODUCTION}/guia`,
+    ]);
   });
 
   it("does not double the slash when APP_ORIGIN ends with one", () => {

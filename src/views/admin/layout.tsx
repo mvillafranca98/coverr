@@ -111,6 +111,7 @@ export const AdminLayout: FC<
                 <a href="/admin/banda" class={active === "band" ? "on" : ""}>
                   Banda
                 </a>
+                <a href="/guia">Ayuda</a>
                 <a href="/admin/salir">Salir</a>
               </span>
             </nav>

@@ -3,16 +3,17 @@
  * may fetch, and which pages exist to be found.
  *
  * The pages decide for themselves whether they are indexable —
- * `views/layout.tsx` defaults to noindex and only the landing and legal pages
+ * `views/layout.tsx` defaults to noindex and only the landing, legal and guide pages
  * opt out. This file has to agree with them: a sitemap entry for a page that
  * says noindex is a contradiction search consoles report as an error.
  */
 
 /**
  * Every page meant to turn up in a search result. Keep in step with the pages
- * that opt out of noindex: `views/landing/page.tsx` and `views/legal/doc.tsx`.
+ * that opt out of noindex: `views/landing/page.tsx` and `views/legal/doc.tsx`, which
+ * the band guide (`views/guide/band-guide.tsx`) is built on.
  */
-export const INDEXABLE_PATHS = ["/", "/privacidad", "/terminos"] as const;
+export const INDEXABLE_PATHS = ["/", "/privacidad", "/terminos", "/guia"] as const;
 
 /**
  * Only paths that cannot carry a noindex of their own: the scanner and admin

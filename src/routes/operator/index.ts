@@ -3,6 +3,7 @@ import { operatorAccountRoutes } from "./accounts";
 import { operatorBandRoutes } from "./bands";
 import type { OperatorEnv } from "./context";
 import { operatorFeeRoutes } from "./fees";
+import { operatorGuideRoutes } from "./guide";
 import { operatorSessionRoutes, requireOperator } from "./session";
 
 /**
@@ -21,3 +22,4 @@ operator.route("/", operatorSessionRoutes);
 operator.route("/", operatorBandRoutes);
 operator.route("/", operatorFeeRoutes);
 operator.route("/", operatorAccountRoutes);
+operator.route("/", operatorGuideRoutes);

@@ -14,7 +14,7 @@ export const OperatorLayout: FC<
   PropsWithChildren<{
     title: string;
     signedIn?: boolean;
-    active?: "bands" | "fees" | "accounts";
+    active?: "bands" | "fees" | "accounts" | "guide";
   }>
 > = ({ title, signedIn, active, children }) => (
   <html lang="es">
@@ -53,6 +53,9 @@ export const OperatorLayout: FC<
                 </a>
                 <a href="/operador/cuentas" class={active === "accounts" ? "on" : ""}>
                   Cuentas
+                </a>
+                <a href="/operador/guia" class={active === "guide" ? "on" : ""}>
+                  Guía
                 </a>
                 <a href="/operador/salir">Salir</a>
               </span>
