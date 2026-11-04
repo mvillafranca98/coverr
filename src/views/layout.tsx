@@ -14,15 +14,19 @@ import { ErrorReporter } from "./error-reporter";
  * pitches Coverr to bands and would read as somebody else's ad here.
  *
  * Built from the page's own URL so it is absolute on whatever origin served it.
+ * The version in the query is bumped whenever the image is redrawn: apps
+ * cache a preview image by its address, so a new picture needs a new one.
  */
+const SHARE_CARD_PATH = "/og-event.png?v=2";
+
 const ShareCard: FC<{ pageUrl: string }> = ({ pageUrl }) => (
   <>
-    <meta property="og:image" content={new URL("/og-event.png", pageUrl).toString()} />
+    <meta property="og:image" content={new URL(SHARE_CARD_PATH, pageUrl).toString()} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="Coverr: comprá tu boleto pagando directo a la banda y recibí tu QR al instante."
+      content="Coverr: comprá tu boleto. Pagás directo a la banda y tu QR llega al instante."
     />
   </>
 );

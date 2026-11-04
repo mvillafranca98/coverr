@@ -57,50 +57,17 @@ const iconPage = (size, scale, bg) => `<!doctype html><html><body style="margin:
     ${markSvg(Math.round(size * scale))}
   </div></body></html>`;
 
-/**
- * The two share cards, same composition, different reader.
- *
- * `og.png` is for the landing page: it pitches Coverr to bands. Event links
- * are opened by buyers, who would be confused by an ad addressed to someone
- * else, so they get `og-event.png`, which says what buying through Coverr is
- * like. The link's own title and description name the actual gig; the image
- * never does, so one card serves every event.
- */
-const SHARE_CARDS = [
-  {
-    file: "og.png",
-    headline: "Vendé tus boletos sin que el dinero pase por <em>nadie más</em>.",
-    facts: ["Preventa", "QR al instante", "Entrada sin señal"],
-    ticket: {
-      band: "Tu banda",
-      event: "Tu próximo toque",
-      meta: ["Sábado", "8:00 pm", "A tu cuenta"],
-    },
-    sticker: "¡QR al instante!",
-  },
-  {
-    file: "og-event.png",
-    headline: "Comprá tu boleto <em>sin vueltas</em>.",
-    sub: "Transferís a la cuenta de la banda, subís el comprobante y tu QR aparece en el momento.",
-    facts: ["Pagás directo a la banda", "QR al instante", "Sin crear cuenta"],
-    ticket: { band: "La banda", event: "El toque", meta: ["Sábado", "8:00 pm", "Preventa"] },
-    sticker: "¡Entrás con tu QR!",
-  },
-];
-
-const ogPage = (card) => `<!doctype html><html><head><meta charset="utf-8"><style>
+/** What both share cards are drawn with: the page, the ticket and the stickers. */
+const CARD_CSS = `
 @font-face{font-family:"Archivo Black";src:url(${font("archivo-black-latin-400-normal.woff2")}) format("woff2")}
 *{box-sizing:border-box}
 body{margin:0;width:1200px;height:630px;overflow:hidden;position:relative;background:#fff4de;color:#111;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-.copy{position:absolute;left:68px;top:56px;width:650px}
 .mark{display:inline-flex;align-items:center;gap:12px;padding:8px 16px 8px 10px;border:3px solid #111;border-radius:14px;background:#ffd43b;box-shadow:5px 5px 0 #111;font-family:"Archivo Black";font-size:30px;letter-spacing:-.02em}
 h1{margin:44px 0 0;font-family:"Archivo Black";font-weight:400;font-size:64px;line-height:1.16;letter-spacing:-.035em}
-.sub{margin:26px 0 0;max-width:600px;font-size:26px;line-height:1.35;font-weight:700;text-wrap:balance}
 em{font-style:normal;white-space:nowrap;padding:0 .14em;border:3px solid #111;border-radius:.18em;background:#ffd43b;-webkit-box-decoration-break:clone}
-.facts{position:absolute;left:68px;bottom:52px;display:flex;gap:12px}
 .facts span{padding:7px 14px;border:3px solid #111;border-radius:999px;background:#fff;font-weight:800;font-size:18px}
-.disc{position:absolute;right:58px;top:96px;width:400px;height:400px;border:3px solid #111;border-radius:50%;background:#ff6ec7}
-.tix{position:absolute;right:96px;top:92px;width:320px;transform:rotate(-4deg);filter:drop-shadow(9px 9px 0 #111)}
+.disc{position:absolute;width:400px;height:400px;border:3px solid #111;border-radius:50%;background:#ff6ec7}
+.tix{position:absolute;width:320px;filter:drop-shadow(9px 9px 0 #111)}
 .card{border:3px solid #111;border-radius:18px;background:#b8f35a;overflow:hidden;
   -webkit-mask:radial-gradient(circle 13px at 0 calc(100% - 126px),#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 13px at 100% calc(100% - 126px),#0000 97%,#000) right/51% 100% no-repeat}
 .head{padding:12px 18px;background:#111;color:#b8f35a;font:700 12px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase}
@@ -114,30 +81,102 @@ em{font-style:normal;white-space:nowrap;padding:0 .14em;border:3px solid #111;bo
 .stub img{width:96px;height:96px;padding:3px;border:3px solid #111;border-radius:10px;background:#fff}
 .code{font:700 20px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em}
 .small{margin-top:8px;font:700 11px/1 ui-monospace,Menlo,Consolas,monospace;text-transform:uppercase}
-.sticker{position:absolute;right:66px;top:58px;width:100px;height:100px;display:grid;place-items:center;padding:10px;border:3px solid #111;border-radius:50%;background:#4d7cfe;font-family:"Archivo Black";font-size:15px;line-height:1.05;text-align:center;transform:rotate(12deg)}
-</style></head><body>
-<div class="copy">
-  <div class="mark">${markSvg(40)}<span>coverr</span></div>
-  <h1>${card.headline}</h1>
-  ${card.sub ? `<p class="sub">${card.sub}</p>` : ""}
-</div>
-<div class="facts">${card.facts.map((fact) => `<span>✓ ${fact}</span>`).join("")}</div>
-<div class="disc"></div>
-<div class="tix"><div class="card">
+.sticker{position:absolute;width:100px;height:100px;display:grid;place-items:center;padding:10px;border:3px solid #111;border-radius:50%;background:#4d7cfe;font-family:"Archivo Black";font-size:15px;line-height:1.05;text-align:center;transform:rotate(12deg)}`;
+
+const ticketHtml = (ticket) => `<div class="card">
   <div class="head">Preventa · Admite 1</div>
   <div class="body">
-    <div class="band">${card.ticket.band}</div>
-    <div class="event">${card.ticket.event}</div>
-    <div class="meta">${card.ticket.meta.map((item) => `<span>${item}</span>`).join("")}</div>
+    <div class="band">${ticket.band}</div>
+    <div class="event">${ticket.event}</div>
+    <div class="meta">${ticket.meta.map((item) => `<span>${item}</span>`).join("")}</div>
   </div>
   <div class="perf"></div>
   <div class="stub">
     <img src="data:image/svg+xml;base64,${Buffer.from(qrPath(ORIGIN)).toString("base64")}">
     <div><div class="code">COVERR</div><div class="small">Boleto 1 de 1</div></div>
   </div>
-</div></div>
+</div>`;
+
+/**
+ * The landing page's card, pitched to bands: the copy down the left, the
+ * ticket on the right. Shared by bands from a computer, where it shows large.
+ */
+const landingCardPage = (
+  card,
+) => `<!doctype html><html><head><meta charset="utf-8"><style>${CARD_CSS}
+.copy{position:absolute;left:68px;top:56px;width:650px}
+.facts{position:absolute;left:68px;bottom:52px;display:flex;gap:12px}
+.disc{right:58px;top:96px}
+.tix{right:96px;top:92px;transform:rotate(-4deg)}
+.sticker{right:66px;top:58px}
+</style></head><body>
+<div class="copy">
+  <div class="mark">${markSvg(40)}<span>coverr</span></div>
+  <h1>${card.headline}</h1>
+</div>
+<div class="facts">${card.facts.map((fact) => `<span>✓ ${fact}</span>`).join("")}</div>
+<div class="disc"></div>
+<div class="tix">${ticketHtml(card.ticket)}</div>
 <div class="sticker">${card.sticker}</div>
 </body></html>`;
+
+/**
+ * The event card, built around its middle square. Event links travel by
+ * WhatsApp, which on a computer shows the image as a small square cut from
+ * the centre: so the mark and "Comprá tu boleto" fill the middle 630px, and
+ * the disc and the ticket only decorate the sides the large card adds. The
+ * link's own title and description name the actual gig; the image never does,
+ * so one card serves every event.
+ */
+const eventCardPage = (card) => `<!doctype html><html><head><meta charset="utf-8"><style>${CARD_CSS}
+.centre{position:absolute;left:285px;top:0;width:630px;height:630px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.centre .mark{font-size:36px;padding:10px 20px 10px 12px}
+.centre h1{margin:40px 0 0;font-size:112px;line-height:1.02;letter-spacing:-.045em}
+.centre h1 em{display:inline-block;margin-top:14px;border-width:5px}
+.centre .sub{margin:34px 0 0;font-size:27px;font-weight:800}
+.disc{left:-190px;top:250px}
+.sticker{left:96px;top:86px;transform:rotate(-10deg)}
+.tix{left:948px;top:118px;transform:rotate(6deg) scale(.78);transform-origin:top left}
+</style></head><body>
+<div class="disc"></div>
+<div class="sticker">${card.sticker}</div>
+<div class="tix">${ticketHtml(card.ticket)}</div>
+<div class="centre">
+  <div class="mark">${markSvg(48)}<span>coverr</span></div>
+  <h1>${card.headline}</h1>
+  <p class="sub">${card.sub}</p>
+</div>
+</body></html>`;
+
+/**
+ * The two share cards, different reader and different composition.
+ *
+ * `og.png` is for the landing page: it pitches Coverr to bands. Event links
+ * are opened by buyers, who would be confused by an ad addressed to someone
+ * else, so they get `og-event.png`, which says what buying through Coverr is.
+ */
+const SHARE_CARDS = [
+  {
+    file: "og.png",
+    page: landingCardPage,
+    headline: "Vendé tus boletos sin que el dinero pase por <em>nadie más</em>.",
+    facts: ["Preventa", "QR al instante", "Entrada sin señal"],
+    ticket: {
+      band: "Tu banda",
+      event: "Tu próximo toque",
+      meta: ["Sábado", "8:00 pm", "A tu cuenta"],
+    },
+    sticker: "¡QR al instante!",
+  },
+  {
+    file: "og-event.png",
+    page: eventCardPage,
+    headline: "Comprá tu<br><em>boleto</em>",
+    sub: "Pagás directo a la banda · QR al instante",
+    ticket: { band: "La banda", event: "El toque", meta: ["Sábado", "8:00 pm", "Preventa"] },
+    sticker: "¡Entrás con tu QR!",
+  },
+];
 
 const browser = await chromium.launch({ channel: "chrome" });
 try {
@@ -162,7 +201,7 @@ try {
 
   for (const card of SHARE_CARDS) {
     const og = await browser.newPage({ viewport: { width: 1200, height: 630 } });
-    await og.setContent(ogPage(card), { waitUntil: "load" });
+    await og.setContent(card.page(card), { waitUntil: "load" });
     await og.evaluate(() => document.fonts.ready);
     await og.screenshot({ path: `public/${card.file}` });
     await og.close();
