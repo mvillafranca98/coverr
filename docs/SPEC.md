@@ -41,7 +41,7 @@ Two numbers from the baseline event (Jungla, 01/08 — 229 people, L52,650) shap
 | F6 | Door scanning, offline | The scanner caches the full attendee list on load and validates locally. Scans queue and sync on reconnect. Verde names the attendee, ámbar names its reason, rojo names the time of the first scan | live |
 | F7 | Cash and comps at the door | Staff record a cash sale in one tap; comps are orders at zero that count toward attendance and never toward revenue or a pricing bracket | live |
 | F8 | Live dashboard | Sold, checked in, still outside; revenue by channel; per-account subtotals; wristbands expected vs actual; open flags. Free every time | live |
-| F9 | Settlement | Gross − costs = net, split by member percentage, less dated advances that carry across events. Warns when percentages don't total 100, never blocks | live |
+| F9 | Settlement | Gross − costs = net, split by member percentage, less dated advances that carry across events. The members table is edited and saved whole, and refuses to save unless it totals exactly 100; a fund the band keeps is a row of its own ("Fondo de la banda"). Removing a member who has advances is refused until those are cleared. Changed 2026-11-04 from "warn, never block" | live |
 | F10 | Band home | Every event the band has run, with cost trends by category and a fan view built from normalised email and phone. Never gated | live |
 | F11 | Refunds | A buyer can request one inside the policy frozen on their order; approving voids the QR and drops the order from every total | live |
 

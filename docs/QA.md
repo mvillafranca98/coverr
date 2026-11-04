@@ -150,7 +150,7 @@ Event → **Resumen** → *Entrada* → copy the staff link. Open on a phone.
 - [ ] **7.3** Per-account subtotals match what actually arrived in the bank
 - [ ] **7.4** Wristbands expected vs actual reconciles
 - [ ] **7.5** Adding costs in **Dinero** recomputes net and each member's share
-- [ ] **7.6** Splits that don't total 100 **warn without blocking**
+- [ ] **7.6** A split that doesn't total 100 **is refused**, naming the total, and the table keeps what was typed
 - [ ] **7.7** A refund **voids the QR** — that attendee now scans red — and writes a negative line
 - [ ] **7.8** The refunded order drops out of revenue totals but **remains in history**
 - [ ] **7.9** Band history shows the event with cost trends by category

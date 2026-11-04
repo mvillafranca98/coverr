@@ -72,7 +72,11 @@ export const bandMembers = sqliteTable(
       .notNull()
       .references(() => bands.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    /** Whole percent, 0-100. Validated as summing to 100 at settlement (warn, never block). */
+    /**
+     * Percent, 0-100, to the hundredth. A band's members total exactly 100: the
+     * members table refuses to save otherwise (lib/member-split.ts). A fund the
+     * band keeps is a row of its own.
+     */
     splitPct: real("split_pct").notNull().default(0),
     isCore: integer("is_core").notNull().default(1),
     sortOrder: integer("sort_order").notNull().default(0),

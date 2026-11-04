@@ -370,6 +370,13 @@ tr.tot td:first-child {
   font-family: var(--display);
   font-weight: 400;
 }
+/* A table of inputs: tighter cells so name, percentage and Quitar fit a phone
+   without scrolling sideways, and every cell centred on its input. */
+.member-table th,
+.member-table td {
+  padding: 8px 10px;
+  vertical-align: middle;
+}
 
 /* Status chips are solid stickers with black ink — they have to read at a
    glance across a dark room, which a tinted chip does not. */

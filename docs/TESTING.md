@@ -76,7 +76,7 @@ plan, no card. Two fields.
 
 4. **Agregá tu cuenta bancaria** → bank, account number, holder name. Save.
 5. **Agregá a los integrantes** → the four members and their percentages. They total 100; try
-   99 and confirm it warns rather than blocks.
+   99 and confirm **Guardar reparto** refuses it and names the total.
 6. **Creá tu primer evento** → everything from the table. Save.
 
 > **What to evaluate.** How many fields before the band can sell? Is anything asked for that

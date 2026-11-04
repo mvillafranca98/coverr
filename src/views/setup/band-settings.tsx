@@ -1,6 +1,8 @@
 import type { FC } from "hono/jsx";
 import { BANKS, bankLabel, formatEventDate, formatLps } from "../../lib/core";
+import { formatPct, type MemberFormRow } from "../../lib/member-split";
 import { AdminLayout } from "../admin/layout";
+import { MemberTable, savedMemberRows } from "./member-table";
 
 export const BandSettingsPage: FC<{
   band: { name: string; contactEmail: string };
@@ -21,9 +23,11 @@ export const BandSettingsPage: FC<{
     eventName: string | null;
   }[];
   events: { id: string; name: string; startsAt: string }[];
+  /** The members table as typed, when a save was just refused. */
+  typedMembers?: MemberFormRow[];
   saved?: boolean;
   error?: string;
-}> = ({ band, accounts, members, advances, events, saved, error }) => {
+}> = ({ band, accounts, members, advances, events, typedMembers, saved, error }) => {
   const pctTotal = members.reduce((n, m) => n + m.splitPct, 0);
   return (
     <AdminLayout title={`Ajustes — ${band.name}`} bandName={band.name} active="band">
@@ -135,91 +139,14 @@ export const BandSettingsPage: FC<{
       </form>
 
       <h2>Integrantes y reparto</h2>
-      {members.length > 0 && pctTotal !== 100 ? (
+      {/* Only a split saved before the table had to total 100 can show this. */}
+      {members.length > 0 && Math.round(pctTotal * 100) !== 10_000 ? (
         <div class="note warn">
-          Los porcentajes suman <b>{pctTotal}%</b>, no 100%. Puede ser intencional, pero revisalo.
+          Los porcentajes guardados suman <b>{formatPct(pctTotal)}%</b>, no 100%. Corregilos y
+          guardá el reparto.
         </div>
       ) : null}
-      <div class="scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th class="n">%</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {members.length === 0 ? (
-              <tr>
-                <td colspan={3} class="muted">
-                  Sin integrantes.
-                </td>
-              </tr>
-            ) : (
-              members.map((m) => (
-                <tr key={m.id}>
-                  <td>
-                    <form
-                      method="post"
-                      action="/admin/banda/integrante"
-                      style="display:flex;gap:6px"
-                    >
-                      <input type="hidden" name="id" value={m.id} />
-                      <input
-                        type="text"
-                        name="name"
-                        value={m.name}
-                        aria-label={`Nombre de ${m.name}`}
-                        style="min-width:140px"
-                      />
-                      <input
-                        type="number"
-                        name="split_pct"
-                        value={String(m.splitPct)}
-                        aria-label={`Porcentaje de ${m.name}`}
-                        min="0"
-                        max="100"
-                        step="0.5"
-                        style="width:80px"
-                      />
-                      <button class="btn sm ghost" type="submit" aria-label={`Guardar ${m.name}`}>
-                        Guardar
-                      </button>
-                    </form>
-                  </td>
-                  <td class="n">{m.splitPct}%</td>
-                  <td class="right">
-                    <form method="post" action="/admin/banda/integrante/borrar">
-                      <input type="hidden" name="id" value={m.id} />
-                      <button class="btn sm ghost" type="submit" aria-label={`Quitar a ${m.name}`}>
-                        Quitar
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-      <form method="post" action="/admin/banda/integrante" class="inline">
-        <div style="flex:1;min-width:170px">
-          <label class="fl" for="m_name">
-            Nuevo integrante
-          </label>
-          <input type="text" name="name" id="m_name" required />
-        </div>
-        <div style="min-width:110px">
-          <label class="fl" for="m_pct">
-            Porcentaje
-          </label>
-          <input type="number" name="split_pct" id="m_pct" min="0" max="100" step="0.5" required />
-        </div>
-        <button class="btn" type="submit">
-          Agregar
-        </button>
-      </form>
+      <MemberTable rows={typedMembers ?? savedMemberRows(members)} />
 
       <h2>Adelantos</h2>
       <p class="sub" style="margin-bottom:10px">

@@ -119,8 +119,9 @@ export const MoneyPage: FC<{
     <h2>Reparto</h2>
     {settlement.pctTotal !== 100 ? (
       <div class="note warn">
-        Los porcentajes suman <b>{settlement.pctTotal}%</b>, no 100%. Puede ser intencional (algo
-        queda en el fondo de la banda), pero revisalo.
+        Los porcentajes suman <b>{settlement.pctTotal}%</b>, no 100%. Corregilos en{" "}
+        <a href="/admin/banda">Banda</a>: si una parte queda para la banda, va en una fila "Fondo de
+        la banda".
       </div>
     ) : null}
 

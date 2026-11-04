@@ -737,7 +737,7 @@ Payout[i] = Share[i] &minus; advances[i]</pre>
     </table>
   </div>
   <ul>
-    <li><strong>Warn when percentages don&rsquo;t total 100</strong>, never block &mdash; bands sometimes hold back a deliberate remainder for the fund.</li>
+    <li><strong>Percentages must total exactly 100</strong> &mdash; the members table is saved whole and refuses anything else. A remainder the band holds back for the fund is a row of its own, <em>Fondo de la banda</em>, so every lempira of the net goes to a name. (Until 2026-11-04 this warned and never blocked.)</li>
     <li><strong>Advances are dated and carry across events</strong>, so an advance survives a show that underperforms.</li>
     <li><strong>Ticket counts come from records, never a typed cell.</strong> The current sheet hardcodes <span class="mono">92</span>; add a presale row and revenue silently stops updating.</li>
   </ul>

@@ -2,8 +2,15 @@ import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findBand, findBandEventById, findBandMember } from "../../db/queries/bands";
+import { bandMemberIds, membersWithAdvances, saveMemberTable } from "../../db/queries/members";
 import * as s from "../../db/schema";
 import { BANKS, lpsToCentavos, newId, normalizeEmail, nowIso } from "../../lib/core";
+import {
+  type MemberFormRow,
+  memberIdsChanged,
+  readMemberTable,
+  typedMemberRows,
+} from "../../lib/member-split";
 import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { BandSettingsPage } from "../../views/setup/band-settings";
 import type { AdminContext, AdminEnv } from "./context";
@@ -14,7 +21,10 @@ const SAVED = "/admin/banda?saved=1";
 
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-async function renderBandSettings(c: AdminContext, opts: { error?: string; saved?: boolean } = {}) {
+async function renderBandSettings(
+  c: AdminContext,
+  opts: { error?: string; saved?: boolean; typedMembers?: MemberFormRow[] } = {},
+) {
   const db = drizzle(c.env.DB, { schema: s });
   const bandId = c.get("bandId");
   const band = await findBand(db, bandId);
@@ -60,6 +70,7 @@ async function renderBandSettings(c: AdminContext, opts: { error?: string; saved
         date: row.advance.date,
         eventName: row.advance.eventId ? (eventNameById.get(row.advance.eventId) ?? null) : null,
       }))}
+      typedMembers={opts.typedMembers}
       error={opts.error}
       saved={opts.saved}
     />,
@@ -157,49 +168,36 @@ bandSettingsRoutes.post("/banda/cuenta/borrar", async (c) => {
 
 // ----------------------------------------------------------------- members
 
-bandSettingsRoutes.post("/banda/integrante", async (c) => {
+/** The whole members table in one save, refused unless it totals 100%. */
+bandSettingsRoutes.post("/banda/reparto", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const bandId = c.get("bandId");
   const body = await c.req.parseBody();
-  const memberId = String(body["id"] ?? "");
-  const name = String(body["name"] ?? "").trim();
-  const splitPct = Number(body["split_pct"]);
+  const refuse = (error: string) =>
+    renderBandSettings(c, { error, typedMembers: typedMemberRows(body) });
 
-  if (!name || !Number.isFinite(splitPct) || splitPct < 0 || splitPct > 100) {
-    return renderBandSettings(c, { error: "Revisá el nombre y el porcentaje (0 a 100)." });
-  }
-  const memberError = tooLong(name, TEXT_LIMITS.name, "El nombre del integrante");
-  if (memberError) return renderBandSettings(c, { error: memberError });
-
-  if (memberId) {
-    await db
-      .update(s.bandMembers)
-      .set({ name, splitPct })
-      .where(and(eq(s.bandMembers.id, memberId), eq(s.bandMembers.bandId, bandId)));
-  } else {
-    const existing = await db
-      .select({ id: s.bandMembers.id })
-      .from(s.bandMembers)
-      .where(eq(s.bandMembers.bandId, bandId));
-    await db.insert(s.bandMembers).values({
-      id: newId("mem"),
-      bandId,
-      name,
-      splitPct,
-      isCore: 1,
-      sortOrder: existing.length,
+  const table = readMemberTable(body);
+  if (!table.ok) return refuse(table.message);
+  // The ids arrive in the form, so they are checked against this band's own
+  // before anything is written; a stale form is refused the same way.
+  if (memberIdsChanged(table, await bandMemberIds(db, bandId))) {
+    return renderBandSettings(c, {
+      error: "Los integrantes cambiaron mientras editabas. Revisá la tabla y guardá de nuevo.",
     });
   }
-  return c.redirect(SAVED, 303);
-});
+  const holders = await membersWithAdvances(db, bandId, table.removeIds);
+  if (holders.length === 1) {
+    return refuse(
+      `${holders[0]} tiene adelantos anotados. Quitalos primero en Adelantos, o dejalo con 0%.`,
+    );
+  }
+  if (holders.length > 1) {
+    return refuse(
+      `${holders.join(", ")} tienen adelantos anotados. Quitalos primero en Adelantos, o dejalos con 0%.`,
+    );
+  }
 
-bandSettingsRoutes.post("/banda/integrante/borrar", async (c) => {
-  const db = drizzle(c.env.DB, { schema: s });
-  const memberId = String((await c.req.parseBody())["id"] ?? "");
-
-  await db
-    .delete(s.bandMembers)
-    .where(and(eq(s.bandMembers.id, memberId), eq(s.bandMembers.bandId, c.get("bandId"))));
+  await saveMemberTable(db, bandId, table);
   return c.redirect(SAVED, 303);
 });
 

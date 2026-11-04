@@ -74,9 +74,10 @@ which is what lets one person run a band and buy from another.
   - **Do:**
     - Under **Cuentas bancarias**: Banco "BAC Credomatic", your own **Número de cuenta**, your
       name as **Titular** → **Agregar**.
-    - Under **Integrantes y reparto**: add one member at 60 and one at 40, each with **Agregar**.
-  - **See:** the account listed, the two members listed with their percentages, and no warning
-    that the percentages don't add up to 100.
+    - Under **Integrantes y reparto**: one member at 60 and one at 40 in the empty rows →
+      **Guardar reparto**. Try 60 and 30 first: it's refused with "Los porcentajes suman 90%…"
+      and the rows keep what you typed.
+  - **See:** the account listed, and the two members saved with the footer reading **100%**.
 - [ ] **1.4 Create and publish the event**
   - **Where:** **+ Evento**.
   - **Do:** fill in **Nombre**, **Lugar**, **Empieza**, **Preventa (L)** `1`, **Taquilla (L)**
