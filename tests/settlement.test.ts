@@ -222,20 +222,26 @@ describe("priceBracket", () => {
     expect(priceBracket(151).amount).toBe(150000);
     expect(priceBracket(300).amount).toBe(150000);
     expect(priceBracket(301).amount).toBe(200000);
-    expect(priceBracket(5000).amount).toBe(200000);
+    expect(priceBracket(500).amount).toBe(200000);
+  });
+
+  it("adds L4 for each ticket past 500 instead of capping big shows", () => {
+    expect(priceBracket(501).amount).toBe(200400);
+    expect(priceBracket(1000).amount).toBe(400000);
+    expect(priceBracket(2000).amount).toBe(800000);
   });
 
   it("names each bracket distinctly", () => {
-    const names = [1, 61, 151, 301].map((n) => priceBracket(n).bracket);
-    expect(new Set(names).size).toBe(4);
+    const names = [1, 61, 151, 301, 501].map((n) => priceBracket(n).bracket);
+    expect(new Set(names).size).toBe(5);
   });
 
   // The landing page and the terms both derive their tables from this, so
   // these are the published prices. Changing one is a pricing decision, and
   // the spec's pricing table (coverr-spec.html, section 11) moves with it.
-  it("charges the published L500 to L2,000", () => {
-    expect([60, 150, 300, 301].map((n) => priceBracket(n).amount)).toEqual([
-      50000, 100000, 150000, 200000,
+  it("charges the published L500 to L2,000, then L4 a ticket past 500", () => {
+    expect([60, 150, 300, 500, 600].map((n) => priceBracket(n).amount)).toEqual([
+      50000, 100000, 150000, 200000, 240000,
     ]);
   });
 });

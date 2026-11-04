@@ -1,6 +1,11 @@
 import type { FC } from "hono/jsx";
 import { formatLpsShort } from "../../lib/core";
-import { freeFirstEventLastDay, priceBracket } from "../../lib/settlement";
+import {
+  freeFirstEventLastDay,
+  LARGE_SHOW_FROM,
+  LARGE_SHOW_PER_TICKET,
+  priceBracket,
+} from "../../lib/settlement";
 import { CONTACT_EMAIL, TERMS_UPDATED } from "./constants";
 import { LegalDoc } from "./doc";
 
@@ -23,11 +28,21 @@ import { LegalDoc } from "./doc";
  * published terms would then be a lie. Throwing the switch now rewrites this
  * page in the same instant.
  */
-const REPORT_TIERS: { range: string; amount: number }[] = [
-  { range: "1 – 60 boletos vendidos", amount: priceBracket(60).amount },
-  { range: "61 – 150", amount: priceBracket(150).amount },
-  { range: "151 – 300", amount: priceBracket(300).amount },
-  { range: "301 o más", amount: priceBracket(301).amount },
+const REPORT_TIERS: { range: string; price: string }[] = [
+  {
+    range: "1 – 60 boletos vendidos",
+    price: `${formatLpsShort(priceBracket(60).amount)} por evento`,
+  },
+  { range: "61 – 150", price: `${formatLpsShort(priceBracket(150).amount)} por evento` },
+  { range: "151 – 300", price: `${formatLpsShort(priceBracket(300).amount)} por evento` },
+  {
+    range: `301 – ${LARGE_SHOW_FROM}`,
+    price: `${formatLpsShort(priceBracket(LARGE_SHOW_FROM).amount)} por evento`,
+  },
+  {
+    range: `${LARGE_SHOW_FROM + 1} o más`,
+    price: `${formatLpsShort(priceBracket(LARGE_SHOW_FROM).amount)} por evento, más ${formatLpsShort(LARGE_SHOW_PER_TICKET)} por cada boleto arriba de ${LARGE_SHOW_FROM}`,
+  },
 ];
 
 export const TermsPage: FC<{ origin: string; billingEnabled: boolean }> = ({
@@ -143,7 +158,7 @@ export const TermsPage: FC<{ origin: string; billingEnabled: boolean }> = ({
       {REPORT_TIERS.map((tier) => (
         <li key={tier.range}>
           <strong>{tier.range}</strong>
-          <span>{formatLpsShort(tier.amount)} por evento</span>
+          <span>{tier.price}</span>
         </li>
       ))}
     </ul>

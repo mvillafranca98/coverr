@@ -421,7 +421,7 @@ export const eventUnlocks = sqliteTable(
       .notNull()
       .references(() => events.id, { onDelete: "cascade" })
       .unique(),
-    /** free_first | free_pass | promo | t60 | t150 | t300 | t301plus */
+    /** free_first | free_pass | promo | t60 | t150 | t300 | t500 | t501plus (t301plus before 2026-11-04) */
     bracket: text("bracket").notNull(),
     amount: integer("amount").notNull(),
     /** The promo's percentage when one priced this unlock; null when none did. */

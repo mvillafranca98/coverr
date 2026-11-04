@@ -1,6 +1,11 @@
 import type { FC } from "hono/jsx";
 import { formatLpsShort, slugify } from "../../lib/core";
-import { freeFirstEventLastDay, priceBracket } from "../../lib/settlement";
+import {
+  freeFirstEventLastDay,
+  LARGE_SHOW_FROM,
+  LARGE_SHOW_PER_TICKET,
+  priceBracket,
+} from "../../lib/settlement";
 import LANDING_CSS from "../../styles/landing.css";
 import TOKENS_CSS from "../../styles/tokens.css";
 import { BrandIcons, Monogram, Wordmark } from "../brand";
@@ -32,11 +37,19 @@ import { AccountsVisual, DoorVisual, ShareLinkVisual, TransferVisual } from "./s
  * The real unlock brackets, read from `priceBracket` the way the terms read
  * them, so the page cannot advertise a price the product does not charge.
  */
-const PRICE_TIERS: { tickets: string; price: string }[] = [
+const PRICE_TIERS: { tickets: string; price: string; extra?: string }[] = [
   { tickets: "1 – 60 boletos", price: formatLpsShort(priceBracket(60).amount) },
   { tickets: "61 – 150", price: formatLpsShort(priceBracket(150).amount) },
   { tickets: "151 – 300", price: formatLpsShort(priceBracket(300).amount) },
-  { tickets: "301 o más", price: formatLpsShort(priceBracket(301).amount) },
+  {
+    tickets: `301 – ${LARGE_SHOW_FROM}`,
+    price: formatLpsShort(priceBracket(LARGE_SHOW_FROM).amount),
+  },
+  {
+    tickets: `${LARGE_SHOW_FROM + 1} o más`,
+    price: formatLpsShort(priceBracket(LARGE_SHOW_FROM).amount),
+    extra: `+ ${formatLpsShort(LARGE_SHOW_PER_TICKET)} por cada boleto arriba de ${LARGE_SHOW_FROM}`,
+  },
 ];
 
 const STEPS: { title: string; body: string; visual: FC<{ slug: string }> }[] = [
@@ -391,7 +404,10 @@ export const LandingPage: FC<{
               {PRICE_TIERS.map((tier) => (
                 <li class="tier" key={tier.tickets} data-reveal>
                   <span class="tier__range">{tier.tickets}</span>
-                  <span class="tier__price">{tier.price}</span>
+                  <span class="tier__price">
+                    {tier.price}
+                    {tier.extra ? <small class="tier__extra">{tier.extra}</small> : null}
+                  </span>
                 </li>
               ))}
             </ol>

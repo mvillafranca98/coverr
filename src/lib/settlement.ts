@@ -94,15 +94,36 @@ export function perHead(s: Settlement): { gross: number; net: number; cost: numb
 }
 
 /**
+ * Where the flat brackets stop. Coverr is built for independent bands, for
+ * whom 300 to 500 people is a big night; past this, a show is priced by its
+ * size instead of capped, so a 2,000-person event does not pay what a 400 one
+ * does.
+ */
+export const LARGE_SHOW_FROM = 500;
+
+/**
+ * What each ticket past LARGE_SHOW_FROM adds, in centavos (L4). Set on
+ * 2026-11-04 against what a ticket costs Coverr to process — one receipt read
+ * per order, about L0.50 to L1, plus an email — so it pays for itself several
+ * times over and still stays near 2% of a large show's gross.
+ */
+export const LARGE_SHOW_PER_TICKET = 400;
+
+/**
  * Pricing bracket, resolved from tickets actually sold. Comps never count —
  * they are free tickets and charging for them would be indefensible.
  * A band's first event can be free regardless of size; see `isFreeFirstEvent`.
+ *
+ * Reports unlocked before 2026-11-04 may carry the old top bracket,
+ * `t301plus` (L2,000 flat for any size); it stays readable in history.
  */
 export function priceBracket(ticketsSold: number): { bracket: string; amount: number } {
   if (ticketsSold <= 60) return { bracket: "t60", amount: 50000 };
   if (ticketsSold <= 150) return { bracket: "t150", amount: 100000 };
   if (ticketsSold <= 300) return { bracket: "t300", amount: 150000 };
-  return { bracket: "t301plus", amount: 200000 };
+  if (ticketsSold <= LARGE_SHOW_FROM) return { bracket: "t500", amount: 200000 };
+  const extraTickets = ticketsSold - LARGE_SHOW_FROM;
+  return { bracket: "t501plus", amount: 200000 + extraTickets * LARGE_SHOW_PER_TICKET };
 }
 
 /**

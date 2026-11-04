@@ -757,11 +757,13 @@ Payout[i] = Share[i] &minus; advances[i]</pre>
         <tr><td>1 &ndash; 60</td><td class="n">L500</td><td>A 40-person bar gig grosses ~L4,000, so this is 12.5% of it.</td></tr>
         <tr><td>61 &ndash; 150</td><td class="n">L1,000</td><td></td></tr>
         <tr><td>151 &ndash; 300</td><td class="n">L1,500</td><td>The baseline event lands here &mdash; 2.8% of gross, 3.5% of net.</td></tr>
-        <tr><td>301 +</td><td class="n">L2,000</td><td></td></tr>
+        <tr><td>301 &ndash; 500</td><td class="n">L2,000</td><td>For the bands this is built for, 300 to 500 people is a big night.</td></tr>
+        <tr><td>501 +</td><td class="n">L2,000 + L4 per ticket over 500</td><td>A 1,000-person show pays L4,000, a 2,000-person one L8,000 &mdash; about 2% of gross at L200 a ticket. Processing a ticket costs Coverr roughly L0.30&ndash;L1 (one receipt read per order, plus an email), so this pays for itself several times over.</td></tr>
       </tbody>
     </table>
   </div>
   <ul>
+    <li><strong>Large shows priced by size since 4 November 2026.</strong> The top bracket used to be L2,000 flat for any size from 301 up; it now stops at 500, and each ticket past that adds L4. Reports already unlocked keep their price.</li>
     <li><strong>Raised on 30 October 2026</strong> from L400&ndash;L1,800 to L500&ndash;L2,000. An event already unlocked keeps the price it was unlocked at.</li>
     <li><strong>The totals show before the unlock.</strong> Decided on 3 November 2026: a locked report still shows gross, costs and net, so the band sees how the night went; the fee buys the per-member split, with advances already deducted. Nothing per member reaches the page until it is unlocked.</li>
     <li><strong>&ldquo;Primer toque gratis&rdquo; is a launch offer, limited on 3 November 2026.</strong> A band&rsquo;s first event is free only if it is <em>held</em> on or before 31 January 2027, Honduras time &mdash; judged by when the show happens, not when it was created, so a March gig set up in December does not stretch the offer. A first event held later is charged by its bracket. The landing page drops its free tier when the offer ends; the date lives in one place, <code>lib/settlement.ts</code>.</li>
