@@ -49,7 +49,7 @@ which is what lets one person run a band and buy from another.
   - **Do:** make sure both BAC accounts are listed. If Armando's doesn't say **PRINCIPAL**, tap
     **Hacer principal** on it.
   - **See:** two rows, and Armando's marked **PRINCIPAL**. This matters in Part 7: Banda B
-    (Alexis) must be shown Armando's account, because Alexis can't pay himself.
+    (Alexis) must be shown Armando's account, because Alexis can't pay into Alexis's own account.
 - [ ] **0.2 Billing is off**
   - **Where:** `coverr.live/terminos`, section **Qué cuesta**.
   - **See:** a paragraph starting "**Hoy el cobro está desactivado**". Leave it off until Part 7.
@@ -137,7 +137,7 @@ link. Do 2.1 to 2.3 **for both bands**; 2.4 and 2.5 only on Banda A.
 
 ## Part 3 — Bands cannot see each other (the most important part)
 
-**Alexis**, in Banda B's panel, copies three addresses from his browser's address bar and sends
+**Alexis**, in Banda B's panel, copies three addresses from the browser's address bar and sends
 them to Armando:
 
 - the event's **Resumen**: `coverr.live/admin/e/<slug-B>`;
@@ -146,12 +146,12 @@ them to Armando:
   image on its own and copy its address, ending in `/comprobante`.
 
 - [ ] **3.1 Banda A can't open Banda B's pages**
-  - **Where:** Armando, **signed in as Banda A**, pastes each address into his browser. Then he
+  - **Where:** Armando, **signed in as Banda A**, pastes each address into the browser. Then
     takes the event address and adds each ending in turn: `/ordenes`, `/ordenes.csv`,
     `/dinero`, `/ajustes`, `/venta`.
   - **See:** **every one** shows "**No encontramos esta página**". Never Banda B's name, buyers,
     numbers or receipt.
-- [ ] **3.2 Mixing an id into his own event doesn't work either**
+- [ ] **3.2 Mixing an id into Banda A's own event doesn't work either**
   - **Do:** take Banda A's own event address and add `/orden/<id-from-Banda-B>`.
   - **See:** "No encontramos esta página".
 - [ ] **3.3 Same thing the other way**
@@ -250,7 +250,7 @@ them to Armando:
 - [ ] **6.4 Suspending Banda B**
   - **Do:** "Prueba B" → **Suspensión** → a **Motivo** → **Suspender banda**.
   - **See (Alexis):**
-    - His next tap in his band panel signs him out, with "**Esta cuenta está suspendida.** Si
+    - The next tap in Banda B's panel signs out, with "**Esta cuenta está suspendida.** Si
       creés que es un error, escribinos a hola@coverr.live".
     - Asking for a sign-in link at `coverr.live/admin/acceso` brings an email "Tu cuenta de
       Coverr está suspendida" instead of a link.
