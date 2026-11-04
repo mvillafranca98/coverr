@@ -50,12 +50,18 @@ could be protecting against — a band standing at a door with 150 people outsid
 no fallback. The same reasoning is why `readFlags` fails **open**: if the table cannot be read,
 sales keep running. Stopping has to be something somebody chose.
 
-### Not yet run against production
+### Run against production on 2026-11-04
 
-Verified end to end locally on 2026-10-28 — sales off returns 503 on the buy page and refuses
-the POST, sales on sells normally, billing on rewrites `/terminos`. The table and the code that
-reads it have been live in production since 2026-10-28, but no switch has been thrown there yet:
-`sales` off pauses real sales, so do it once in a quiet window and turn it straight back on.
+Thrown during the multi-band test (`docs/QA-MULTIBAND.md`, parts 7 and 8), with the commands
+above:
+
+- `billing` on and off again: `/terminos` dropped and then restored the "Por ahora el reporte
+  también es gratis" line, and a band paid its fee by transfer in between.
+- `sales` off for about two minutes: every sale page answered 503 "La venta está pausada", the
+  real band's included, while `/health`, `/recuperar`, the dashboards and the door kept working.
+  Back on, all of them sold again at once.
+
+`proof_extraction` has still only been thrown locally (2026-10-28).
 
 ## Health check
 
