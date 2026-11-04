@@ -153,9 +153,9 @@ export const TermsPage: FC<{ origin: string; billingEnabled: boolean }> = ({
       </p>
     ) : (
       <p>
-        <b>Hoy el cobro está desactivado</b> y todas las bandas ven el reporte completo sin pagar,
-        mientras el producto se gana su lugar en la escena. Cuando eso cambie se avisa con
-        antelación y nunca de forma retroactiva: un evento ya desbloqueado queda desbloqueado. No
+        <b>Por ahora el reporte también es gratis:</b> mientras Coverr se gana su lugar en la
+        escena, todas las bandas lo ven completo sin pagar. Antes de empezar a cobrarlo se avisa con
+        antelación, y nunca de forma retroactiva: un evento ya desbloqueado queda desbloqueado. No
         hay suscripción ni plan mensual.
       </p>
     )}

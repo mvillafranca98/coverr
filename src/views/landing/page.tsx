@@ -397,8 +397,8 @@ export const LandingPage: FC<{
             </ol>
             {billingEnabled ? null : (
               <p class="billing-off" data-reveal>
-                <b>Hoy el cobro está desactivado:</b> todas las bandas ven el reporte completo sin
-                pagar. Antes de activarlo se avisa con tiempo.
+                <b>Por ahora el reporte también es gratis:</b> todas las bandas lo ven completo sin
+                pagar. Antes de empezar a cobrarlo se avisa con tiempo.
               </p>
             )}
             <p class="note" data-reveal>

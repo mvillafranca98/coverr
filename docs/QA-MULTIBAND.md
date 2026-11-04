@@ -56,7 +56,7 @@ both bands with a different alias for each.
     banks at BAC, so it must be shown the company's account, not Alexis's own.
 - [ ] **0.2 Billing is off**
   - **Where:** `coverr.live/terminos`, section **Qué cuesta**.
-  - **See:** a paragraph starting "**Hoy el cobro está desactivado**". Leave it off until Part 7.
+  - **See:** a paragraph starting "**Por ahora el reporte también es gratis**". Leave it off until Part 7.
 
 ## Part 1 — Two bands sign up (each on their own phone)
 
@@ -282,7 +282,7 @@ them to Armando:
     ```bash
     npx wrangler d1 execute coverr-db --remote --command "INSERT INTO platform_flags (key, enabled, note, changed_at) VALUES ('billing', 1, 'multi-band test', datetime('now')) ON CONFLICT(key) DO UPDATE SET enabled=1, note=excluded.note, changed_at=excluded.changed_at"
     ```
-  - **See:** `/terminos` no longer says "Hoy el cobro está desactivado".
+  - **See:** `/terminos` no longer says "Por ahora el reporte también es gratis".
 - [ ] **7.2 Banda A: free thanks to the pass**
   - **Where:** Banda A → event → **Dinero**.
   - **See:** the **Bruto / Costos / Neto** cards still show, and the member table is replaced by
@@ -322,7 +322,7 @@ them to Armando:
     ```bash
     npx wrangler d1 execute coverr-db --remote --command "INSERT INTO platform_flags (key, enabled, note, changed_at) VALUES ('billing', 0, 'multi-band test done', datetime('now')) ON CONFLICT(key) DO UPDATE SET enabled=0, note=excluded.note, changed_at=excluded.changed_at"
     ```
-  - **See:** `/terminos` says "Hoy el cobro está desactivado" again.
+  - **See:** `/terminos` says "Por ahora el reporte también es gratis" again.
 
 ## Part 8 (optional) — The sales kill switch
 
