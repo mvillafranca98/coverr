@@ -226,10 +226,11 @@ them to Armando:
 
 - [ ] **5.1 The report**
   - **Where:** event → **Dinero**.
-  - **Do:** under **Costos**, add "Sonido", category Sonido, `100` → **Agregar**.
-  - **See:** under **Reparto**, the cards **Bruto**, **Costos** (−L100) and **Neto** agree with
-    each other. The table shows the two members at 60% and 40%, splitting Neto. Billing is off,
-    so nothing is locked.
+  - **Do:** under **Costos**, add "Sonido", category Sonido, `2` → **Agregar**. Keep it small:
+    the test only took in a few lempiras, and a bigger cost makes every share negative.
+  - **See:** under **Reparto**, **Bruto** minus **Costos** (−L2) equals **Neto**, and the two
+    members at 60% and 40% split Neto with no "Sin asignar" row. Billing is off, so nothing is
+    locked.
 - [ ] **5.2 A refund**
   - **Do:**
     1. On the buyer's ticket page from 2.1 (the link is in the ticket email too), tap
