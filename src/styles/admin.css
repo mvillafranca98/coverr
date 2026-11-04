@@ -585,7 +585,14 @@ select:focus {
 .note.crit a,
 .note.warn b,
 .note.ok b,
-.note.crit b {
+.note.crit b,
+/* The page greys are set for the dark surface and vanish on a coloured note. */
+.note.warn .sub,
+.note.ok .sub,
+.note.crit .sub,
+.note.warn .muted,
+.note.ok .muted,
+.note.crit .muted {
   color: var(--accent-ink);
 }
 

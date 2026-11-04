@@ -101,7 +101,9 @@ export const OrderPage: FC<{
         <>
           <h2>Solicitud de reembolso</h2>
           <div class={`note ${refund.status === "open" ? "warn" : ""}`}>
-            <div style="font-size:12px;color:var(--dim);font-family:var(--mono)">
+            {/* No colours of its own: the note sets them, dark ink while it is
+                yellow and the page greys once the request is decided. */}
+            <div style="font-size:12px;font-family:var(--mono)">
               {formatMoment(refund.requestedAt)} ·{" "}
               {refund.status === "open"
                 ? "pendiente"
@@ -109,7 +111,7 @@ export const OrderPage: FC<{
                   ? "aprobada"
                   : "rechazada"}
             </div>
-            <p style="margin:8px 0 0;color:var(--text)">{refund.reason ?? "Sin motivo."}</p>
+            <p style="margin:8px 0 0;font-weight:700">{refund.reason ?? "Sin motivo."}</p>
             {refund.status === "open" ? (
               <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
                 <form method="post" action={`/admin/e/${event.slug}/orden/${order.id}/reembolso`}>
