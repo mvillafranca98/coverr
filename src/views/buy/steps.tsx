@@ -225,17 +225,20 @@ export const ConsentStep: FC<ConsentStepProps> = ({ refundPolicy, refundPolicyTe
   <section class="step">
     <label class="consent">
       <input type="checkbox" name="consent" value="1" required />
+      {/* One box, ticked once, says all three things a buyer agrees to: the
+          refund rule of this event, the age, and the terms. The age used to be
+          a line of text under the box, which nobody affirmed (LEG-11). */}
       <span>
         {refundPolicy === "none"
           ? "Entiendo que esta compra no admite reembolsos."
           : (refundPolicyText ??
-            "Puedo solicitar reembolso dentro de las 24 horas siguientes a mi compra.")}
+            "Puedo solicitar reembolso dentro de las 24 horas siguientes a mi compra.")}{" "}
+        <span class="consent__terms">
+          Tengo 18 años o más y acepto los <a href="/terminos">términos</a> y el{" "}
+          <a href="/privacidad">aviso de privacidad</a>.
+        </span>
       </span>
     </label>
-    <p class="accept">
-      Al confirmar aceptás los <a href="/terminos">términos</a> y el{" "}
-      <a href="/privacidad">aviso de privacidad</a>. Tenés que tener 18 años o más.
-    </p>
     <button type="submit" class="submit" id="submitBtn">
       Confirmar compra
     </button>

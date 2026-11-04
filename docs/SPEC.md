@@ -95,7 +95,7 @@ what a band or a buyer can do, except where a row says so.
 
 **Still to settle:**
 
-1. **SAR invoicing** — see above; needed before billing goes on, not before building.
+1. **SAR invoicing** — decided on 2026-11-04 to stay manual within the company for now: invoices are issued outside Coverr and their numbers recorded on each fee payment. Needed before billing goes on, not before building.
 2. **A deleted band's fee history.** Deleting an account deletes its fee payments and their
    screenshots with everything else, so the ledger loses them. Fine for privacy; check it suits
    the accountant.
@@ -160,4 +160,4 @@ operator's band list shows when an email runs more than one band.
   a USD-converted transfer are all unsampled.
 - **Bank statement export format.** Does the sender's name survive into a BAC export, or does it
   read `ACH CREDITO`? Blocks optional morning-after reconciliation.
-- **Minimum age.** Decided as 18+, but stated nowhere in the product and enforced nowhere.
+- **Minimum age.** 18+, in the terms and affirmed by the buyer in the checkout checkbox since 2026-11-04. Self-declared; nothing checks an ID.

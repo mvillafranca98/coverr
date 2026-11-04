@@ -40,8 +40,8 @@ Commands: `npm run dev`, `npm run typecheck`, `npm run db:generate`, `npm run db
 ## Project rules
 - **Honduras only.** Money is lempiras, copy is Honduran Spanish, banks are the six in
   `lib/core.ts`. No EU or UK users, so GDPR items are out of scope until that changes.
-- **18+ only.** Stated in the terms and in the checkout acceptance line; still not *enforced*
-  anywhere — there is no age gate. See LEG-11.
+- **18+ only.** Stated in the terms, and affirmed by the buyer in the one required checkbox at
+  checkout ("Tengo 18 años o más y acepto los términos…"). Self-declared; no ID check. See LEG-11.
 - **No animation library and no icon set — except on the landing page. One webfont elsewhere.**
   Deliberate, not an oversight: buyers open these pages on venue wifi moments before paying. `/`
   is marketing to bands and carries GSAP; every other surface stays still, except that the

@@ -693,13 +693,15 @@ select.invalid {
   margin: 0;
   accent-color: var(--text);
 }
-.accept {
-  margin: 12px 0 0;
-  color: var(--dim);
-  font-size: 12.5px;
-  line-height: 1.45;
+/* The age and terms sentence, on its own line under the event's refund rule:
+   the rule is written to the buyer and this one in the buyer's own voice. */
+.consent__terms {
+  display: block;
+  margin-top: 6px;
 }
-.accept a {
+/* The terms and privacy links sit inside the consent label: bold ink, so they
+   read as links among the muted sentence around them. */
+.consent a {
   color: var(--text);
   font-weight: 700;
 }
