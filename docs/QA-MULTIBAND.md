@@ -121,18 +121,23 @@ and 2.5 only on Banda A.
     with the QR **image showing** in Gmail.
 - [ ] **2.3 The band sees the order as clean**
   - **Where:** the band's phone → the event → **Órdenes**.
-  - **See:** the order's row with a green **OK** chip within two minutes. It may show nothing
-    the first few seconds while the receipt is being read.
+  - **See:** the order's row with a green **OK** chip. It shows OK from the start, because
+    nothing has been flagged yet: refresh after two minutes, once the receipt has been read, and
+    it should still say OK.
 - [ ] **2.4 Banda A only: paying too little**
   - **Do:** buy **2** tickets, but transfer and upload only **L1**.
   - **See:**
     - The buyer still gets the QRs immediately.
-    - Armando gets an email "Revisar <code> — <event>" whose red box names the short amount.
-    - In **Órdenes**, that order shows a yellow **REVISAR** chip.
+    - In **Órdenes**, within two minutes, that order shows a yellow **REVISAR** chip. Tapping it
+      shows "Faltan L1 — pagó L1 de L2".
+    - **No email.** A short payment is a warning, shown only in the panel; only a critical
+      problem (a reused receipt, money sent to another account) emails the band.
 - [ ] **2.5 Banda A only: reusing a screenshot**
-  - **Do:** buy 1 ticket and upload **the same screenshot as 2.1**. No new transfer.
-  - **See:** the QR still appears. Armando gets another "Revisar …" email saying the receipt was
-    already used, and the order shows **REVISAR**.
+  - **Do:** buy 1 ticket and upload **the same screenshot file as 2.1**, not a new screenshot of
+    it. No new transfer.
+  - **See:** the QR still appears. Within two minutes Armando gets an email "Revisar <code> —
+    <event>" at Banda A's address, saying that receipt was already received on the 2.1 order, and
+    the order shows **REVISAR**.
 - [ ] **2.6 Getting tickets back**
   - **Where:** `coverr.live/recuperar`.
   - **Do:**
