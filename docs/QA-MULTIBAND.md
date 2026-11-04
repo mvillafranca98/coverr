@@ -38,7 +38,7 @@ both bands with a different alias for each.
 - **Go slowly with emails.** Coverr allows 5 emails a minute per network. Wait about 15 seconds
   between sign-in links or purchases on the same wifi, or you will see "Demasiados intentos
   seguidos" and think something broke.
-- **Where things live in the band panel.** The top bar has **Eventos · + Evento · Banda · Salir**.
+- **Where things live in the band panel.** The top bar has **Eventos · + Evento · Banda · Ayuda · Salir**.
   Inside an event, a second bar has **Resumen · Órdenes · Venta · Dinero · Ajustes**.
 
 ---
