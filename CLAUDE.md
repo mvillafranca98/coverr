@@ -44,7 +44,8 @@ Commands: `npm run dev`, `npm run typecheck`, `npm run db:generate`, `npm run db
   anywhere — there is no age gate. See LEG-11.
 - **No animation library and no icon set — except on the landing page. One webfont elsewhere.**
   Deliberate, not an oversight: buyers open these pages on venue wifi moments before paying. `/`
-  is marketing to bands and carries GSAP; every other surface stays still. Every page but the
+  is marketing to bands and carries GSAP; every other surface stays still, except that the
+  band's charts grow in once, in plain CSS (DESIGN.md, *Charts*). Every page but the
   door scanner loads one font, Archivo Black (18.6KB, preloaded, `font-display: swap`, so
   nothing ever waits on it). The scanner loads no font file at all — it must work offline. See
   DESIGN.md, *Typography* and *The landing page*.

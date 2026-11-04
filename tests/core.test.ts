@@ -4,6 +4,7 @@ import {
   formatLps,
   formatLpsShort,
   formatMoment,
+  formatShortDate,
   isReadableProof,
   isRenderableImage,
   jsonForScript,
@@ -258,5 +259,20 @@ describe("formatMoment", () => {
 
   it("moves to the right day across midnight", () => {
     expect(formatMoment("2026-11-05T03:30:00.000Z")).toBe("4 de noviembre, 9:30pm");
+  });
+});
+
+describe("formatLpsShort with a loss", () => {
+  it("puts the sign before the L", () => {
+    expect(formatLpsShort(-200000)).toBe("-L2,000");
+    expect(formatLpsShort(-150)).toBe("-L1.50");
+    expect(formatLpsShort(0)).toBe("L0");
+  });
+});
+
+describe("formatShortDate", () => {
+  it("gives day and short month in Honduras", () => {
+    expect(formatShortDate("2026-11-05T03:30:00.000Z")).toBe("4 nov");
+    expect(formatShortDate("2027-02-07T02:00:00.000Z")).toBe("6 feb");
   });
 });

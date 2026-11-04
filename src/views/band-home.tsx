@@ -1,8 +1,9 @@
 import type { FC } from "hono/jsx";
 import type { CategoryRow, EventMetrics, FanStats } from "../db/queries/stats";
-import { formatEventDate, formatLpsShort } from "../lib/core";
+import { formatEventDate, formatLpsShort, formatShortDate } from "../lib/core";
 import { costCategoryLabel } from "./admin/cost-category";
 import { AdminLayout } from "./admin/layout";
+import { TrendChart, type TrendPoint } from "./admin/trend-chart";
 import { OnboardingChecklist } from "./signup";
 
 /**
@@ -10,6 +11,9 @@ import { OnboardingChecklist } from "./signup";
  * fan list stay open whether or not the next gig has been paid for, and this
  * is the only screen a band opens on a Tuesday with no show booked.
  */
+/** How many of the most recent events the charts show: a year of monthly gigs. */
+const TREND_EVENTS = 12;
+
 const pct = (v: number | null, digits = 0): string =>
   v == null ? "—" : `${(v * 100).toFixed(digits)}%`;
 
@@ -30,6 +34,15 @@ export const BandHomePage: FC<{
     }),
     { attendance: 0, gross: 0, costs: 0, net: 0 },
   );
+
+  // The charts read left to right, oldest first, over the last dozen nights.
+  const recent = played.slice(0, TREND_EVENTS).reverse();
+  const trend = (measure: (event: EventMetrics) => number): TrendPoint[] =>
+    recent.map((event) => ({
+      name: event.name,
+      date: formatShortDate(event.startsAt),
+      value: measure(event),
+    }));
 
   // Newest first, so "previous" is the next one along.
   const latest = played[0];
@@ -79,6 +92,42 @@ export const BandHomePage: FC<{
           </small>
         </div>
       </div>
+
+      {recent.length >= 2 ? (
+        <>
+          <h2>Cómo vienen tus eventos</h2>
+          <p class="sub" style="margin-bottom:12px">
+            Los últimos {recent.length} eventos, del más viejo al más nuevo. Los números exactos
+            están en la tabla de abajo.
+          </p>
+          <div class="trends">
+            <TrendChart
+              title="Personas"
+              tone="yellow"
+              points={trend((event) => event.attendance)}
+              format={String}
+            />
+            <TrendChart
+              title="Bruto"
+              tone="pink"
+              points={trend((event) => event.gross)}
+              format={formatLpsShort}
+            />
+            <TrendChart
+              title="Costos"
+              tone="lime"
+              points={trend((event) => event.costs)}
+              format={formatLpsShort}
+            />
+            <TrendChart
+              title="Neto"
+              tone="blue"
+              points={trend((event) => event.net)}
+              format={formatLpsShort}
+            />
+          </div>
+        </>
+      ) : null}
 
       {latest && previous ? (
         <>

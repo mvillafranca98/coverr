@@ -298,6 +298,154 @@ h2:first-of-type {
 }
 /* A share of a whole, drawn under the number: adentro out of vendidos,
    brazaletes left out of the starting count. Always from records. */
+/* ---- charts ----
+   Drawn on the server as plain SVG and HTML. Each measure keeps its stat card's
+   colour: personas yellow, bruto pink, costos lime, neto blue. The one motion on
+   the band's pages lives here: bars grow in once on load, CSS only, and the
+   reduced-motion rule at the bottom of this file switches it off. */
+/* Two by two, so the four measures line up as pairs; one column on a phone. */
+.trends {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 0 8px 12px 0;
+}
+@media (max-width: 640px) {
+  .trends {
+    grid-template-columns: 1fr;
+  }
+}
+.trend {
+  margin: 0;
+  padding: 14px 16px 10px;
+  border: var(--edge);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--lift) var(--lift) 0 var(--tone);
+}
+.trend figcaption {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.trend svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 6px;
+  overflow: visible;
+}
+.trend--yellow,
+.tone-yellow {
+  --tone: var(--yellow);
+}
+.trend--pink,
+.tone-pink {
+  --tone: var(--pink);
+}
+.trend--lime,
+.tone-lime {
+  --tone: var(--lime);
+}
+.trend--blue,
+.tone-blue {
+  --tone: var(--blue);
+}
+.trend__grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.trend__base {
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+.trend__tick {
+  fill: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.trend__value {
+  fill: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+.trend__bar {
+  fill: var(--tone);
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: bar-grow 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 35ms);
+}
+.trend__bar--down {
+  transform-origin: 50% 0;
+}
+.trend__hit {
+  fill: transparent;
+}
+.trend__hit:hover {
+  fill: rgb(255 244 222 / 0.06);
+}
+@keyframes bar-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/* The split: one bar, a part per member. Parts are separated by the surface
+   showing through a 2px gap, never by an outline, and print their share in
+   black ink only when it fits — a part too narrow for it shows none, and the
+   table under the bar still has the number. */
+.split {
+  display: flex;
+  gap: 2px;
+  height: 28px;
+  margin: 4px 0 14px;
+  animation: split-reveal 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.split__part {
+  display: flex;
+  align-items: center;
+  flex-basis: 0;
+  min-width: 0;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: var(--tone);
+  container-type: inline-size;
+}
+.split__part b {
+  color: var(--accent-ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+@container (max-width: 40px) {
+  .split__part b {
+    display: none;
+  }
+}
+@keyframes split-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+/* A member's colour beside their name in the split table: the bar's legend. */
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 3px;
+  background: var(--tone);
+}
+
 .meter {
   display: block;
   order: 3;

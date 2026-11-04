@@ -86,7 +86,7 @@ components:
 - **Feel:** loud, DIY, friendly — a zine or a gig flyer, not a bank.
 - **Signature:** the ticket. The lime stub with a black head band and a dashed perforation is the hero of the landing page, the header of the buy page, what the buyer receives, the image they share, and the brand mark itself.
 - **Themes:** light and dark — but not as a user preference. **The surface is chosen by audience, not by toggle.**
-- **Motion:** none, with exactly one exception — the landing page. See *The landing page* below. `prefers-reduced-motion` is honoured in every stylesheet.
+- **Motion:** none, with two exceptions — the landing page, and the band's charts growing in once on load. See *The landing page* and *Charts* below. `prefers-reduced-motion` is honoured in every stylesheet.
 - **Accessibility:** WCAG AA on both surfaces — 4.5:1 for body text, 3:1 for large text and controls. Every pair in this file was computed, not estimated.
 - **Reference:** the neo-brutalist web style (Gumroad is the best-known example), chosen from a board of six directions. The style, not the assets: no logo, image or line of copy came from any site.
 
@@ -202,9 +202,9 @@ The ticket a buyer downloads or shares is drawn in their browser by `src/views/c
 
 ## The landing page
 
-The landing page (`/`) is the single surface allowed motion and an animation library.
-Everything else — the buy page, the ticket page, recovery, refunds, the admin and the
-scanner — stays still.
+The landing page (`/`) is the single surface allowed an animation library and continuous
+motion. Everything else — the buy page, the ticket page, recovery, refunds, the admin and the
+scanner — stays still, apart from the band's charts growing in once (see *Charts*).
 
 The split is not taste, it is who is reading. A buyer opens `/e/:slug` on venue wifi
 with a transfer half-made, and a blocked render there costs a sale. A band deciding
@@ -317,6 +317,35 @@ Three rules hold, each because getting it wrong broke something real:
    has no glow at all; keep it that way.
 3. **`prefers-reduced-motion` disables all of it**, not a gentler version.
 
+## Charts
+
+The band's pages carry small charts, drawn on the server as plain SVG and HTML: no chart
+library, no script, nothing to load. Approved on 2026-11-04.
+
+- **Trends, on the band's home page.** Four small column charts — Personas, Bruto, Costos,
+  Neto — over the last 12 events, oldest on the left, two by two (one column on a phone). Each
+  takes its stat card's colour: yellow, pink, lime, blue. One series per chart, so the caption
+  names it and there is no legend. The scale tops out at a round number, which is the one tick
+  printed; the latest value sits over its column; the first and last dates sit under the axis.
+  A night that lost money hangs below the zero line instead of growing up from the floor.
+  Every column names its event and value on hover, and the "Cada evento" table under the charts
+  holds every exact number, so the charts never have to.
+- **The split, on Dinero.** One bar, a part per member as wide as their share, the share
+  printed inside in black ink when it fits. Parts are separated by a 2px gap, never an outline.
+  Member colours go yellow, pink, blue, lime in table order, never cycled; yellow and lime are
+  never neighbours because they share a lightness. A band of more than four takes one colour for
+  every part and lets the names carry identity. The table under it is the legend: each name has
+  its swatch. It sits behind the report lock with the table.
+- **Columns** are at most 24px wide, square at the baseline, 4px round at the data end. The grid
+  and the zero line are 1px hairlines in the band surface's line greys.
+- **The colours are the brand's, not a chart palette's.** Checked with the dataviz validator on
+  the dark surface: colour-blind separation passes in this order (worst adjacent pair ΔE 11.1),
+  normal-vision separation and contrast pass; the lightness-band check fails because the
+  stickers are deliberately loud, which is the style.
+- **Motion:** each chart grows in once on load — columns rise from the baseline in turn over
+  about half a second, the split bar opens left to right — in CSS only. Never on buyer pages,
+  never on a loop, and `prefers-reduced-motion` removes it.
+
 ## Do's and Don'ts
 - **Do** pick the surface by audience: light for anything a buyer sees, dark for anything the band sees.
 - **Do** put black ink on every sticker colour. Never light text on pink, yellow, lime or blue.
@@ -324,6 +353,6 @@ Three rules hold, each because getting it wrong broke something real:
 - **Do** keep money tabular and monospaced.
 - **Do** compute contrast when adding a colour. Every number in this file is measured.
 - **Don't** add soft shadows, blur, gradients, glass or texture. Depth here is a hard offset.
-- **Don't** add an icon set or a second animation library, or any animation outside `/`.
+- **Don't** add an icon set or a second animation library, or any animation outside `/` beyond the charts' one-time grow-in.
 - **Don't** load a second webfont. Archivo Black plus the system sans and mono is the whole type system; the scanner loads none.
 - **Don't** ship lorem ipsum or invent testimonials, logos or stats.

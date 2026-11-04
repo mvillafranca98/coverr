@@ -5,6 +5,7 @@ import type { Settlement, UnlockPrice } from "../../lib/settlement";
 import { COST_CATEGORY_LABEL, costCategoryLabel } from "./cost-category";
 import { AdminLayout } from "./layout";
 import { type FeeAccount, ReportLock } from "./report-lock";
+import { memberTone, SplitBar } from "./split-bar";
 
 export const MoneyPage: FC<{
   bandName: string;
@@ -153,38 +154,49 @@ export const MoneyPage: FC<{
     </div>
 
     {unlocked ? (
-      <div class="scroll" style="margin-top:12px">
-        <table>
-          <thead>
-            <tr>
-              <th>Integrante</th>
-              <th class="n">%</th>
-              <th class="n">Parte</th>
-              <th class="n">Adelantos</th>
-              <th class="n">A pagar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {settlement.members.map((m) => (
-              <tr key={m.id}>
-                <td>{m.name}</td>
-                <td class="n">{m.splitPct}%</td>
-                <td class="n">{formatLps(m.share)}</td>
-                <td class="n">{m.advances ? `−${formatLps(m.advances)}` : "—"}</td>
-                <td class="n">
-                  <b>{formatLps(m.payout)}</b>
-                </td>
+      <>
+        <div style="margin-top:16px">
+          <SplitBar members={settlement.members} />
+        </div>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Integrante</th>
+                <th class="n">%</th>
+                <th class="n">Parte</th>
+                <th class="n">Adelantos</th>
+                <th class="n">A pagar</th>
               </tr>
-            ))}
-            {settlement.unallocated !== 0 ? (
-              <tr class="tot">
-                <td colspan={4}>Sin asignar</td>
-                <td class="n">{formatLps(settlement.unallocated)}</td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {settlement.members.map((m, index) => {
+                const tone = memberTone(index, settlement.members.length);
+                return (
+                  <tr key={m.id}>
+                    <td>
+                      {tone ? <i class={`swatch tone-${tone}`} aria-hidden="true" /> : null}
+                      {m.name}
+                    </td>
+                    <td class="n">{m.splitPct}%</td>
+                    <td class="n">{formatLps(m.share)}</td>
+                    <td class="n">{m.advances ? `−${formatLps(m.advances)}` : "—"}</td>
+                    <td class="n">
+                      <b>{formatLps(m.payout)}</b>
+                    </td>
+                  </tr>
+                );
+              })}
+              {settlement.unallocated !== 0 ? (
+                <tr class="tot">
+                  <td colspan={4}>Sin asignar</td>
+                  <td class="n">{formatLps(settlement.unallocated)}</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </>
     ) : (
       <ReportLock slug={event.slug} price={price} feeAccount={feeAccount} owed={owed ?? null} />
     )}

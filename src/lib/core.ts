@@ -7,11 +7,11 @@ export function formatLps(centavos: number): string {
   return `${sign}L${whole.toLocaleString("en-US")}.${String(cents).padStart(2, "0")}`;
 }
 
-/** "L200" when the centavos are zero — cleaner on the buyer page. */
+/** "L200" when the centavos are zero — cleaner on the buyer page. A loss reads "-L200". */
 export function formatLpsShort(centavos: number): string {
-  return centavos % 100 === 0
-    ? `L${Math.floor(centavos / 100).toLocaleString("en-US")}`
-    : formatLps(centavos);
+  if (centavos % 100 !== 0) return formatLps(centavos);
+  const sign = centavos < 0 ? "-" : "";
+  return `${sign}L${Math.abs(centavos / 100).toLocaleString("en-US")}`;
 }
 
 const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -207,6 +207,12 @@ export function formatDayMonth(iso: string, options: { year?: boolean } = {}): s
  */
 export function formatMoment(iso: string): string {
   return `${formatDayMonth(iso)}, ${formatEventTime(iso)}`;
+}
+
+/** "4 nov": a day in Honduras, short enough for a chart's axis. */
+export function formatShortDate(iso: string): string {
+  const local = new Date(new Date(iso).getTime() - 6 * 3600 * 1000);
+  return `${local.getUTCDate()} ${MONTHS[local.getUTCMonth()]?.slice(0, 3) ?? ""}`;
 }
 
 export function formatEventTime(iso: string): string {
