@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import type { CategoryRow, EventMetrics, FanStats } from "../db/queries/stats";
 import { formatEventDate, formatLpsShort } from "../lib/core";
+import { costCategoryLabel } from "./admin/cost-category";
 import { AdminLayout } from "./admin/layout";
 import { OnboardingChecklist } from "./signup";
 
@@ -11,19 +12,6 @@ import { OnboardingChecklist } from "./signup";
  */
 const pct = (v: number | null, digits = 0): string =>
   v == null ? "—" : `${(v * 100).toFixed(digits)}%`;
-
-const CATEGORY_LABEL: Record<string, string> = {
-  sound: "Sonido",
-  stage: "Tarima",
-  promo: "Promoción",
-  food: "Comida",
-  art: "Arte",
-  staff: "Personal",
-  photo: "Fotos",
-  decor: "Decoración",
-  rental: "Alquiler",
-  other: "Otro",
-};
 
 export const BandHomePage: FC<{
   bandName: string;
@@ -226,7 +214,7 @@ export const BandHomePage: FC<{
               <tbody>
                 {categories.map((cat) => (
                   <tr key={cat.category}>
-                    <td>{CATEGORY_LABEL[cat.category] ?? cat.category}</td>
+                    <td>{costCategoryLabel(cat.category)}</td>
                     {played.map((e) => (
                       <td class="n" key={e.id}>
                         {cat.perEvent[e.id] ? formatLpsShort(cat.perEvent[e.id]!) : "—"}

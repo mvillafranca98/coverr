@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { formatLps, formatLpsShort } from "../../lib/core";
 import type { Settlement, UnlockPrice } from "../../lib/settlement";
+import { COST_CATEGORY_LABEL, costCategoryLabel } from "./cost-category";
 import { AdminLayout } from "./layout";
 import { type FeeAccount, ReportLock } from "./report-lock";
 
@@ -58,7 +59,7 @@ export const MoneyPage: FC<{
             expenses.map((e) => (
               <tr key={e.id}>
                 <td>{e.label}</td>
-                <td class="muted">{e.category}</td>
+                <td class="muted">{costCategoryLabel(e.category)}</td>
                 <td class="n">{formatLps(e.amount)}</td>
                 <td class="right">
                   <form method="post" action={`/admin/e/${event.slug}/dinero/costo/borrar`}>
@@ -93,16 +94,11 @@ export const MoneyPage: FC<{
           Categoría
         </label>
         <select name="category" id="category">
-          <option value="sound">Sonido</option>
-          <option value="stage">Tarima</option>
-          <option value="promo">Promoción</option>
-          <option value="food">Comida</option>
-          <option value="art">Arte</option>
-          <option value="staff">Personal</option>
-          <option value="photo">Fotos</option>
-          <option value="decor">Decoración</option>
-          <option value="rental">Alquiler</option>
-          <option value="other">Otro</option>
+          {Object.entries(COST_CATEGORY_LABEL).map(([value, label]) => (
+            <option value={value} key={value}>
+              {label}
+            </option>
+          ))}
         </select>
       </div>
       <div style="min-width:120px">
