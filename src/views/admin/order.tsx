@@ -1,5 +1,13 @@
 import type { FC } from "hono/jsx";
-import { bankLabel, formatLps, isRenderableImage } from "../../lib/core";
+import {
+  bankLabel,
+  formatDayMonth,
+  formatEventTime,
+  formatLps,
+  formatMoment,
+  isRenderableImage,
+} from "../../lib/core";
+import { flagLabel, NOTE_ONLY_FLAG } from "../../lib/verify";
 import { AdminLayout } from "./layout";
 import { CHANNEL_LABEL, type OrderRow } from "./order-row";
 
@@ -59,36 +67,42 @@ export const OrderPage: FC<{
     >
       <h1>{order.shortCode}</h1>
       <p class="sub">
-        {CHANNEL_LABEL[order.channel] ?? order.channel} ·{" "}
-        {new Date(order.createdAt).toLocaleString("es-HN")}
+        {CHANNEL_LABEL[order.channel] ?? order.channel} · {formatMoment(order.createdAt)}
       </p>
 
       {error ? <div class="note crit">{error}</div> : null}
 
       {flags
         .filter((f) => !f.resolvedAt)
-        .map((f) => (
-          <div class={`note ${f.severity === "critical" ? "crit" : "warn"}`} key={f.id}>
-            <b>{f.code}</b> — {f.detail}
-            <form
-              method="post"
-              action={`/admin/e/${event.slug}/orden/${order.id}/resolver`}
-              style="margin-top:10px"
-            >
-              <input type="hidden" name="flag_id" value={f.id} />
-              <button class="btn sm" type="submit">
-                Revisado y resuelto
-              </button>
-            </form>
-          </div>
-        ))}
+        .map((f) =>
+          // A note, not a to-do: nothing to resolve, so no button and no colour.
+          f.code === NOTE_ONLY_FLAG ? (
+            <div class="note" key={f.id}>
+              <b>{flagLabel(f.code)}</b> — {f.detail}
+            </div>
+          ) : (
+            <div class={`note ${f.severity === "critical" ? "crit" : "warn"}`} key={f.id}>
+              <b>{flagLabel(f.code)}</b> — {f.detail}
+              <form
+                method="post"
+                action={`/admin/e/${event.slug}/orden/${order.id}/resolver`}
+                style="margin-top:10px"
+              >
+                <input type="hidden" name="flag_id" value={f.id} />
+                <button class="btn sm" type="submit">
+                  Revisado y resuelto
+                </button>
+              </form>
+            </div>
+          ),
+        )}
 
       {refund ? (
         <>
           <h2>Solicitud de reembolso</h2>
           <div class={`note ${refund.status === "open" ? "warn" : ""}`}>
             <div style="font-size:12px;color:var(--dim);font-family:var(--mono)">
-              {new Date(refund.requestedAt).toLocaleString("es-HN")} ·{" "}
+              {formatMoment(refund.requestedAt)} ·{" "}
               {refund.status === "open"
                 ? "pendiente"
                 : refund.status === "approved"
@@ -204,12 +218,7 @@ export const OrderPage: FC<{
                   {a.voidedAt ? (
                     <span class="chip crit">reembolsado</span>
                   ) : a.checkedInAt ? (
-                    <span class="chip ok">
-                      {new Date(a.checkedInAt).toLocaleTimeString("es-HN", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
+                    <span class="chip ok">{formatEventTime(a.checkedInAt)}</span>
                   ) : (
                     <span class="chip info">afuera</span>
                   )}
@@ -229,7 +238,7 @@ export const OrderPage: FC<{
         <>
           <dl class="kv" style="margin-bottom:14px">
             <dt>Subido</dt>
-            <dd>{new Date(proof.uploadedAt).toLocaleString("es-HN")}</dd>
+            <dd>{formatMoment(proof.uploadedAt)}</dd>
             <dt>Archivo</dt>
             <dd>
               {proof.contentType} · {Math.round(proof.fileSize / 1024)} KB
@@ -294,9 +303,9 @@ export const OrderPage: FC<{
           </form>
           {proof.purgedAt ? (
             <div class="note">
-              El comprobante se borró el {new Date(proof.purgedAt).toLocaleDateString("es-HN")}, 30
-              días después del evento. Los datos de la cuenta de quien pagó se borraron con él —
-              eran de un tercero. Lo que queda arriba es lo que no identifica a nadie.
+              El comprobante se borró el {formatDayMonth(proof.purgedAt, { year: true })}, 30 días
+              después del evento. Los datos de la cuenta de quien pagó se borraron con él — eran de
+              un tercero. Lo que queda arriba es lo que no identifica a nadie.
             </div>
           ) : isRenderableImage(proof.contentType) ? (
             <img

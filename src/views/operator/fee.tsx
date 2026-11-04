@@ -2,7 +2,7 @@ import type { FC } from "hono/jsx";
 import { formatDayMonth, formatLpsShort } from "../../lib/core";
 import type { FeeStatus } from "../../lib/fees";
 import { TEXT_LIMITS } from "../../lib/text-limits";
-import type { Flag } from "../../lib/verify";
+import { type Flag, flagLabel } from "../../lib/verify";
 import { FeeStatusChip } from "./fee-status";
 import { OperatorLayout } from "./layout";
 
@@ -71,7 +71,7 @@ export const FeePaymentPage: FC<{
         <h2>Lo que no cuadró</h2>
         {flags.map((flag) => (
           <div class={`note ${flag.severity === "critical" ? "crit" : "warn"}`} key={flag.code}>
-            <b>{flag.code}</b>
+            <b>{flagLabel(flag.code)}</b>
             <p style="margin:6px 0 0">{flag.detail}</p>
           </div>
         ))}

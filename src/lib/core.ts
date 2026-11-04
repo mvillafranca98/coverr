@@ -201,6 +201,14 @@ export function formatDayMonth(iso: string, options: { year?: boolean } = {}): s
   return options.year ? `${day} de ${local.getUTCFullYear()}` : day;
 }
 
+/**
+ * "4 de noviembre, 1:17pm": a moment in Honduras, for when something happened.
+ * Never `toLocaleString`: Workers run in UTC, so it reads six hours ahead.
+ */
+export function formatMoment(iso: string): string {
+  return `${formatDayMonth(iso)}, ${formatEventTime(iso)}`;
+}
+
 export function formatEventTime(iso: string): string {
   const local = new Date(new Date(iso).getTime() - 6 * 3600 * 1000);
   let h = local.getUTCHours();

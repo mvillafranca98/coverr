@@ -1,4 +1,5 @@
 import { escapeHtml, formatEventDate, formatEventTime, formatLpsShort } from "../lib/core";
+import { flagLabel } from "../lib/verify";
 import { CONTACT_EMAIL } from "./legal/constants";
 
 /*
@@ -308,7 +309,7 @@ export function feeAlertEmailHtml(i: FeeAlertInput): string {
     .map(
       (f) =>
         `<tr><td style="background:${CRIT_BG};border:3px solid ${INK};border-radius:12px;padding:14px 16px;font:400 15px/1.6 ${SANS};color:${INK}">
-<b style="color:${CRIT};font:700 12px/1.4 ${MONO};letter-spacing:.08em">${escapeHtml(f.code)}</b><br>
+<b style="color:${CRIT};font:700 12px/1.4 ${MONO};letter-spacing:.08em">${escapeHtml(flagLabel(f.code))}</b><br>
 ${escapeHtml(f.detail)}
 </td></tr><tr><td style="height:10px"></td></tr>`,
     )
@@ -329,7 +330,7 @@ ${rows}
 }
 
 export function feeAlertEmailText(i: FeeAlertInput): string {
-  const lines = i.flags.map((f) => `- ${f.code}: ${f.detail}`).join("\n");
+  const lines = i.flags.map((f) => `- ${flagLabel(f.code)}: ${f.detail}`).join("\n");
   return `Un pago de reporte necesita revisión\n\nBanda: ${i.band.name} (${i.band.contactEmail})\nEvento: ${i.event.name}\nMonto: ${formatLpsShort(i.amount)}\n\n${lines}\n\nVer el pago: ${i.url}`;
 }
 
@@ -370,7 +371,7 @@ export function flagAlertEmailHtml(i: FlagAlertInput): string {
     .map(
       (f) =>
         `<tr><td style="background:${CRIT_BG};border:3px solid ${INK};border-radius:12px;padding:14px 16px;font:400 15px/1.6 ${SANS};color:${INK}">
-<b style="color:${CRIT};font:700 12px/1.4 ${MONO};letter-spacing:.08em">${escapeHtml(f.code)}</b><br>
+<b style="color:${CRIT};font:700 12px/1.4 ${MONO};letter-spacing:.08em">${escapeHtml(flagLabel(f.code))}</b><br>
 ${escapeHtml(f.detail)}
 </td></tr><tr><td style="height:10px"></td></tr>`,
     )
@@ -392,7 +393,7 @@ ${rows}
 }
 
 export function flagAlertEmailText(i: FlagAlertInput): string {
-  const lines = i.flags.map((f) => `- ${f.code}: ${f.detail}`).join("\n");
+  const lines = i.flags.map((f) => `- ${flagLabel(f.code)}: ${f.detail}`).join("\n");
   return `Una compra necesita revisión — ${i.order.shortCode}
 
 Evento: ${i.event.name}

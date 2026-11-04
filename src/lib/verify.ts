@@ -26,6 +26,32 @@ export type Severity = "critical" | "warning" | "info";
 
 export type Flag = { code: FlagCode; severity: Severity; detail: string };
 
+/** What each check is called wherever a person reads it. The code itself stays internal. */
+const FLAG_LABEL: Record<FlagCode, string> = {
+  REF_DUPLICATE: "Referencia repetida",
+  HASH_DUPLICATE: "Comprobante repetido",
+  DEST_MISMATCH: "Otra cuenta",
+  AMOUNT_SHORT: "Pagó de menos",
+  AMOUNT_OVER: "Pagó de más",
+  DATE_STALE: "Transferencia vieja",
+  UNREADABLE: "No se pudo leer",
+  NAME_MISMATCH: "Pagó otra persona",
+  NOT_A_RECEIPT: "No es un comprobante",
+};
+
+/** A stored flag's name for people, or its code if it is one this version does not know. */
+export function flagLabel(code: string): string {
+  return (FLAG_LABEL as Record<string, string>)[code] ?? code;
+}
+
+/**
+ * The one flag that is a note rather than something to review. One person
+ * paying for a group is the common case, so a different sender never asks the
+ * band to do anything: it is left out of every "revisar" count and chip, and
+ * the door never sees it (routes/scan.ts).
+ */
+export const NOTE_ONLY_FLAG: FlagCode = "NAME_MISMATCH";
+
 export type VerifyInput = {
   fields: ProofFields;
   expectedAmount: number;

@@ -1,6 +1,7 @@
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, ne, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { newShortCode } from "../../lib/core";
+import { NOTE_ONLY_FLAG } from "../../lib/verify";
 import * as s from "../schema";
 
 /**
@@ -220,11 +221,19 @@ async function loadOrderRows(
     .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
     .where(inScope);
 
+  // What the list marks "revisar". A different sender name is a note on the
+  // order page, not something to review, so it never marks an order here.
   const openFlags = await db
     .select({ orderId: s.verificationFlags.orderId, detail: s.verificationFlags.detail })
     .from(s.verificationFlags)
     .innerJoin(s.orders, eq(s.verificationFlags.orderId, s.orders.id))
-    .where(and(inScope, isNull(s.verificationFlags.resolvedAt)));
+    .where(
+      and(
+        inScope,
+        isNull(s.verificationFlags.resolvedAt),
+        ne(s.verificationFlags.code, NOTE_ONLY_FLAG),
+      ),
+    );
 
   const openRefunds = await db
     .select({ orderId: s.refundRequests.orderId })

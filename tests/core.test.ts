@@ -3,6 +3,7 @@ import {
   bankLabel,
   formatLps,
   formatLpsShort,
+  formatMoment,
   isReadableProof,
   isRenderableImage,
   jsonForScript,
@@ -246,5 +247,16 @@ describe("bankLabel", () => {
 
   it("falls back to the code rather than rendering nothing", () => {
     expect(bankLabel("NOPE")).toBe("NOPE");
+  });
+});
+
+describe("formatMoment", () => {
+  it("says when something happened in Honduras time, not the server's UTC", () => {
+    // 19:17 UTC is 1:17pm in Tegucigalpa: the order page used to show 7:17pm.
+    expect(formatMoment("2026-11-04T19:17:04.000Z")).toBe("4 de noviembre, 1:17pm");
+  });
+
+  it("moves to the right day across midnight", () => {
+    expect(formatMoment("2026-11-05T03:30:00.000Z")).toBe("4 de noviembre, 9:30pm");
   });
 });

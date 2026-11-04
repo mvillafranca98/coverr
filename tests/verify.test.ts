@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ProofFields } from "../src/lib/extract";
-import { type FlagCode, verifyProof, worstSeverity } from "../src/lib/verify";
+import { type FlagCode, flagLabel, verifyProof, worstSeverity } from "../src/lib/verify";
 
 /**
  * The eight rules that decide whether a buyer's proof raises a flag.
@@ -240,5 +240,16 @@ describe("worstSeverity", () => {
 
   it("returns null when nothing fired", () => {
     expect(worstSeverity([])).toBeNull();
+  });
+});
+
+describe("flagLabel", () => {
+  it("names each check in Spanish for the band", () => {
+    expect(flagLabel("AMOUNT_SHORT")).toBe("Pagó de menos");
+    expect(flagLabel("NAME_MISMATCH")).toBe("Pagó otra persona");
+  });
+
+  it("falls back to the code for one it does not know", () => {
+    expect(flagLabel("SOMETHING_NEW")).toBe("SOMETHING_NEW");
   });
 });

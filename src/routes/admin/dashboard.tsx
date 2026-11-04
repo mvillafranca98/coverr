@@ -1,10 +1,11 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { settlementFor } from "../../db/queries/event-totals";
 import { findEventBySlug } from "../../db/queries/events";
 import * as s from "../../db/schema";
+import { NOTE_ONLY_FLAG } from "../../lib/verify";
 import { DashboardPage } from "../../views/admin/dashboard";
 import type { AdminEnv } from "./context";
 
@@ -50,7 +51,13 @@ dashboardRoutes.get("/e/:slug", async (c) => {
     .select({ n: sql<number>`count(*)` })
     .from(s.verificationFlags)
     .innerJoin(s.orders, eq(s.verificationFlags.orderId, s.orders.id))
-    .where(and(eq(s.orders.eventId, event.id), isNull(s.verificationFlags.resolvedAt)));
+    .where(
+      and(
+        eq(s.orders.eventId, event.id),
+        isNull(s.verificationFlags.resolvedAt),
+        ne(s.verificationFlags.code, NOTE_ONLY_FLAG),
+      ),
+    );
 
   const [openRefunds] = await db
     .select({ n: sql<number>`count(*)` })
