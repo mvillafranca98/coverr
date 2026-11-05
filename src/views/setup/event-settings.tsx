@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { CopyLink } from "../admin/copy-link";
 import { AdminLayout } from "../admin/layout";
+import { EventStatusChip } from "../event-status";
 import { type EventFormValues, Fields } from "./event-form";
 
 export const EventSettingsPage: FC<{
@@ -28,8 +29,7 @@ export const EventSettingsPage: FC<{
   >
     <h1>Ajustes</h1>
     <p class="sub">
-      {event.name} ·{" "}
-      <span class={`chip ${event.status === "live" ? "ok" : "info"}`}>{event.status}</span>
+      {event.name} · <EventStatusChip status={event.status} />
     </p>
     {saved ? <div class="note ok">Guardado.</div> : null}
     {error ? <div class="note crit">{error}</div> : null}
@@ -41,15 +41,23 @@ export const EventSettingsPage: FC<{
           <b>La venta está abierta.</b> Este es el enlace que va en el flyer o la bio:
           <CopyLink url={`${origin}/e/${event.slug}`} />
         </>
-      ) : (
+      ) : event.status === "draft" ? (
         <>
           <b>Todavía no está publicado.</b> Nadie puede comprar hasta que lo publiqués.
+        </>
+      ) : (
+        <>
+          <b>La venta está cerrada.</b> Nadie puede comprar hasta que la volvás a abrir.
         </>
       )}
       <form method="post" action={`/admin/e/${event.slug}/ajustes/estado`} style="margin-top:12px">
         <input type="hidden" name="status" value={event.status === "live" ? "closed" : "live"} />
         <button class={`btn sm ${event.status === "live" ? "ghost" : ""}`} type="submit">
-          {event.status === "live" ? "Cerrar la venta" : "Publicar y abrir la venta"}
+          {event.status === "live"
+            ? "Cerrar la venta"
+            : event.status === "draft"
+              ? "Publicar y abrir la venta"
+              : "Volver a abrir la venta"}
         </button>
       </form>
     </div>

@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { bankLabel, formatEventDate, formatLps, formatLpsShort } from "../../lib/core";
 import type { Settlement } from "../../lib/settlement";
+import { EventStatusChip } from "../event-status";
 import { CopyLink } from "./copy-link";
 import { AdminLayout } from "./layout";
 
@@ -58,7 +59,7 @@ export const DashboardPage: FC<DashProps> = (p) => {
       <h1>{p.event.name}</h1>
       <p class="sub">
         {formatEventDate(p.event.startsAt)} · {p.event.venue} ·{" "}
-        <span class={`chip ${p.event.status === "live" ? "ok" : "info"}`}>{p.event.status}</span>
+        <EventStatusChip status={p.event.status} />
       </p>
 
       {p.openRefunds > 0 ? (

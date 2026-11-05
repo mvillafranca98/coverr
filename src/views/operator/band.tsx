@@ -3,6 +3,7 @@ import type { OperatorEventRow } from "../../db/queries/operator";
 import { formatDayMonth } from "../../lib/core";
 import type { FeeStatus } from "../../lib/fees";
 import { TEXT_LIMITS } from "../../lib/text-limits";
+import { eventStatusLabel } from "../event-status";
 import { FeeStatusChip } from "./fee-status";
 import { OperatorLayout } from "./layout";
 import { passLastDay, StandingChips } from "./standing";
@@ -40,14 +41,6 @@ const DONE: Record<string, string> = {
   "sin-pase": "Pase libre quitado.",
   promo: "Promo guardada. Se aplica sola en sus próximos reportes.",
   "sin-promo": "Promo quitada.",
-};
-
-/** An event's status as the operator reads it. */
-const EVENT_STATUS_LABEL: Record<string, string> = {
-  draft: "borrador",
-  live: "a la venta",
-  closed: "venta cerrada",
-  settled: "liquidado",
 };
 
 const ACTION_LABEL: Record<string, string> = {
@@ -323,7 +316,7 @@ export const OperatorBandPage: FC<{
               <tr key={event.id}>
                 <td>{event.name}</td>
                 <td>{formatDayMonth(event.startsAt, { year: true })}</td>
-                <td class="muted">{EVENT_STATUS_LABEL[event.status] ?? event.status}</td>
+                <td class="muted">{eventStatusLabel(event.status)}</td>
                 <td class="n">{event.paidTickets}</td>
                 <td>
                   {event.unlockBracket === null ? (
