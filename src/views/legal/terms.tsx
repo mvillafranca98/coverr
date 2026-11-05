@@ -201,8 +201,9 @@ export const TermsPage: FC<{ origin: string; billingEnabled: boolean }> = ({
     <p>
       Una banda puede borrar su cuenta cuando quiera, desde Ajustes, y con ella se borra todo lo que
       tiene en Coverr; no se puede deshacer. Mientras tenga un evento por realizarse con boletos
-      vendidos, o una solicitud de reembolso sin responder, la cuenta no se puede borrar: primero
-      hay que cumplirle a quien compró.
+      vendidos, una solicitud de reembolso sin responder, o un reporte sin pagar o con el pago
+      todavía en revisión, la cuenta no se puede borrar: primero hay que cumplirle a quien compró y
+      a Coverr.
     </p>
 
     <h2>Ley aplicable</h2>

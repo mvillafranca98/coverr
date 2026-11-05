@@ -225,9 +225,9 @@ export const PrivacyPage: FC<{ origin: string }> = ({ origin }) => (
       cada uno guarda; Coverr no puede borrarlo desde acá.
     </p>
     <p>
-      Mientras la banda tenga un evento por realizarse con boletos vendidos, o una solicitud de
-      reembolso sin responder, la cuenta no se puede borrar: primero hay que cumplirle a quien
-      compró.
+      Mientras la banda tenga un evento por realizarse con boletos vendidos, una solicitud de
+      reembolso sin responder, o un reporte sin pagar o con el pago todavía en revisión, la cuenta
+      no se puede borrar: primero hay que cumplirle a quien compró y a Coverr.
     </p>
     <p>
       Si querés que borremos tu nombre y tu correo de una orden, decilo y lo hacemos conservando el

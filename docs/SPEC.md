@@ -98,7 +98,9 @@ what a band or a buyer can do, except where a row says so.
 1. **SAR invoicing** — decided on 2026-11-04 to stay manual within the company for now: invoices are issued outside Coverr and their numbers recorded on each fee payment. Needed before billing goes on, not before building.
 2. **A deleted band's fee history.** Deleting an account deletes its fee payments and their
    screenshots with everything else, so the ledger loses them. Fine for privacy; check it suits
-   the accountant.
+   the accountant. Since 2026-11-04 a band cannot delete while a fee is unpaid, flagged or still
+   being checked, so deleting no longer wipes a debt (and with it the way back to a free first
+   event).
 
 The operators are Armando, the associate Alexis, and the shared `hola@coverr.live` inbox: all
 three addresses are in `OPERATOR_EMAILS`. Coverr's three accounts are entered at

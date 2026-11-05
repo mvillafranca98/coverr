@@ -421,7 +421,8 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
       <p>
         Mientras tengas un evento que todavía no pasó con boletos vendidos, o una solicitud de
         reembolso sin responder, no se puede borrar: esa gente ya te pagó. Un evento cuenta como
-        pasado 12 horas después de que empieza.
+        pasado 12 horas después de que empieza. Tampoco mientras un reporte esté sin pagar o estemos
+        revisando tu pago. La página te dice qué falta y te lleva a cada orden.
       </p>
 
       <h2 id="preguntas">Preguntas frecuentes</h2>

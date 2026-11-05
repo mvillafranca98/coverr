@@ -1,7 +1,8 @@
 import type { FC } from "hono/jsx";
 import type { DeletionBlocker } from "../../lib/account-deletion";
-import { formatEventDate } from "../../lib/core";
+import { formatEventDate, formatLpsShort } from "../../lib/core";
 import { AdminLayout } from "../admin/layout";
+import { CONTACT_EMAIL } from "../legal/constants";
 
 /** Stated here rather than imported from the query layer: a view names the shape it needs. */
 type BandFootprint = {
@@ -28,6 +29,20 @@ const BlockerItem: FC<{ blocker: DeletionBlocker }> = ({ blocker }) => {
         «{blocker.eventName}» ({formatEventDate(blocker.startsAt)}) todavía tiene{" "}
         {plural(blocker.liveTickets, "boleto activo", "boletos activos")}. {refund}, o esperá a que
         pase el evento.
+      </li>
+    );
+  }
+  if (blocker.kind === "unsettled_fee") {
+    const report = `El reporte de «${blocker.eventName}» (${formatLpsShort(blocker.amount)})`;
+    const contact = <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>;
+    return blocker.owed ? (
+      <li>
+        {report} todavía no está pagado. Escribinos a {contact} y lo resolvemos.
+      </li>
+    ) : (
+      <li>
+        {report}: estamos revisando tu pago. Cuando lo confirmemos vas a poder borrar la cuenta; si
+        tarda, escribinos a {contact}.
       </li>
     );
   }
@@ -109,7 +124,7 @@ export const DeleteAccountPage: FC<{
     {blockers.length > 0 ? (
       <>
         <div class="note crit">
-          <b>Todavía no se puede borrar.</b> Primero hay que cumplirle a quien compró:
+          <b>Todavía no se puede borrar.</b> Primero hay que resolver esto:
           <ul style="margin:8px 0 0;padding-left:18px">
             {blockers.map((blocker) => (
               <BlockerItem blocker={blocker} />

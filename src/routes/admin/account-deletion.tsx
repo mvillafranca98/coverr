@@ -26,6 +26,7 @@ function blockersFor(state: DeletionState): DeletionBlocker[] {
   return deletionBlockers({
     events: state.events,
     unansweredRefunds: state.unansweredRefunds,
+    unsettledFees: state.unsettledFees,
     now: new Date(),
   });
 }

@@ -1,6 +1,10 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import type { UnansweredRefund } from "../../lib/account-deletion";
+import {
+  UNSETTLED_FEE_STATUSES,
+  type UnansweredRefund,
+  type UnsettledFee,
+} from "../../lib/account-deletion";
 import * as s from "../schema";
 
 /**
@@ -9,6 +13,13 @@ import * as s from "../schema";
  * event's "Reembolsos pedidos" filter.
  */
 const UNANSWERED_REFUNDS_LISTED = 10;
+
+/**
+ * Unsettled fees named on the deletion page. One is enough to block; an unpaid
+ * fee also stops the band opening another paid report, so more than a few is
+ * unlikely.
+ */
+const UNSETTLED_FEES_LISTED = 10;
 
 /** What deleting the account will take with it, counted for the band to read first. */
 export type BandFootprint = {
@@ -27,13 +38,16 @@ export type DeletionState = {
   events: { id: string; name: string; startsAt: string; liveTickets: number }[];
   /** Orders with a refund request nobody has answered: how many, and the first few. */
   unansweredRefunds: { count: number; orders: UnansweredRefund[] };
+  /** Report fees Coverr has not accepted as paid. */
+  unsettledFees: UnsettledFee[];
 };
 
 /**
  * Everything the delete-account page and its POST need, in one place.
  *
- * Read again on the POST rather than trusted from the page: a ticket sold or a
- * refund requested between the two must still stop the deletion.
+ * Read again on the POST rather than trusted from the page: a ticket sold, a
+ * refund requested or a fee marked unpaid between the two must still stop the
+ * deletion.
  */
 export async function loadDeletionState(
   db: DrizzleD1Database<typeof s>,
@@ -54,6 +68,7 @@ export async function loadDeletionState(
     accounts,
     refundCount,
     refundOrders,
+    unsettledFees,
   ] = await Promise.all([
     db
       .select({ id: s.events.id, name: s.events.name, startsAt: s.events.startsAt })
@@ -104,6 +119,23 @@ export async function loadDeletionState(
       .where(openRequest)
       .orderBy(s.events.name, s.orders.shortCode)
       .limit(UNANSWERED_REFUNDS_LISTED),
+    db
+      .select({
+        eventName: s.events.name,
+        amount: s.feePayments.amount,
+        status: s.feePayments.status,
+      })
+      .from(s.feePayments)
+      .innerJoin(s.eventUnlocks, eq(s.feePayments.unlockId, s.eventUnlocks.id))
+      .innerJoin(s.events, eq(s.eventUnlocks.eventId, s.events.id))
+      .where(
+        and(
+          eq(s.feePayments.bandId, bandId),
+          inArray(s.feePayments.status, [...UNSETTLED_FEE_STATUSES]),
+        ),
+      )
+      .orderBy(s.feePayments.uploadedAt)
+      .limit(UNSETTLED_FEES_LISTED),
   ]);
 
   const liveTickets = new Map(liveByEvent.map((row) => [row.eventId, Number(row.n)]));
@@ -120,6 +152,8 @@ export async function loadDeletionState(
     },
     events: events.map((event) => ({ ...event, liveTickets: liveTickets.get(event.id) ?? 0 })),
     unansweredRefunds: { count: first(refundCount), orders: refundOrders },
+    // The query filtered on exactly these statuses, so the narrowing holds.
+    unsettledFees: unsettledFees as UnsettledFee[],
   };
 }
 

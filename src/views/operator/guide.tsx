@@ -279,8 +279,10 @@ export const OperatorGuidePage: FC<{ origin: string }> = ({ origin }) => {
         <h3>"Quiero borrar mi cuenta."</h3>
         <p>
           Lo hace la banda desde Banda → Borrar la cuenta. No puede mientras tenga un evento por
-          venir con boletos vendidos o un reembolso sin responder. Borrar la cuenta borra también
-          sus pagos de reporte de Cobros: si la contabilidad los necesita, bajá el CSV antes.
+          venir con boletos vendidos, un reembolso sin responder, o un pago de reporte marcado como
+          no pagado, con algo que revisar o todavía en revisión: borrar la cuenta borra sus pagos de
+          Cobros, y con eso la deuda. Para dejarla ir, resolvé el pago en Cobros (Marcar pagado o El
+          pago está bien). Si la contabilidad necesita esos pagos, bajá el CSV antes.
         </p>
 
         <h2 id="privacidad">Privacidad</h2>

@@ -22,5 +22,5 @@ export const CONTACT_EMAIL = "hola@coverr.live";
  * Each document's own last change. They shared one date until the report
  * prices moved, which changed the terms and not the privacy notice.
  */
-export const PRIVACY_UPDATED = "3 de noviembre de 2026";
+export const PRIVACY_UPDATED = "4 de noviembre de 2026";
 export const TERMS_UPDATED = "4 de noviembre de 2026";
