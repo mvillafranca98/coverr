@@ -41,6 +41,8 @@ import { DEMO_SHOWS } from "../src/views/demo-shows.ts";
 const ORIGIN = "http://127.0.0.1:8787";
 const OUT = "public/img";
 const BAND = "bnd_demo";
+/** The demo band's contact email in seed/demo.sql, which the session names. */
+const BAND_EMAIL = "demo@ejemplo.com";
 const EVENT = "evt_demo";
 /** The first ticket on /boletos/ord_demo_002, the one the ticket shot frames. */
 const TICKET_ATTENDEE = "att_demo_002";
@@ -178,7 +180,12 @@ async function assertNamesFit(page, show) {
   }
 }
 
-/** Same HMAC the worker uses; see src/lib/auth.ts. */
+/**
+ * A band session cookie for the demo band, signed with the same HMAC the
+ * worker uses (src/lib/auth.ts, src/lib/sign-in.ts). Set on the browser
+ * directly: sign-in links are single-use and confirmed by a tap now, so there
+ * is no URL that signs a script in.
+ */
 async function signSession() {
   const vars = readFileSync(".dev.vars", "utf8");
   const secret = vars
@@ -196,7 +203,14 @@ async function signSession() {
       .replace(/=+$/, "");
 
   const body = b64url(
-    enc.encode(JSON.stringify({ b: BAND, exp: Math.floor(Date.now() / 1000) + 600 })),
+    enc.encode(
+      JSON.stringify({
+        b: BAND,
+        e: BAND_EMAIL,
+        use: "band-session",
+        exp: Math.floor(Date.now() / 1000) + 600,
+      }),
+    ),
   );
   const key = await crypto.subtle.importKey(
     "raw",
@@ -278,7 +292,7 @@ async function shootShow(show) {
     const page = await context.newPage();
 
     if (shot.auth) {
-      await page.goto(`${ORIGIN}/admin/entrar?t=${encodeURIComponent(token)}`);
+      await context.addCookies([{ name: "coverr_session", value: token, url: ORIGIN }]);
     }
     await page.goto(ORIGIN + shot.url, { waitUntil: "networkidle" });
     if (shot.prepare) await shot.prepare(page, show);
