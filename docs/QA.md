@@ -6,7 +6,8 @@ you can tick or fail — no "looks fine".
 Run it against **production**, where Anthropic extraction, rate limiting and email are real.
 Budget about an hour, plus a bank transfer.
 
-State verified on 2026-10-24:
+State verified on 2026-10-24. **Historical:** Daydrinking, and this event with it, was deleted on
+2026-11-04 to start fresh for the next gig. To run this again, make a band and an event for it.
 
 | | |
 |---|---|
@@ -14,7 +15,7 @@ State verified on 2026-10-24:
 | Band | Daydrinking · `mvillafranca98@gmail.com` |
 | Event | Masayoshi Takanaka Special · `/e/masayoshi-takanaka-special` · 5 Dec 2026 · cap 400 |
 | Price now | **L1** presale (the L1 rule runs to 5 Dec 18:00) |
-| Receiving account | BAC `751367661` · CRISTINA MARIA VILLAFRANCA ALTAMIRANO |
+| Receiving account | A personal BAC account, a test arrangement (the number is not kept in the repo) |
 
 ---
 
@@ -25,9 +26,10 @@ from `hola@coverr.live` and reaches any address — before that only `mvillafran
 got anything. The first sign-in email to an outside Gmail landed in Promotions, not the inbox
 and not Spam. Look there before deciding an email never arrived.
 
-**2. A new band needs an address that isn't already in use.** Signing up again with an
-existing address just logs you into that band — by design, so the page can't be used to discover
-who has an account. Onboarding now works in production too (checked 3 November 2026); Part 1 is
+**2. One address can run several bands (since 4 November 2026).** Signing up again with an
+address already in use mails a link that creates the new band, or signs in to the existing one
+when the name matches it. The page answers the same either way, so it can't be used to discover
+who has an account. Onboarding works in production too (checked 3 November 2026); Part 1 is
 still written for a local run.
 
 **3. Email is rate-limited to 5 per 60s per IP**, purchases to 20 per 60s. Real limits, live.
@@ -80,7 +82,7 @@ Open `/e/masayoshi-takanaka-special` in a **private window** — buyers have no 
 - [ ] **3.2** BAC shows the account number with a working copy button and **no** fee warning
 - [ ] **3.3** Switching to another bank shows the **~L40 ACH fee** warning
 - [ ] **3.4** Submitting with a missing required field keeps everything you typed — nothing is cleared
-- [ ] **3.5** Make the real transfer (L1 or L2) to BAC `751367661`
+- [ ] **3.5** Make the real transfer (L1 or L2) to the account the event page shows
 - [ ] **3.6** Upload the real confirmation screenshot, consent, submit
 - [ ] **3.7** **QR codes appear immediately**, before verification has run — the central invariant
 - [ ] **3.8** The ticket page shows the short code and one QR per attendee
@@ -168,14 +170,10 @@ Independent of the checks above. **All of these must be done.**
       `macawly.dev` entry on the team holding your API key, re-add it, complete the claim with the
       ownership TXT, then add the fresh DKIM + SPF records — and delete the `send` CNAME so the MX
       and TXT can exist beside it. Then put `EMAIL_FROM` back in `wrangler.jsonc`.
-- [ ] **B2 — Restore real prices.** Presale is **L1**, door **L2**. Held deliberately on
-      2026-10-25 — every event in production is a test for now. Note the originals cannot be
-      recovered: the rules were edited in place and nothing snapshots what they were (**F14**),
-      so the real figures have to come from you.
-- [ ] **B3 — Restore the band's own bank account.** Money goes to BAC `751367661`
-      (CRISTINA MARIA VILLAFRANCA ALTAMIRANO), a test arrangement. Held deliberately on
-      2026-10-25 while real transfers are still being tested. The Ficohsa and Atlántida entries
-      hold placeholder `000000000` and are inactive; they need real numbers or removing.
+- [x] **B2 — Restore real prices.** Closed 2026-11-04: Daydrinking was deleted, and its L1
+      test prices with it. The next band sets its own prices when it creates its event.
+- [x] **B3 — Restore the band's own bank account.** Closed 2026-11-04 the same way: the test
+      account and the two placeholder entries went with the band. The next band enters its own.
 - [x] **B4 — Seed data removed from production.** ✅ 2026-10-25. This was bigger than the item
       described: production was not "a real band plus test orders", it was the Jungla demo seed
       wearing the Daydrinking name — 131 fabricated orders across two invented events, plus 12
@@ -185,9 +183,8 @@ Independent of the checks above. **All of these must be done.**
       event, so those were removed explicitly. Verified: events 4→2, orders 141→10, attendees
       247→14, expenses 18→6, advances 3→0, and all four removed slugs now 404. The six remaining
       expenses are all from QA, none from the seed.
-- [ ] **B4b — The 10 QA orders on the Masayoshi event remain**, deliberately. Everything in
-      production is still a test while B2 and B3 stand; clear them when real prices and the real
-      account go in.
+- [x] **B4b — The 10 QA orders on the Masayoshi event.** Closed 2026-11-04: deleted with
+      Daydrinking, along with the event and its proofs.
 - [ ] **B5 — Spend caps** (audit LCH-03, still failing): a cap and low-balance alert on Anthropic, a
       budget alert on Cloudflare, and know your Resend plan limit. Every purchase is a vision call.
 - [ ] **B6 — Age gate.** 18+ is stated in the terms and at checkout but enforced nowhere (LEG-11).
