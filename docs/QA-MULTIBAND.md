@@ -351,12 +351,16 @@ The runbook notes this has never been thrown in production. A quiet test window 
   - **Where:** `/operador` → each band.
   - **Do:** **Quitar pase** on Prueba A, **Quitar promo** on Prueba B if it's still there (it was
     used up in 7.3).
-- [ ] **9.2 Delete both test bands**
+- [ ] **9.2 Delete the test bands** (Prueba A, Prueba B, and any other you made, such as
+  "prueba 4" from the several-bands check — never Daydrinking)
   - **Do:**
-    1. Each band: event → **Ajustes** → set **Empieza** to **yesterday**, and **Puertas** to
-       yesterday too (or clear it) → **Guardar cambios**. An upcoming event with tickets blocks
-       deletion, and doors can't be more than 12 hours before the start.
-    2. Then **Banda** → **Borrar la cuenta…** → type the band's name to confirm → delete.
+    1. Each band: event → **Ajustes** → set **Empieza** to **two days ago** and clear
+       **Puertas** → **Guardar cambios**. An event with live tickets blocks deletion until 12
+       hours after it starts, so "yesterday evening" may not be enough yet.
+    2. Any open refund request: open the order → **Rechazar** (or **Aprobar**). An unanswered
+       one blocks deletion too.
+    3. Then **Banda** → **Borrar la cuenta…** → type the band's name to confirm → delete. A
+       band with no event, or none with tickets, skips straight to this step.
   - **See:** a page confirming the account is gone. Opening an old sign-in link only leads back
     to the sign-in page.
 - [ ] **9.3 Nothing is left behind**
