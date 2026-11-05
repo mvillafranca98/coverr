@@ -60,10 +60,10 @@ export const OperatorGuidePage: FC<{ origin: string }> = ({ origin }) => {
         </p>
         <p>
           Para entrar: <a href="/operador/acceso">coverr.live/operador/acceso</a>, tu correo,{" "}
-          <b>Enviar enlace</b>, y en la página que abre el correo, <b>Entrar</b>. El enlace sirve una
-          sola vez y vence en 15 minutos; la sesión dura 12 horas. Lo que
-          hagás entrando como <b>hola@</b> queda en el historial como hola@, no con tu nombre: para
-          los cambios que importan, entrá con tu propio correo.
+          <b>Enviar enlace</b>, y en la página que abre el correo, <b>Entrar</b>. El enlace sirve
+          una sola vez y vence en 15 minutos; la sesión dura 12 horas. Lo que hagás entrando como{" "}
+          <b>hola@</b> queda en el historial como hola@, no con tu nombre: para los cambios que
+          importan, entrá con tu propio correo.
         </p>
 
         <h2 id="bandas">Bandas: suspender, pase libre, promo</h2>
