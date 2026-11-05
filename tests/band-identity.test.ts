@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  addressTakesBand,
   type BandOfEmail,
   decideNewBand,
   decideSignIn,
@@ -43,6 +44,22 @@ describe("starting a band", () => {
     const bands = [band("bnd_1", "Prueba A"), band("bnd_2", "Otra", "2026-11-04T00:00:00Z")];
     expect(decideNewBand(bands, "Una nueva").kind).toBe("suspended");
     expect(decideNewBand(bands, "Prueba A").kind).toBe("suspended");
+  });
+});
+
+describe("moving a band to another address", () => {
+  it("is allowed onto an address with no band, or only bands in good standing", () => {
+    expect(addressTakesBand([], "bnd_9")).toBe(true);
+    expect(addressTakesBand([band("bnd_1", "Prueba A")], "bnd_9")).toBe(true);
+  });
+
+  // The suspended person would otherwise end up with a working band.
+  it("is refused onto an address with a suspended band", () => {
+    expect(addressTakesBand([band("bnd_1", "Otra", "2026-11-04T00:00:00Z")], "bnd_9")).toBe(false);
+  });
+
+  it("does not count the band being moved against itself", () => {
+    expect(addressTakesBand([band("bnd_9", "Esta", "2026-11-04T00:00:00Z")], "bnd_9")).toBe(true);
   });
 });
 

@@ -23,6 +23,23 @@ export async function listBandsByEmail(db: DrizzleD1Database<typeof s>, email: s
 }
 
 /**
+ * Moves a band onto a new address, but only while it still has the one the move
+ * was asked from: an older link opened after a newer move, or two links opened
+ * at once, change nothing. True when the band moved.
+ */
+export async function moveBandToEmail(
+  db: DrizzleD1Database<typeof s>,
+  move: { bandId: string; from: string; to: string },
+): Promise<boolean> {
+  const moved = await db
+    .update(s.bands)
+    .set({ contactEmail: move.to })
+    .where(and(eq(s.bands.id, move.bandId), eq(s.bands.contactEmail, move.from)))
+    .returning({ id: s.bands.id });
+  return moved.length > 0;
+}
+
+/**
  * Slug from the band name, with a numeric suffix when that one is taken.
  * Tries the first 40 candidates and otherwise returns the plain slug.
  */

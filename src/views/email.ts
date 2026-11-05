@@ -266,6 +266,37 @@ export function createBandEmailSubject(i: CreateBandEmailInput): string {
   return `Crear ${i.bandName} en Coverr`;
 }
 
+// ------------------------------------------------------- band email change
+
+type EmailChangeEmailInput = { bandName: string; url: string; minutes: number };
+
+/**
+ * Sent to the address a band wants to move to. The band's email is who signs
+ * in and who answers for it, so it only changes once that address says yes.
+ */
+export function emailChangeEmailHtml(i: EmailChangeEmailInput): string {
+  return `<!doctype html><html lang="es"><body style="margin:0;background:${CREAM};padding:28px 14px;font-family:${SANS}">
+<table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:440px;text-align:left">
+<tr><td style="padding-bottom:16px">${sticker("Coverr", YELLOW)}</td></tr>
+<tr><td style="${HEADING};padding-bottom:10px">Confirmá el correo de ${escapeHtml(i.bandName)}</td></tr>
+<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED};padding-bottom:22px">Pidieron que ${escapeHtml(i.bandName)} entre a Coverr con este correo. Tocá el botón para confirmarlo. El enlace sirve una sola vez y vence en ${i.minutes} minutos.</td></tr>
+<tr><td><a href="${i.url}" style="${BUTTON}">Confirmar el correo</a></td></tr>
+<tr><td style="${FINE_PRINT};padding-top:26px">Si no pediste esto, ignoralo — el correo de la banda no cambia sin este enlace.</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export function emailChangeEmailText(i: EmailChangeEmailInput): string {
+  return `Pidieron que ${i.bandName} entre a Coverr con este correo. Para confirmarlo:
+
+${i.url}
+
+El enlace sirve una sola vez y vence en ${i.minutes} minutos. Si no pediste esto, ignoralo: el correo de la banda no cambia sin este enlace.`;
+}
+
+export function emailChangeEmailSubject(i: EmailChangeEmailInput): string {
+  return `Confirmá el correo de ${i.bandName} en Coverr`;
+}
+
 // ----------------------------------------------------------- suspended band
 
 type SuspendedEmailInput = { bandName: string };

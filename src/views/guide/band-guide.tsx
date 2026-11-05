@@ -410,6 +410,11 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
           nuevos hasta pagarlo. Y si una banda tuya está suspendida, ese correo no puede crear
           bandas nuevas; las otras siguen funcionando.
         </li>
+        <li>
+          Para cambiar el correo de una banda, escribí el nuevo en <b>Banda → La banda</b> y tocá{" "}
+          <b>Guardar</b>. Al correo nuevo le llega <b>"Confirmá el correo de …"</b>: el cambio pasa
+          cuando alguien lo abre desde ahí. Hasta entonces seguís entrando con el de siempre.
+        </li>
       </ul>
 
       <h2 id="borrar">Borrar la cuenta</h2>

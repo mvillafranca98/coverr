@@ -71,6 +71,31 @@ export const SignInConfirmPage: FC<{ bandName: string; token: string }> = ({ ban
  * Where a creation link from /registro lands. The band is created on the tap,
  * not on the opening, so a mail filter scanning the link creates nothing.
  */
+/**
+ * Where an email-change link lands: one button, so a mail filter opening the
+ * link neither spends it nor moves the band.
+ */
+export const EmailChangeConfirmPage: FC<{ bandName: string; email: string; token: string }> = ({
+  bandName,
+  email,
+  token,
+}) => (
+  <AdminLayout title="Confirmar el correo — Coverr">
+    <AuthShell>
+      <h1>Confirmar el correo de {bandName}</h1>
+      <form method="post" action="/admin/correo">
+        <p class="sub">
+          Desde ahora {bandName} entra a Coverr con <b>{email}</b>. Este enlace sirve una sola vez.
+        </p>
+        <input type="hidden" name="t" value={token} />
+        <button class="btn" type="submit">
+          Confirmar el correo
+        </button>
+      </form>
+    </AuthShell>
+  </AdminLayout>
+);
+
 export const CreateBandConfirmPage: FC<{ bandName: string; token: string }> = ({
   bandName,
   token,

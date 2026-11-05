@@ -6,6 +6,7 @@ import { bandsRoutes } from "./bands";
 import type { AdminEnv } from "./context";
 import { createBandRoutes } from "./create-band";
 import { dashboardRoutes } from "./dashboard";
+import { emailChangeRoutes } from "./email-change";
 import { eventSettingsRoutes } from "./event-settings";
 import { manualSaleRoutes } from "./manual-sale";
 import { moneyRoutes } from "./money";
@@ -29,6 +30,7 @@ admin.use("*", requireSession);
 
 admin.route("/", sessionRoutes);
 admin.route("/", createBandRoutes);
+admin.route("/", emailChangeRoutes);
 admin.route("/", bandsRoutes);
 admin.route("/", bandHomeRoutes);
 admin.route("/", dashboardRoutes);

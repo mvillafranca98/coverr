@@ -9,6 +9,8 @@ import {
 } from "../../db/queries/bands";
 import { bandMemberIds, membersWithAdvances, saveMemberTable } from "../../db/queries/members";
 import * as s from "../../db/schema";
+import { mailBandEmailChangeLink } from "../../jobs/mail-band-links";
+import { addressTakesBand } from "../../lib/band-identity";
 import { BANKS, lpsToCentavos, newId, normalizeEmail, nowIso } from "../../lib/core";
 import {
   type MemberFormRow,
@@ -16,6 +18,7 @@ import {
   readMemberTable,
   typedMemberRows,
 } from "../../lib/member-split";
+import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
 import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { CONTACT_EMAIL } from "../../views/legal/constants";
 import { BandSettingsPage } from "../../views/setup/band-settings";
@@ -29,7 +32,14 @@ const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 async function renderBandSettings(
   c: AdminContext,
-  opts: { error?: string; saved?: boolean; typedMembers?: MemberFormRow[] } = {},
+  opts: {
+    error?: string;
+    saved?: boolean;
+    /** The address a confirmation link was just mailed to. */
+    emailPendingAt?: string;
+    emailConfirmed?: boolean;
+    typedMembers?: MemberFormRow[];
+  } = {},
 ) {
   const db = drizzle(c.env.DB, { schema: s });
   const bandId = c.get("bandId");
@@ -79,16 +89,30 @@ async function renderBandSettings(
       typedMembers={opts.typedMembers}
       error={opts.error}
       saved={opts.saved}
+      emailPendingAt={opts.emailPendingAt}
+      emailConfirmed={opts.emailConfirmed}
     />,
   );
 }
 
 bandSettingsRoutes.get("/banda", (c) =>
-  renderBandSettings(c, { saved: c.req.query("saved") === "1" }),
+  renderBandSettings(c, {
+    saved: c.req.query("saved") === "1",
+    emailConfirmed: c.req.query("correo") === "1",
+  }),
 );
 
+/**
+ * Saves the band's name at once. A new email is not saved here: a band's email
+ * is its person — it signs in with it, and debts and suspensions follow it to
+ * every band under it — so the band moves only when the new address opens the
+ * link mailed to it (routes/admin/email-change.tsx). Until then nothing changes
+ * and the band keeps signing in as before.
+ */
 bandSettingsRoutes.post("/banda", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
+  const band = await findBand(db, c.get("bandId"));
+  if (!band) return c.redirect("/admin/salir", 302);
   const body = await c.req.parseBody();
   const name = String(body["name"] ?? "").trim();
   const contactEmail = normalizeEmail(String(body["contact_email"] ?? ""));
@@ -101,20 +125,25 @@ bandSettingsRoutes.post("/banda", async (c) => {
   if (!EMAIL_PATTERN.test(contactEmail)) {
     return renderBandSettings(c, { error: "Revisá el correo." });
   }
-  // A suspension follows the person: a band cannot be moved under an address
-  // whose other band is suspended, which would otherwise hand it a working one.
-  const others = await listBandsByEmail(db, contactEmail);
-  if (others.some((band) => band.bannedAt && band.id !== c.get("bandId"))) {
-    return renderBandSettings(c, {
-      error: `Ese correo no se puede usar. Escribinos a ${CONTACT_EMAIL}.`,
-    });
+  const movesEmail = contactEmail !== band.contactEmail;
+  if (movesEmail) {
+    // Refused here as well as when the link is opened, so the band hears now.
+    if (!addressTakesBand(await listBandsByEmail(db, contactEmail), band.id)) {
+      return renderBandSettings(c, {
+        error: `Ese correo no se puede usar. Escribinos a ${CONTACT_EMAIL}.`,
+      });
+    }
+    if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
+      return renderBandSettings(c, { error: TOO_MANY_REQUESTS });
+    }
   }
 
-  await db
-    .update(s.bands)
-    .set({ name, contactEmail })
-    .where(eq(s.bands.id, c.get("bandId")));
-  return c.redirect(SAVED, 303);
+  await db.update(s.bands).set({ name }).where(eq(s.bands.id, band.id));
+  if (!movesEmail) return c.redirect(SAVED, 303);
+
+  const change = { bandId: band.id, bandName: name, from: band.contactEmail, to: contactEmail };
+  c.executionCtx.waitUntil(mailBandEmailChangeLink(c.env, change));
+  return renderBandSettings(c, { emailPendingAt: contactEmail });
 });
 
 // ---------------------------------------------------------- bank accounts

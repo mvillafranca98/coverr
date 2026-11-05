@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import { operatorFromToken, operatorTokenPayload } from "../src/lib/operator";
 import {
   bandCreatePayload,
+  bandEmailChangePayload,
   bandFromSession,
   bandLoginPayload,
   bandSessionPayload,
   bandToCreate,
+  emailChangeFromLink,
   emailFromLoginLink,
   emailFromSession,
   linkToSpend,
@@ -56,6 +58,46 @@ describe("a link that creates a band", () => {
     const link = { ...bandCreatePayload("a@b.co", "Los Pérez"), exp };
     expect(emailFromLoginLink(link)).toBeNull();
     expect(bandFromSession(link)).toBeNull();
+  });
+});
+
+describe("a link that moves a band to a new email", () => {
+  it("names the band, the address it had when asked, and the new one", () => {
+    const link = { ...bandEmailChangePayload("bnd_1", "viejo@b.co", "nuevo@b.co"), exp };
+    expect(emailChangeFromLink(link)).toEqual({
+      bandId: "bnd_1",
+      from: "viejo@b.co",
+      to: "nuevo@b.co",
+    });
+    expect(linkToSpend(link)?.linkId).toBe(link.jti);
+  });
+
+  // It is mailed to an address the band does not control yet; set as a
+  // cookie or replayed as a sign-in link it must open nothing.
+  it("cannot stand in for a session, a sign-in link or a creation link", () => {
+    const link = { ...bandEmailChangePayload("bnd_1", "viejo@b.co", "nuevo@b.co"), exp };
+    expect(bandFromSession(link)).toBeNull();
+    expect(emailFromSession(link)).toBeNull();
+    expect(emailFromLoginLink(link)).toBeNull();
+    expect(bandToCreate(link)).toBeNull();
+  });
+
+  it("is refused without an id, a band or either address", () => {
+    const { jti: _jti, ...noId } = bandEmailChangePayload("bnd_1", "a@b.co", "c@d.co");
+    expect(emailChangeFromLink({ ...noId, exp })).toBeNull();
+    expect(
+      emailChangeFromLink({ ...bandEmailChangePayload("", "a@b.co", "c@d.co"), exp }),
+    ).toBeNull();
+    expect(
+      emailChangeFromLink({ ...bandEmailChangePayload("bnd_1", "", "c@d.co"), exp }),
+    ).toBeNull();
+    expect(
+      emailChangeFromLink({ ...bandEmailChangePayload("bnd_1", "a@b.co", ""), exp }),
+    ).toBeNull();
+  });
+
+  it("is not a sign-in link's kind of payload, so the sign-in page refuses it", () => {
+    expect(emailChangeFromLink({ ...bandLoginPayload("a@b.co"), exp })).toBeNull();
   });
 });
 

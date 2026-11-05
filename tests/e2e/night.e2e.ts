@@ -7,8 +7,9 @@ import { launchBrowser, localDateTime, mailedLinkCount, nextMailedLink } from ".
  * and sets up, publishes an event, a fan buys two tickets with a receipt, the
  * door lets one in online and one offline, the fan asks for a refund and the
  * band gives it in two parts, the same person starts a second band and moves
- * between them, another band cannot see the first, and the operator suspends
- * it — which follows the person.
+ * between them, another band cannot see the first and moves to a new email only
+ * once that address confirms, and the operator suspends the first band — which
+ * follows the person.
  *
  * The steps share state and run in order. A failure names the step, and the
  * local server's log is in .wrangler/e2e-state/server.log.
@@ -22,11 +23,14 @@ const RECEIPT = "public/og-event.png";
 
 const BAND_A = { name: "Banda E2E", email: "banda-e2e@ejemplo.com" };
 const BAND_B = { name: "Otra Banda E2E", email: "otra-e2e@ejemplo.com" };
+/** Where Band B moves its email to, read by somebody else on another phone. */
+const BAND_B_NEW_EMAIL = "otra-nueva-e2e@ejemplo.com";
 const OPERATOR = "hola@coverr.live";
 const SECOND_BAND = "Segunda Banda E2E";
 
 let browser: Browser;
 let bandA: Page;
+let bandB: { context: BrowserContext; page: Page };
 let bandASignInLink = "";
 let eventSlug = "";
 let scanLink = "";
@@ -249,13 +253,35 @@ describe("a night with Coverr", () => {
   });
 
   it("keeps a second band out of the first band's pages", async () => {
-    const { context, page } = await newPerson();
-    await signUpBand(page, BAND_B);
+    bandB = await newPerson();
+    await signUpBand(bandB.page, BAND_B);
     for (const path of ["", "/ordenes", "/dinero", "/ajustes"]) {
-      await page.goto(`/admin/e/${eventSlug}${path}`);
-      await expect(page.getByText("No encontramos esta página").count()).resolves.toBe(1);
+      await bandB.page.goto(`/admin/e/${eventSlug}${path}`);
+      await expect(bandB.page.getByText("No encontramos esta página").count()).resolves.toBe(1);
     }
+  });
+
+  it("moves a band to a new email only once that address confirms it", async () => {
+    const { page } = bandB;
+    await page.goto("/admin/banda");
+    await page.fill("#contact_email", BAND_B_NEW_EMAIL);
+    await page.locator('form[action="/admin/banda"] button').click();
+    await page.getByText(`Te mandamos un enlace a ${BAND_B_NEW_EMAIL}`).waitFor();
+    await page.goto("/admin/banda");
+    await expect(page.locator("#contact_email").inputValue()).resolves.toBe(BAND_B.email);
+
+    // Somebody else, on another phone, reads the new address.
+    const link = await nextMailedLink(logPath, BAND_B_NEW_EMAIL, "/admin/correo");
+    const { context, page: reader } = await newPerson();
+    await reader.goto(link);
+    await reader.getByRole("button", { name: "Confirmar el correo" }).click();
+    await reader.waitForURL("**/admin/banda?correo=1");
+    await reader.getByText(`Listo: ahora la banda entra con ${BAND_B_NEW_EMAIL}`).waitFor();
+
+    await reader.goto(link);
+    await reader.getByText("Ese enlace ya se usó").waitFor();
     await context.close();
+    await bandB.context.close();
   });
 
   it("lets the operator suspend a band, which signs it out on its next click", async () => {

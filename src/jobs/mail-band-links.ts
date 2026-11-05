@@ -1,10 +1,13 @@
 import { LOGIN_TTL, sessionSecret, sign } from "../lib/auth";
 import { makeTransport } from "../lib/email";
-import { bandCreatePayload, bandLoginPayload } from "../lib/sign-in";
+import { bandCreatePayload, bandEmailChangePayload, bandLoginPayload } from "../lib/sign-in";
 import {
   createBandEmailHtml,
   createBandEmailSubject,
   createBandEmailText,
+  emailChangeEmailHtml,
+  emailChangeEmailSubject,
+  emailChangeEmailText,
   LOGIN_EMAIL_SUBJECT,
   loginEmailHtml,
   loginEmailText,
@@ -15,7 +18,7 @@ type Env = Parameters<typeof makeTransport>[0] & { SESSION_SECRET?: string; APP_
 const MINUTES = Math.round(LOGIN_TTL / 60);
 
 /**
- * The two links a band's person gets by mail, sent after the response so a
+ * The links a band's person gets by mail, sent after the response so a
  * page that mails and a page that does not answer in the same time. A failed
  * send is logged, never thrown: the page has already said "revisá tu correo".
  */
@@ -46,4 +49,23 @@ export async function mailBandCreateLink(env: Env, email: string, name: string):
     text: createBandEmailText(mail),
   });
   if (!result.ok) console.error(`[sign-up] create link failed for ${email}: ${result.error}`);
+}
+
+/** A link, mailed to `change.to`, that moves the band onto that address once it is opened. */
+export async function mailBandEmailChangeLink(
+  env: Env,
+  change: { bandId: string; bandName: string; from: string; to: string },
+): Promise<void> {
+  const payload = bandEmailChangePayload(change.bandId, change.from, change.to);
+  const token = await sign(sessionSecret(env), payload, LOGIN_TTL);
+  const url = `${env.APP_ORIGIN}/admin/correo?t=${encodeURIComponent(token)}`;
+  const mail = { bandName: change.bandName, url, minutes: MINUTES };
+  const result = await makeTransport(env).send({
+    to: change.to,
+    subject: emailChangeEmailSubject(mail),
+    html: emailChangeEmailHtml(mail),
+    text: emailChangeEmailText(mail),
+  });
+  if (!result.ok)
+    console.error(`[band-email] change link failed for ${change.to}: ${result.error}`);
 }

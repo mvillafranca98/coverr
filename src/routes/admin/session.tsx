@@ -30,12 +30,17 @@ import type { AdminContext, AdminEnv } from "./context";
 
 const isHttps = (origin: string) => origin.startsWith("https://");
 
-/** The only admin paths reachable without a session — everything signing in or creating a band needs. */
+/**
+ * The only admin paths reachable without a session — everything signing in,
+ * creating a band or confirming a band's new email needs. The last is opened
+ * by whoever reads the new address, often on another phone.
+ */
 const PUBLIC_PATHS = new Set([
   "/admin/acceso",
   "/admin/login",
   "/admin/entrar",
   "/admin/crear",
+  "/admin/correo",
   "/admin/salir",
 ]);
 

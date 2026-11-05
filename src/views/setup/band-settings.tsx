@@ -26,14 +26,40 @@ export const BandSettingsPage: FC<{
   /** The members table as typed, when a save was just refused. */
   typedMembers?: MemberFormRow[];
   saved?: boolean;
+  /** The new address a confirmation link was just mailed to. */
+  emailPendingAt?: string;
+  /** Back from opening that link: the band now signs in with its new address. */
+  emailConfirmed?: boolean;
   error?: string;
-}> = ({ band, accounts, members, advances, events, typedMembers, saved, error }) => {
+}> = ({
+  band,
+  accounts,
+  members,
+  advances,
+  events,
+  typedMembers,
+  saved,
+  emailPendingAt,
+  emailConfirmed,
+  error,
+}) => {
   const pctTotal = members.reduce((n, m) => n + m.splitPct, 0);
   return (
     <AdminLayout title={`Ajustes — ${band.name}`} bandName={band.name} active="band">
       <h1>Ajustes de la banda</h1>
       <p class="sub">Cuentas, integrantes y adelantos.</p>
       {saved ? <div class="note ok">Guardado.</div> : null}
+      {emailPendingAt ? (
+        <div class="note ok">
+          Te mandamos un enlace a <b>{emailPendingAt}</b>. El correo de la banda cambia cuando lo
+          abras; mientras tanto seguís entrando con <b>{band.contactEmail}</b>.
+        </div>
+      ) : null}
+      {emailConfirmed ? (
+        <div class="note ok">
+          Listo: ahora la banda entra con <b>{band.contactEmail}</b>.
+        </div>
+      ) : null}
       {error ? <div class="note crit">{error}</div> : null}
 
       <h2>La banda</h2>
@@ -54,7 +80,11 @@ export const BandSettingsPage: FC<{
             id="contact_email"
             required
             value={band.contactEmail}
+            aria-describedby="contact_email_hint"
           />
+          <p class="sub" id="contact_email_hint" style="margin:6px 0 0">
+            Si lo cambiás, te mandamos un enlace al correo nuevo para confirmarlo.
+          </p>
         </div>
         <button class="btn" type="submit">
           Guardar

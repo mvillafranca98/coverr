@@ -49,6 +49,16 @@ export function decideSignIn(bands: readonly BandOfEmail[]): SignInDecision {
   return open.length > 0 ? { kind: "open", bands: open } : { kind: "suspended", band: first };
 }
 
+/**
+ * Whether a band may move under this address. Not while the address has a
+ * suspended band (other than this one): moving there would hand the suspended
+ * person a working band, which is what a suspension following the person
+ * rules out.
+ */
+export function addressTakesBand(bandsOfAddress: readonly BandOfEmail[], bandId: string): boolean {
+  return !bandsOfAddress.some((band) => band.bannedAt && band.id !== bandId);
+}
+
 /** What a sign-in mail and its landing page call what it opens: the band, or all of them. */
 export function signInTitle(bands: readonly BandOfEmail[]): string {
   return bands.length === 1 ? (bands[0] as BandOfEmail).name : "tus bandas";
