@@ -34,7 +34,7 @@ export const BandsPage: FC<{
 
       {email ? (
         <div class="scroll">
-          <table>
+          <table class="bands-table">
             <tbody>
               {bands.map((band) => (
                 <tr key={band.id}>

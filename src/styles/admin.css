@@ -562,10 +562,12 @@ tr.tot td:first-child {
   font-family: var(--display);
   font-weight: 400;
 }
-/* A table of inputs: tighter cells so name, percentage and Quitar fit a phone
-   without scrolling sideways, and every cell centred on its input. */
+/* A table of inputs or buttons: tighter cells so name, percentage and Quitar
+   fit a phone without scrolling sideways, and every cell centred on its
+   control, so a row with a 44px button lines its text up with it. */
 .member-table th,
-.member-table td {
+.member-table td,
+.bands-table td {
   padding: 8px 10px;
   vertical-align: middle;
 }
