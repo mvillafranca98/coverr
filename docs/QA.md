@@ -185,8 +185,12 @@ Independent of the checks above. **All of these must be done.**
       expenses are all from QA, none from the seed.
 - [x] **B4b — The 10 QA orders on the Masayoshi event.** Closed 2026-11-04: deleted with
       Daydrinking, along with the event and its proofs.
-- [ ] **B5 — Spend caps** (audit LCH-03, still failing): a cap and low-balance alert on Anthropic, a
-      budget alert on Cloudflare, and know your Resend plan limit. Every purchase is a vision call.
+- [x] **B5 — Spend caps** (audit LCH-03). Closed 2026-11-05.
+      - Anthropic: limited by the organization's monthly spend limit, which is shared with other
+        projects. The Console documents no low-balance email.
+      - Cloudflare: a $10 budget alert.
+      - Resend: on the free plan, which can't be charged; the limit is 100 emails a day.
+      - Since 2026-11-05 every purchase is a Sonnet 5.5 call, about $0.008 each.
 - [ ] **B6 — Age gate.** 18+ is stated in the terms and at checkout but enforced nowhere (LEG-11).
       Decide whether that is acceptable for launch.
 
