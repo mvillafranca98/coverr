@@ -18,6 +18,7 @@
     "brand": "node scripts/brand.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "e2e": "vitest run --config vitest.e2e.config.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "fmt": "biome format --write .",

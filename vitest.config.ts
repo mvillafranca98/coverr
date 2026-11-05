@@ -10,7 +10,8 @@ import { defineConfig } from "vitest/config";
  * and they run in milliseconds.
  *
  * Routes and views are not covered here. They need a Workers runtime and a
- * database, which is a different kind of test and a different kind of slow.
+ * database, which is a different kind of test and a different kind of slow:
+ * that is `npm run e2e` (vitest.e2e.config.ts).
  */
 export default defineConfig({
   test: {

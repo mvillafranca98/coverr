@@ -182,9 +182,9 @@ them to Armando:
 ## Part 4 — The door (Banda A, door phone)
 
 - [ ] **4.1 Open the door scanner**
-  - **Where:** Banda A → event → **Ajustes** → "Enlace del personal de puerta" → **Generar
-    enlace** → **Copiar**. It warns that the link is only for staff; accept. Open that link on
-    the door phone.
+  - **Where:** Banda A → event → **Ajustes** → "Enlace del personal de puerta" → **Copiar**
+    (every event is created with its door link). It warns that the link is only for staff;
+    accept. Open that link on the door phone.
   - **See:**
     - the event name, with venue · band underneath;
     - a status badge reading "Lista descargada · listo", then **Sincronizado**;

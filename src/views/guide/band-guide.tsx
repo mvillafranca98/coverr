@@ -259,9 +259,10 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
 
       <h2 id="puerta">La puerta</h2>
       <p>
-        En <b>Ajustes → Enlace del personal de puerta</b>, tocá <b>Generar enlace</b> y copialo.
-        Mandáselo solo a tu staff: quien lo tenga puede registrar entradas. Si alguien deja de
-        trabajar con vos, generá uno nuevo y el anterior deja de servir.
+        Cada evento ya trae su enlace de puerta. En <b>Ajustes → Enlace del personal de puerta</b>,
+        tocá <b>Copiar</b>. Mandáselo solo a tu staff: quien lo tenga puede registrar entradas. Si
+        alguien deja de trabajar con vos, tocá <b>Generar uno nuevo</b> y el anterior deja de
+        servir.
       </p>
       <p>
         Abrilo en el teléfono de la puerta <b>antes de que empiece</b>, con señal: descarga la lista

@@ -1,5 +1,11 @@
 # Walking the product end to end
 
+**The automated version is `npm run e2e`** (`tests/e2e/night.e2e.ts`): a real browser walks one
+night through a private local Coverr in about 20 seconds, and refuses to run if `.dev.vars` holds
+a key that would send real mail or pay for receipt reading. Run it before every deploy. What it
+cannot do — a real camera, a real bank screenshot read by the model, mail landing in Gmail — is
+what this manual pass is still for.
+
 A full pass: create a band, set it up, sell a ticket to yourself, upload a proof, scan it at
 the door, and close the books. Roughly 20 minutes.
 

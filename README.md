@@ -207,6 +207,7 @@ also on its dashboard, under *Entrada*.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | Biome lint and format check; `lint:fix` applies fixes, `fmt` formats |
 | `npm test` | Vitest, once; `test:watch` keeps it running |
+| `npm run e2e` | A real browser walks one whole night through a private local Coverr: signup, setup, a sale, the door online and offline, a refund, a second band kept out, an operator suspension. About 20 seconds; needs Chrome installed. Run it before every deploy |
 | `npm run db:generate` | Generates a SQL migration from changes to `src/db/schema.ts` |
 | `npm run db:migrate:local` | Applies pending migrations to the local database |
 | `npm run db:seed:local` | Loads `seed/seed.sql` into the local database |
@@ -386,8 +387,15 @@ lint and tests on every push to `main` and every pull request.
 ## Deploying
 
 ```bash
+npm run e2e
+```
+
+```bash
 npm run db:migrate:remote && npm run deploy
 ```
+
+The end-to-end run comes first: it is the one check that drives the real pages, and it starts
+its own server on a fresh local database, so it never touches production.
 
 `npm run deploy` runs [`scripts/deploy.mjs`](scripts/deploy.mjs), which tags each Cloudflare
 version with its short commit hash and writes the commit subject as its message — so the
