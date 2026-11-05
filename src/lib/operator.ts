@@ -26,7 +26,10 @@ export function isOperatorEmail(email: string, operatorEmails: readonly string[]
 export type OperatorTokenUse = "operator-login" | "operator-session";
 
 export function operatorTokenPayload(email: string, use: OperatorTokenUse) {
-  return { op: normalizeEmail(email), use };
+  const payload = { op: normalizeEmail(email), use };
+  // A sign-in link carries an id so it opens one session and no more
+  // (lib/sign-in.ts); a session is only ever expired, never spent.
+  return use === "operator-login" ? { ...payload, jti: crypto.randomUUID() } : payload;
 }
 
 /** The operator a verified token names, or null when it is not that kind of token. */

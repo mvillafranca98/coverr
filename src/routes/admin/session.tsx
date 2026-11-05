@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono, type MiddlewareHandler } from "hono";
 import { findBand } from "../../db/queries/bands";
+import { isSignInLinkSpent, spendSignInLink } from "../../db/queries/sign-in-links";
 import * as s from "../../db/schema";
 import { sendSuspendedNotice } from "../../jobs/notify-suspended";
 import {
@@ -15,10 +16,17 @@ import {
   sign,
   verify,
 } from "../../lib/auth";
-import { normalizeEmail } from "../../lib/core";
+import { normalizeEmail, nowIso } from "../../lib/core";
 import { makeTransport } from "../../lib/email";
 import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
-import { LoginPage } from "../../views/admin/login";
+import {
+  bandFromLoginLink,
+  bandFromSession,
+  bandLoginPayload,
+  bandSessionPayload,
+  linkToSpend,
+} from "../../lib/sign-in";
+import { LoginPage, SignInConfirmPage } from "../../views/admin/login";
 import { LOGIN_EMAIL_SUBJECT, loginEmailHtml, loginEmailText } from "../../views/email";
 import type { AdminEnv } from "./context";
 
@@ -37,14 +45,14 @@ export const requireSession: MiddlewareHandler<AdminEnv> = async (c, next) => {
 
   const raw = readCookie(c.req.header("Cookie"), SESSION_COOKIE);
   if (!raw) return c.redirect("/admin/acceso", 302);
-  const payload = await verify<{ b: string }>(sessionSecret(c.env), raw);
-  if (!payload?.b) return c.redirect("/admin/acceso", 302);
+  const bandId = bandFromSession(await verify(sessionSecret(c.env), raw));
+  if (!bandId) return c.redirect("/admin/acceso", 302);
 
   // A signed session outlives its band when the band deletes its account from
   // another device, and so does a sign-in link sent just before. Without this
   // check every write in the admin would hit a foreign key that no longer
   // exists and crash; with it, the session just ends.
-  const band = await findBand(drizzle(c.env.DB, { schema: s }), payload.b);
+  const band = await findBand(drizzle(c.env.DB, { schema: s }), bandId);
   if (!band) return c.redirect("/admin/salir", 302);
 
   // A ban ends the session on the band's next click, not when its cookie runs
@@ -54,7 +62,7 @@ export const requireSession: MiddlewareHandler<AdminEnv> = async (c, next) => {
     return c.redirect("/admin/acceso?suspendida=1", 302);
   }
 
-  c.set("bandId", payload.b);
+  c.set("bandId", bandId);
   return next();
 };
 
@@ -87,7 +95,7 @@ sessionRoutes.post("/login", async (c) => {
   if (band?.bannedAt) {
     c.executionCtx.waitUntil(sendSuspendedNotice(c.env, band));
   } else if (band) {
-    const token = await sign(sessionSecret(c.env), { b: band.id }, LOGIN_TTL);
+    const token = await sign(sessionSecret(c.env), bandLoginPayload(band.id), LOGIN_TTL);
     const url = `${c.env.APP_ORIGIN}/admin/entrar?t=${encodeURIComponent(token)}`;
     const mail = { bandName: band.name, url, minutes: Math.round(LOGIN_TTL / 60) };
 
@@ -107,22 +115,53 @@ sessionRoutes.post("/login", async (c) => {
   return c.redirect("/admin/acceso?ok=1", 303);
 });
 
+const EXPIRED_LINK = "Ese enlace ya venció. Pedí uno nuevo.";
+const SPENT_LINK = "Ese enlace ya se usó. Pedí uno nuevo si querés entrar otra vez.";
+
+/**
+ * A sign-in link opens a page with one button rather than the panel itself:
+ * mail filters open links to scan them, and the link is spent on the tap, not
+ * on the opening. Says so up front when the link is already spent.
+ */
 sessionRoutes.get("/entrar", async (c) => {
   const token = c.req.query("t");
   if (!token) return c.redirect("/admin/acceso", 302);
 
-  const payload = await verify<{ b: string }>(sessionSecret(c.env), token);
-  if (!payload?.b) {
-    return c.html(<LoginPage error="Ese enlace ya venció. Pedí uno nuevo." />, 400);
+  const payload = await verify(sessionSecret(c.env), token);
+  const bandId = bandFromLoginLink(payload);
+  const link = linkToSpend(payload);
+  if (!bandId || !link) return c.html(<LoginPage error={EXPIRED_LINK} />, 400);
+
+  const db = drizzle(c.env.DB, { schema: s });
+  const band = await findBand(db, bandId);
+  if (!band) return c.html(<LoginPage error={EXPIRED_LINK} />, 400);
+  // A link sent before the ban must not open a session after it.
+  if (band.bannedAt) return c.html(<LoginPage suspended />, 403);
+  if (await isSignInLinkSpent(db, link.linkId)) {
+    return c.html(<LoginPage error={SPENT_LINK} />, 400);
+  }
+  return c.html(<SignInConfirmPage bandName={band.name} token={token} />);
+});
+
+/** Spends the link and opens the session. A second tap, or a second device, is refused. */
+sessionRoutes.post("/entrar", async (c) => {
+  const token = String((await c.req.parseBody())["t"] ?? "");
+  const payload = token ? await verify(sessionSecret(c.env), token) : null;
+  const bandId = bandFromLoginLink(payload);
+  const link = linkToSpend(payload);
+  if (!bandId || !link) return c.html(<LoginPage error={EXPIRED_LINK} />, 400);
+
+  const db = drizzle(c.env.DB, { schema: s });
+  const band = await findBand(db, bandId);
+  if (!band) return c.html(<LoginPage error={EXPIRED_LINK} />, 400);
+  if (band.bannedAt) return c.html(<LoginPage suspended />, 403);
+  if (!(await spendSignInLink(db, link, nowIso()))) {
+    return c.html(<LoginPage error={SPENT_LINK} />, 400);
   }
 
-  // A link sent before the ban must not open a session after it.
-  const band = await findBand(drizzle(c.env.DB, { schema: s }), payload.b);
-  if (band?.bannedAt) return c.html(<LoginPage suspended />, 403);
-
-  const session = await sign(sessionSecret(c.env), { b: payload.b }, SESSION_TTL);
+  const session = await sign(sessionSecret(c.env), bandSessionPayload(bandId), SESSION_TTL);
   c.header("Set-Cookie", sessionCookie(session, isHttps(c.env.APP_ORIGIN)));
-  return c.redirect("/admin", 302);
+  return c.redirect("/admin", 303);
 });
 
 sessionRoutes.get("/salir", (c) => {

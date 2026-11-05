@@ -526,6 +526,21 @@ export const platformFlags = sqliteTable("platform_flags", {
 });
 
 /**
+ * Sign-in links already used, band and operator alike, so each opens one
+ * session and no more. A row is only needed until its link would have expired
+ * anyway; the nightly sweep deletes it after that. Belongs to no band.
+ */
+export const usedSignInLinks = sqliteTable(
+  "used_sign_in_links",
+  {
+    id: text("id").primaryKey(),
+    usedAt: text("used_at").notNull(),
+    expiresAt: text("expires_at").notNull(),
+  },
+  (t) => [index("idx_used_sign_in_links_expires").on(t.expiresAt)],
+);
+
+/**
  * Unhandled failures, kept so they can be counted and chased.
  *
  * Cloudflare already retains the console output, but a dashboard is somewhere

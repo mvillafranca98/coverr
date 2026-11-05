@@ -1,4 +1,7 @@
+import { drizzle } from "drizzle-orm/d1";
 import { Hono, type MiddlewareHandler } from "hono";
+import { isSignInLinkSpent, spendSignInLink } from "../../db/queries/sign-in-links";
+import * as s from "../../db/schema";
 import {
   clearOperatorCookie,
   LOGIN_TTL,
@@ -10,12 +13,13 @@ import {
   sign,
   verify,
 } from "../../lib/auth";
-import { normalizeEmail } from "../../lib/core";
+import { normalizeEmail, nowIso } from "../../lib/core";
 import { makeTransport } from "../../lib/email";
 import { isOperatorEmail, operatorFromToken, operatorTokenPayload } from "../../lib/operator";
 import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { linkToSpend } from "../../lib/sign-in";
 import { LOGIN_EMAIL_SUBJECT, loginEmailHtml, loginEmailText } from "../../views/email";
-import { OperatorLoginPage } from "../../views/operator/login";
+import { OperatorLoginPage, OperatorSignInConfirmPage } from "../../views/operator/login";
 import type { OperatorEnv } from "./context";
 
 const isHttps = (origin: string) => origin.startsWith("https://");
@@ -88,15 +92,43 @@ operatorSessionRoutes.post("/acceso", async (c) => {
   return c.redirect("/operador/acceso?ok=1", 303);
 });
 
-operatorSessionRoutes.get("/entrar", async (c) => {
-  const token = c.req.query("t");
+const EXPIRED_LINK = "Ese enlace ya venció. Pedí uno nuevo.";
+const SPENT_LINK = "Ese enlace ya se usó. Pedí uno nuevo si querés entrar otra vez.";
+
+/**
+ * The operator a sign-in link opens, and the id to spend it by, or null.
+ * Re-checks the list: an address taken off it while its link was in flight
+ * does not get in.
+ */
+async function readOperatorLink(c: { env: OperatorEnv["Bindings"] }, token: string | undefined) {
   const payload = token ? await verify(sessionSecret(c.env), token) : null;
   const email = operatorFromToken(payload, "operator-login");
-  // Re-checked here as well: an address taken off the list while its link was
-  // in flight does not get in.
-  if (!email || !isOperatorEmail(email, c.env.OPERATOR_EMAILS)) {
-    return c.html(<OperatorLoginPage error="Ese enlace ya venció. Pedí uno nuevo." />, 400);
+  const link = linkToSpend(payload);
+  if (!email || !link || !isOperatorEmail(email, c.env.OPERATOR_EMAILS)) return null;
+  return { email, link };
+}
+
+/** Lands on a button rather than the panel: a mail filter opening the link must not spend it. */
+operatorSessionRoutes.get("/entrar", async (c) => {
+  const token = c.req.query("t");
+  const signIn = await readOperatorLink(c, token);
+  if (!token || !signIn) return c.html(<OperatorLoginPage error={EXPIRED_LINK} />, 400);
+  if (await isSignInLinkSpent(drizzle(c.env.DB, { schema: s }), signIn.link.linkId)) {
+    return c.html(<OperatorLoginPage error={SPENT_LINK} />, 400);
   }
+  return c.html(<OperatorSignInConfirmPage token={token} />);
+});
+
+/** Spends the link and opens the session; a second tap is refused. */
+operatorSessionRoutes.post("/entrar", async (c) => {
+  const token = String((await c.req.parseBody())["t"] ?? "");
+  const signIn = await readOperatorLink(c, token);
+  if (!signIn) return c.html(<OperatorLoginPage error={EXPIRED_LINK} />, 400);
+  const db = drizzle(c.env.DB, { schema: s });
+  if (!(await spendSignInLink(db, signIn.link, nowIso()))) {
+    return c.html(<OperatorLoginPage error={SPENT_LINK} />, 400);
+  }
+  const email = signIn.email;
 
   const session = await sign(
     sessionSecret(c.env),
@@ -104,7 +136,7 @@ operatorSessionRoutes.get("/entrar", async (c) => {
     OPERATOR_SESSION_TTL,
   );
   c.header("Set-Cookie", operatorCookie(session, isHttps(c.env.APP_ORIGIN)));
-  return c.redirect("/operador", 302);
+  return c.redirect("/operador", 303);
 });
 
 operatorSessionRoutes.get("/salir", (c) => {

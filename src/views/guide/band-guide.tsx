@@ -84,8 +84,9 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
           correo, y tocá <b>Crear</b>.
         </li>
         <li>
-          Te llega un correo <b>"Entrar a Coverr"</b>. Tocá <b>Entrar</b> y ya estás en tu panel. El
-          enlace vence en 15 minutos.
+          Te llega un correo <b>"Entrar a Coverr"</b>. Tocá <b>Entrar</b> en el correo y otra vez{" "}
+          <b>Entrar</b> en la página que se abre, y ya estás en tu panel. El enlace sirve una sola
+          vez y vence en 15 minutos.
         </li>
         <li>
           No hay contraseña. Para volver a entrar otro día, andá a{" "}

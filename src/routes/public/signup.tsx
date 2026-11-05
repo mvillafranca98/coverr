@@ -7,6 +7,7 @@ import { LOGIN_TTL, sign } from "../../lib/auth";
 import { newId, normalizeEmail, nowIso } from "../../lib/core";
 import { makeTransport } from "../../lib/email";
 import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { bandLoginPayload } from "../../lib/sign-in";
 import { TEXT_LIMITS } from "../../lib/text-limits";
 import { signupEmailHtml, signupEmailSubject, signupEmailText } from "../../views/email";
 import { SignupPage, SignupSentPage } from "../../views/signup";
@@ -70,7 +71,7 @@ signupRoutes.post("/registro", async (c) => {
     });
   }
 
-  const token = await sign(c.env.SESSION_SECRET, { b: bandId }, LOGIN_TTL);
+  const token = await sign(c.env.SESSION_SECRET, bandLoginPayload(bandId), LOGIN_TTL);
   const mail = { bandName, url: `${c.env.APP_ORIGIN}/admin/entrar?t=${encodeURIComponent(token)}` };
   c.executionCtx.waitUntil(
     makeTransport(c.env)

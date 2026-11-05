@@ -47,7 +47,8 @@ both bands with a different alias for each.
 
 - [ ] **0.1 Coverr's accounts are ready**
   - **Where:** `coverr.live/operador/acceso` → type `mvillafranca98@gmail.com` → **Enviar
-    enlace** → open the email "Entrar a Coverr" → **Entrar**. Then **Cuentas** in the top bar.
+    enlace** → open the email "Entrar a Coverr" → **Entrar** → **Entrar** again on the page it
+    opens. Then **Cuentas** in the top bar.
   - **Do:** make sure all three accounts are listed: the company's (INVERSIONES ALFRAM S. DE
     R.L.), Armando's and Alexis's. If the company's doesn't say **PRINCIPAL**, tap **Hacer
     principal** on it.
@@ -65,7 +66,8 @@ both bands with a different alias for each.
   - **Do:** band name "Prueba A" (Armando) or "Prueba B" (Alexis), your band's alias, **Crear**.
   - **See:** a page "Revisá tu correo". Within a minute an email from **Coverr
     &lt;hola@coverr.live&gt;** with the subject "Entrar a Coverr — Prueba A" (or B). Its
-    **Entrar** button opens your band's panel. Note which Gmail tab it landed in.
+    **Entrar** button opens a page with one more **Entrar**, which opens your band's panel.
+    Note which Gmail tab it landed in.
 - [ ] **1.2 The welcome box reads well**
   - **Where:** the panel's first page (**Eventos**).
   - **See:** a yellow box "Te falta poco para vender" with three steps: Agregá tu cuenta

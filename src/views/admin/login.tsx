@@ -45,3 +45,24 @@ export const LoginPage: FC<{
     </AuthShell>
   </AdminLayout>
 );
+
+/**
+ * Where a sign-in link lands: one button that spends the link and opens the
+ * panel. Opening the link does not spend it on its own, because mail filters
+ * open links to scan them, and a link spent by a scanner would greet the band
+ * with "ya se usó" the moment they tapped it.
+ */
+export const SignInConfirmPage: FC<{ bandName: string; token: string }> = ({ bandName, token }) => (
+  <AdminLayout title="Entrar — Coverr">
+    <AuthShell>
+      <h1>Entrar a {bandName}</h1>
+      <form method="post" action="/admin/entrar">
+        <p class="sub">Tocá el botón para abrir el panel. Este enlace sirve una sola vez.</p>
+        <input type="hidden" name="t" value={token} />
+        <button class="btn" type="submit">
+          Entrar
+        </button>
+      </form>
+    </AuthShell>
+  </AdminLayout>
+);

@@ -222,14 +222,14 @@ export function loginEmailHtml(i: LoginEmailInput): string {
 <table role="presentation" width="100%" style="max-width:440px;text-align:left">
 <tr><td style="padding-bottom:16px">${sticker("Coverr", YELLOW)}</td></tr>
 <tr><td style="${HEADING};padding-bottom:10px">Entrar al panel de ${escapeHtml(i.bandName)}</td></tr>
-<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED};padding-bottom:22px">Tocá el botón para entrar. El enlace vence en ${i.minutes} minutos.</td></tr>
+<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED};padding-bottom:22px">Tocá el botón para entrar. El enlace sirve una sola vez y vence en ${i.minutes} minutos.</td></tr>
 <tr><td><a href="${i.url}" style="${BUTTON}">Entrar</a></td></tr>
 <tr><td style="${FINE_PRINT};padding-top:26px">Si no pediste esto, ignoralo — nadie puede entrar sin este correo.</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
 export function loginEmailText(i: LoginEmailInput): string {
-  return `Entrar al panel de ${i.bandName}:\n\n${i.url}\n\nEl enlace vence en ${i.minutes} minutos. Si no pediste esto, ignoralo.`;
+  return `Entrar al panel de ${i.bandName}:\n\n${i.url}\n\nEl enlace sirve una sola vez y vence en ${i.minutes} minutos. Si no pediste esto, ignoralo.`;
 }
 
 export const LOGIN_EMAIL_SUBJECT = "Entrar a Coverr";
@@ -248,14 +248,14 @@ export function signupEmailHtml(i: SignupEmailInput): string {
 <table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:440px;text-align:left">
 <tr><td style="padding-bottom:16px">${sticker("Coverr", YELLOW)}</td></tr>
 <tr><td style="${HEADING};padding-bottom:10px">Entrar al panel de ${escapeHtml(i.bandName)}</td></tr>
-<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED};padding-bottom:22px">Tocá el botón para entrar. El enlace vence en 15 minutos.</td></tr>
+<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED};padding-bottom:22px">Tocá el botón para entrar. El enlace sirve una sola vez y vence en 15 minutos.</td></tr>
 <tr><td><a href="${i.url}" style="${BUTTON}">Entrar</a></td></tr>
 <tr><td style="${FINE_PRINT};padding-top:26px">Si no pediste esto, ignoralo — nadie puede entrar sin este correo.</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
 export function signupEmailText(i: SignupEmailInput): string {
-  return `Entrar al panel de ${i.bandName}:\n\n${i.url}\n\nEl enlace vence en 15 minutos.`;
+  return `Entrar al panel de ${i.bandName}:\n\n${i.url}\n\nEl enlace sirve una sola vez y vence en 15 minutos.`;
 }
 
 export function signupEmailSubject(i: SignupEmailInput): string {

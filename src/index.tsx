@@ -3,6 +3,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { purgeOldErrors } from "./jobs/purge-errors";
 import { purgeExpiredFeeProofs } from "./jobs/purge-fee-proofs";
 import { purgeExpiredProofs } from "./jobs/purge-proofs";
+import { purgeSpentSignInLinks } from "./jobs/purge-sign-in-links";
 import { reportError } from "./jobs/report-error";
 import { sweepExpiredProofFiles } from "./jobs/sweep-proof-files";
 import { isCanonicalHost } from "./lib/crawl";
@@ -188,5 +189,6 @@ export default {
     sweep("purge-fee-proofs", purgeExpiredFeeProofs(env));
     sweep("sweep-proof-files", sweepExpiredProofFiles(env));
     sweep("purge-errors", purgeOldErrors(env));
+    sweep("purge-sign-in-links", purgeSpentSignInLinks(env));
   },
 };
