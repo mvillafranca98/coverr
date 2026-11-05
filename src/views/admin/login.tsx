@@ -66,3 +66,27 @@ export const SignInConfirmPage: FC<{ bandName: string; token: string }> = ({ ban
     </AuthShell>
   </AdminLayout>
 );
+
+/**
+ * Where a creation link from /registro lands. The band is created on the tap,
+ * not on the opening, so a mail filter scanning the link creates nothing.
+ */
+export const CreateBandConfirmPage: FC<{ bandName: string; token: string }> = ({
+  bandName,
+  token,
+}) => (
+  <AdminLayout title="Crear la banda — Coverr">
+    <AuthShell>
+      <h1>Crear {bandName}</h1>
+      <form method="post" action="/admin/crear">
+        <p class="sub">
+          Tocá el botón para crear la banda y entrar a su panel. Este enlace sirve una sola vez.
+        </p>
+        <input type="hidden" name="t" value={token} />
+        <button class="btn" type="submit">
+          Crear la banda
+        </button>
+      </form>
+    </AuthShell>
+  </AdminLayout>
+);

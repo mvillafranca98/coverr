@@ -145,12 +145,12 @@ describe("the ledger's months", () => {
 });
 
 describe("owedFeeMessage", () => {
-  const owed = { eventName: "Evento 2", amount: 500 };
+  const owed = { eventName: "Evento 2", amount: 500, bandName: "Prueba B" };
 
   it("names the report owed, what is blocked, and that open sales keep selling", () => {
     const message = owedFeeMessage(owed, "publicar eventos", "hola@coverr.live");
     expect(message).toBe(
-      "Tenés un pago pendiente: el reporte de Evento 2 (L5) todavía no está pagado, así que por ahora no podés publicar eventos. Los eventos que ya están a la venta siguen vendiendo. Escribinos a hola@coverr.live y lo resolvemos.",
+      "Tenés un pago pendiente: el reporte de Evento 2, de Prueba B (L5), todavía no está pagado, así que por ahora no podés publicar eventos. Los eventos que ya están a la venta siguen vendiendo. Escribinos a hola@coverr.live y lo resolvemos.",
     );
   });
 });

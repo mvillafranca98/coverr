@@ -41,6 +41,7 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
     ["reembolsos", "Reembolsos"],
     ["dinero", "Dinero, costos y el reporte"],
     ["historial", "Tu historial"],
+    ["varias", "¿Tocás en más de una banda?"],
     ["borrar", "Borrar la cuenta"],
     ["preguntas", "Preguntas frecuentes"],
   ];
@@ -84,9 +85,9 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
           correo, y tocá <b>Crear</b>.
         </li>
         <li>
-          Te llega un correo <b>"Entrar a Coverr"</b>. Tocá <b>Entrar</b> en el correo y otra vez{" "}
-          <b>Entrar</b> en la página que se abre, y ya estás en tu panel. El enlace sirve una sola
-          vez y vence en 15 minutos.
+          Te llega un correo <b>"Crear … en Coverr"</b>, con el nombre de tu banda. Tocá{" "}
+          <b>Crear la banda</b> en el correo y otra vez en la página que se abre: ahí se crea la
+          banda y entrás a su panel. El enlace sirve una sola vez y vence en 15 minutos.
         </li>
         <li>
           No hay contraseña. Para volver a entrar otro día, andá a{" "}
@@ -388,6 +389,28 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
         contra el anterior, cada evento con sus números, en qué gastás más, y <b>Tu gente</b>:
         cuántas personas distintas te han visto y cuántas repiten. Nunca se bloquea.
       </p>
+
+      <h2 id="varias">¿Tocás en más de una banda?</h2>
+      <p>
+        Con un mismo correo podés llevar varias bandas. Cada una tiene sus propios eventos, cuentas,
+        integrantes y plata; no se mezclan.
+      </p>
+      <ul>
+        <li>
+          Para crear otra, tocá el <b>nombre de tu banda</b> arriba a la izquierda del panel: ahí
+          está <b>Tus bandas</b>, con <b>Crear otra banda</b>. También podés registrarla en{" "}
+          <a href="/registro">coverr.live/registro</a> con el mismo correo y otro nombre.
+        </li>
+        <li>
+          Para pasar de una a otra, entrá a <b>Tus bandas</b> y tocá <b>Entrar</b> en la que querés.
+          Cuando pedís un enlace para entrar, te lleva directo a esa lista.
+        </li>
+        <li>
+          Si una de tus bandas tiene un pago de reporte pendiente, ninguna puede crear eventos
+          nuevos hasta pagarlo. Y si una banda tuya está suspendida, ese correo no puede crear
+          bandas nuevas; las otras siguen funcionando.
+        </li>
+      </ul>
 
       <h2 id="borrar">Borrar la cuenta</h2>
       <p>

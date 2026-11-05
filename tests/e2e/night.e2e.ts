@@ -5,8 +5,9 @@ import { launchBrowser, localDateTime, mailedLinkCount, nextMailedLink } from ".
 /**
  * One whole night, through the real pages of a local Coverr: a band signs up
  * and sets up, publishes an event, a fan buys two tickets with a receipt, the
- * door lets one in online and one offline, the band refunds, a second band
- * cannot see the first, and the operator suspends it.
+ * door lets one in online and one offline, the band refunds, the same person
+ * starts a second band and moves between them, another band cannot see the
+ * first, and the operator suspends it — which follows the person.
  *
  * The steps share state and run in order. A failure names the step, and the
  * local server's log is in .wrangler/e2e-state/server.log.
@@ -21,6 +22,7 @@ const RECEIPT = "public/og-event.png";
 const BAND_A = { name: "Banda E2E", email: "banda-e2e@ejemplo.com" };
 const BAND_B = { name: "Otra Banda E2E", email: "otra-e2e@ejemplo.com" };
 const OPERATOR = "hola@coverr.live";
+const SECOND_BAND = "Segunda Banda E2E";
 
 let browser: Browser;
 let bandA: Page;
@@ -34,22 +36,25 @@ async function newPerson(): Promise<{ context: BrowserContext; page: Page }> {
   return { context, page: await context.newPage() };
 }
 
-/** Signs a band up at /registro and lands in its panel through the mailed link. */
+/** Signs a band up at /registro; the band exists once its mailed link is opened and tapped. */
 async function signUpBand(page: Page, band: { name: string; email: string }) {
-  const known = mailedLinkCount(logPath, band.email, "/admin/entrar");
+  const known = mailedLinkCount(logPath, band.email, "/admin/crear");
   await page.goto("/registro");
   await page.fill('input[name="name"]', band.name);
   await page.fill('input[name="email"]', band.email);
   await page.click('button[type="submit"]');
   await page.getByRole("heading", { name: "Revisá tu correo" }).waitFor();
 
-  const link = await nextMailedLink(logPath, band.email, "/admin/entrar", known);
+  const link = await nextMailedLink(logPath, band.email, "/admin/crear", known);
   await page.goto(link);
-  await page.getByRole("heading", { name: `Entrar a ${band.name}` }).waitFor();
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await page.getByRole("heading", { name: `Crear ${band.name}` }).waitFor();
+  await page.getByRole("button", { name: "Crear la banda" }).click();
   await page.waitForURL("**/admin");
   return link;
 }
+
+/** The name in the panel's top bar: which band the session is in. */
+const bandInTopBar = (page: Page) => page.locator("nav.band .brand").textContent();
 
 beforeAll(async () => {
   browser = await launchBrowser();
@@ -66,14 +71,14 @@ describe("a night with Coverr", () => {
     await expect(bandA.getByText("Te falta poco para vender").count()).resolves.toBe(1);
   });
 
-  it("refuses the same sign-in link a second time, opened or submitted", async () => {
+  it("refuses the same creation link a second time, opened or submitted", async () => {
     const { context, page } = await newPerson();
     await page.goto(bandASignInLink);
     await expect(page.getByText("Ese enlace ya se usó").count()).resolves.toBe(1);
 
     // Opening a used link hides the button, but nothing stops a direct submit.
     const token = new URL(bandASignInLink, baseUrl).searchParams.get("t") ?? "";
-    const resubmit = await page.request.post("/admin/entrar", { form: { t: token } });
+    const resubmit = await page.request.post("/admin/crear", { form: { t: token } });
     expect(resubmit.status()).toBe(400);
     await expect(resubmit.text()).resolves.toContain("Ese enlace ya se usó");
     await context.close();
@@ -178,6 +183,34 @@ describe("a night with Coverr", () => {
     await bandA.getByText("reembolsada").first().waitFor();
   });
 
+  it("lets the same person start a second band and move between the two", async () => {
+    await bandA.goto("/admin/bandas");
+    await bandA.fill("#new_band_name", SECOND_BAND);
+    await bandA.getByRole("button", { name: "Crear banda" }).click();
+    await bandA.waitForURL("**/admin");
+    await expect(bandInTopBar(bandA)).resolves.toContain(SECOND_BAND);
+
+    await bandA.goto("/admin/bandas");
+    const firstRow = bandA.locator("tr", { hasText: BAND_A.name }).first();
+    await firstRow.getByRole("button", { name: "Entrar" }).click();
+    await bandA.waitForURL("**/admin");
+    await expect(bandInTopBar(bandA)).resolves.toContain(BAND_A.name);
+  });
+
+  it("signs a person with two bands in to a list of both", async () => {
+    const { context, page } = await newPerson();
+    const known = mailedLinkCount(logPath, BAND_A.email, "/admin/entrar");
+    await page.goto("/admin/acceso");
+    await page.fill('input[name="email"]', BAND_A.email);
+    await page.getByRole("button", { name: "Enviar enlace" }).click();
+    await page.goto(await nextMailedLink(logPath, BAND_A.email, "/admin/entrar", known));
+    await page.getByRole("heading", { name: "Entrar a tus bandas" }).waitFor();
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await page.waitForURL("**/admin/bandas");
+    await expect(page.locator("tr", { hasText: SECOND_BAND }).count()).resolves.toBe(1);
+    await context.close();
+  });
+
   it("keeps a second band out of the first band's pages", async () => {
     const { context, page } = await newPerson();
     await signUpBand(page, BAND_B);
@@ -198,7 +231,9 @@ describe("a night with Coverr", () => {
     await page.getByRole("button", { name: "Entrar" }).click();
     await page.waitForURL("**/operador");
 
-    await page.locator("a.cell-link", { hasText: BAND_A.email }).click();
+    // Two bands share this email now, and "Banda E2E" sits inside the other names too.
+    await page.locator("a.cell-link", { hasText: new RegExp(`^${BAND_A.name}`) }).click();
+    await page.getByText(`El mismo correo también lleva: ${SECOND_BAND}`).waitFor();
     await page.fill("#reason", "Prueba automática");
     await page.getByRole("button", { name: "Suspender banda" }).click();
     await page.getByText("Banda suspendida").first().waitFor();
@@ -207,5 +242,19 @@ describe("a night with Coverr", () => {
     await bandA.goto("/admin");
     await bandA.waitForURL("**/admin/acceso?suspendida=1");
     await bandA.getByText("Esta cuenta está suspendida").waitFor();
+  });
+
+  it("refuses the suspended band's person a new band, mailing the reason instead", async () => {
+    const { context, page } = await newPerson();
+    const known = mailedLinkCount(logPath, BAND_A.email, "/admin/crear");
+    await page.goto("/registro");
+    await page.fill('input[name="name"]', "Una Banda Nueva");
+    await page.fill('input[name="email"]', BAND_A.email);
+    await page.click('button[type="submit"]');
+    // The page answers exactly as it always does; only the mail differs.
+    await page.getByRole("heading", { name: "Revisá tu correo" }).waitFor();
+    await new Promise((resolve) => setTimeout(resolve, 1_500));
+    expect(mailedLinkCount(logPath, BAND_A.email, "/admin/crear")).toBe(known);
+    await context.close();
   });
 });

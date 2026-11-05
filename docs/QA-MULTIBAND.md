@@ -65,9 +65,9 @@ both bands with a different alias for each.
   - **Where:** `coverr.live/registro`.
   - **Do:** band name "Prueba A" (Armando) or "Prueba B" (Alexis), your band's alias, **Crear**.
   - **See:** a page "Revisá tu correo". Within a minute an email from **Coverr
-    &lt;hola@coverr.live&gt;** with the subject "Entrar a Coverr — Prueba A" (or B). Its
-    **Entrar** button opens a page with one more **Entrar**, which opens your band's panel.
-    Note which Gmail tab it landed in.
+    &lt;hola@coverr.live&gt;** with the subject "Crear Prueba A en Coverr" (or B). Its **Crear
+    la banda** button opens a page with one more **Crear la banda**, which creates the band and
+    opens its panel. The band does not exist until that tap. Note which Gmail tab it landed in.
 - [ ] **1.2 The welcome box reads well**
   - **Where:** the panel's first page (**Eventos**).
   - **See:** a yellow box "Te falta poco para vender" with three steps: Agregá tu cuenta
@@ -93,9 +93,11 @@ both bands with a different alias for each.
     está publicado". Tap **Publicar y abrir la venta**. It now says "La venta está abierta. Este
     es el enlace que va en el flyer o la bio", with a **Copiar** button. Copy the link and send
     it to the other person on WhatsApp.
-- [ ] **1.5 Signing up twice doesn't make a second band**
-  - **Where:** `coverr.live/registro` again, same alias, any band name.
-  - **See:** the same "Revisá tu correo" page, and a sign-in email for your existing band.
+- [ ] **1.5 Signing up twice with the same name doesn't make a twin**
+  - **Where:** `coverr.live/registro` again, same alias, the **same** band name.
+  - **See:** the same "Revisá tu correo" page, and a sign-in email "Entrar a Coverr" for your
+    existing band, not a creation link. (A **different** name would create a second band under
+    the same email, which is allowed: see the band guide, "¿Tocás en más de una banda?".)
     In Part 6 the operator list must show only one "Prueba A" and one "Prueba B".
 
 ## Part 2 — Buying (buyers on their phones)

@@ -71,7 +71,8 @@ export const SignupSentPage: FC<{ email: string }> = ({ email }) => (
     <AuthShell>
       <h1>Revisá tu correo</h1>
       <div class="note ok">
-        Te mandamos un enlace a <b>{email}</b>. Tocalo para entrar — vence en 15 minutos.
+        Te mandamos un enlace a <b>{email}</b>. Tocalo para crear tu banda y entrar a su panel —
+        sirve una sola vez y vence en 15 minutos.
       </div>
       <p class="sub">Si no llega en un par de minutos, revisá la carpeta de spam.</p>
     </AuthShell>

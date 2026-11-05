@@ -253,9 +253,11 @@ export const OperatorBandPage: FC<{
   band: Band;
   events: OperatorEventRow[];
   actions: Action[];
+  /** The other bands run from the same email: one person, and a suspension follows them. */
+  siblings: { id: string; name: string; bannedAt: string | null }[];
   done?: string;
   error?: string;
-}> = ({ band, events, actions, done, error }) => (
+}> = ({ band, events, actions, siblings, done, error }) => (
   <OperatorLayout title={`${band.name} — Coverr operación`} signedIn active="bands">
     <p class="sub">
       <a href="/operador">← Bandas</a>
@@ -271,6 +273,20 @@ export const OperatorBandPage: FC<{
         promoReportsLeft={band.promoReportsLeft}
       />
     </p>
+    {siblings.length > 0 ? (
+      <p class="sub">
+        El mismo correo también lleva:{" "}
+        {siblings.map((other, index) => (
+          <span key={other.id}>
+            {index > 0 ? ", " : ""}
+            <a href={`/operador/bandas/${other.id}`}>{other.name}</a>
+            {other.bannedAt ? " (suspendida)" : ""}
+          </span>
+        ))}
+        . Si suspendés esta banda, ese correo no puede crear bandas nuevas; las otras siguen
+        funcionando hasta que las suspendás.
+      </p>
+    ) : null}
     {done && DONE[done] ? <div class="note ok">{DONE[done]}</div> : null}
     {error ? <div class="note crit">{error}</div> : null}
 

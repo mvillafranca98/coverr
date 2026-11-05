@@ -236,30 +236,34 @@ export const LOGIN_EMAIL_SUBJECT = "Entrar a Coverr";
 
 // ------------------------------------------------------------- band sign-up
 
-type SignupEmailInput = { bandName: string; url: string };
+type CreateBandEmailInput = { bandName: string; url: string; minutes: number };
 
 /**
- * The link that puts a brand-new band into its panel. It repeats most of the
- * sign-in mail above; the two are kept apart because sign-up names the band in
- * the subject line, which the sign-in mail does not.
+ * The link that creates a band, sent from /registro. The band does not exist
+ * until it is opened, so the mail asks for exactly that — create it — rather
+ * than reading like a sign-in to something already there.
  */
-export function signupEmailHtml(i: SignupEmailInput): string {
+export function createBandEmailHtml(i: CreateBandEmailInput): string {
   return `<!doctype html><html lang="es"><body style="margin:0;background:${CREAM};padding:28px 14px;font-family:${SANS}">
 <table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="100%" style="max-width:440px;text-align:left">
 <tr><td style="padding-bottom:16px">${sticker("Coverr", YELLOW)}</td></tr>
-<tr><td style="${HEADING};padding-bottom:10px">Entrar al panel de ${escapeHtml(i.bandName)}</td></tr>
-<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED};padding-bottom:22px">Tocá el botón para entrar. El enlace sirve una sola vez y vence en 15 minutos.</td></tr>
-<tr><td><a href="${i.url}" style="${BUTTON}">Entrar</a></td></tr>
-<tr><td style="${FINE_PRINT};padding-top:26px">Si no pediste esto, ignoralo — nadie puede entrar sin este correo.</td></tr>
+<tr><td style="${HEADING};padding-bottom:10px">Crear ${escapeHtml(i.bandName)}</td></tr>
+<tr><td style="font:400 15px/1.5 ${SANS};color:${MUTED};padding-bottom:22px">Tocá el botón para crear la banda y entrar a su panel. El enlace sirve una sola vez y vence en ${i.minutes} minutos.</td></tr>
+<tr><td><a href="${i.url}" style="${BUTTON}">Crear la banda</a></td></tr>
+<tr><td style="${FINE_PRINT};padding-top:26px">Si no pediste esto, ignoralo — no se crea nada sin este correo.</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
-export function signupEmailText(i: SignupEmailInput): string {
-  return `Entrar al panel de ${i.bandName}:\n\n${i.url}\n\nEl enlace sirve una sola vez y vence en 15 minutos.`;
+export function createBandEmailText(i: CreateBandEmailInput): string {
+  return `Crear ${i.bandName} en Coverr:
+
+${i.url}
+
+El enlace sirve una sola vez y vence en ${i.minutes} minutos. Si no pediste esto, ignoralo.`;
 }
 
-export function signupEmailSubject(i: SignupEmailInput): string {
-  return `Entrar a Coverr — ${i.bandName}`;
+export function createBandEmailSubject(i: CreateBandEmailInput): string {
+  return `Crear ${i.bandName} en Coverr`;
 }
 
 // ----------------------------------------------------------- suspended band

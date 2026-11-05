@@ -99,10 +99,11 @@ export const AdminLayout: FC<
         {bandName ? (
           <header class="chrome">
             <nav class="band" aria-label="Banda">
-              <span class="brand">
+              {/* The band's name is the way to the person's other bands. */}
+              <a class="brand" href="/admin/bandas" title="Tus bandas">
                 <Monogram size={22} />
                 {bandName}
-              </span>
+              </a>
               <span class="band-links">
                 <a href="/admin" class={active === "events" ? "on" : ""}>
                   Eventos

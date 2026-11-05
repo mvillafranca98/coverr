@@ -255,16 +255,26 @@ export async function setFeeInvoiceNumber(db: Db, feePaymentId: string, invoice:
 }
 
 /**
- * The report a band still owes for, if an operator has marked one unpaid.
- * While there is one, the band cannot create events.
+ * A report still owed, if an operator has marked one unpaid — on this band or
+ * any band that shares its email (F22). One person, one debt: otherwise
+ * starting a second band would walk around the first band's. While there is
+ * one, none of that person's bands can create or publish events or open
+ * another paid report.
  */
 export async function unpaidFeeFor(db: Db, bandId: string) {
+  const [band] = await db
+    .select({ email: s.bands.contactEmail })
+    .from(s.bands)
+    .where(eq(s.bands.id, bandId))
+    .limit(1);
+  if (!band) return null;
   const rows = await db
-    .select({ eventName: s.events.name, amount: s.feePayments.amount })
+    .select({ eventName: s.events.name, amount: s.feePayments.amount, bandName: s.bands.name })
     .from(s.feePayments)
     .innerJoin(s.eventUnlocks, eq(s.feePayments.unlockId, s.eventUnlocks.id))
     .innerJoin(s.events, eq(s.eventUnlocks.eventId, s.events.id))
-    .where(and(eq(s.feePayments.bandId, bandId), eq(s.feePayments.status, "unpaid")))
+    .innerJoin(s.bands, eq(s.feePayments.bandId, s.bands.id))
+    .where(and(eq(s.bands.contactEmail, band.email), eq(s.feePayments.status, "unpaid")))
     .limit(1);
   return rows[0] ?? null;
 }

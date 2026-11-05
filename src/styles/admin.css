@@ -114,6 +114,14 @@ nav.band .brand {
   font-size: 17px;
   letter-spacing: -0.02em;
   white-space: nowrap;
+  /* A link to the person's bands, but it reads as the band's name. */
+  text-decoration: none;
+}
+@media (hover: hover) {
+  nav.band .brand:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
 }
 /* The gap lives in the links' own padding, so "Salir" is a 44px target
    rather than the 29px its word measures. Same spacing on screen, and the

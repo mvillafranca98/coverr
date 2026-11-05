@@ -26,7 +26,7 @@ export const FEE_PROOF_RETENTION_DAYS = 90;
 export type FeeStatus = "checking" | "ok" | "flagged" | "resolved" | "unpaid";
 
 /** A report fee an operator has marked unpaid: what stands between a band and the next step. */
-export type OwedFee = { eventName: string; amount: number };
+export type OwedFee = { eventName: string; amount: number; bandName: string };
 
 /**
  * What a band that owes is told when it tries something an unpaid fee blocks:
@@ -35,7 +35,7 @@ export type OwedFee = { eventName: string; amount: number };
  * a show that is already selling.
  */
 export function owedFeeMessage(owed: OwedFee, blocked: string, contactEmail: string): string {
-  return `Tenés un pago pendiente: el reporte de ${owed.eventName} (${formatLpsShort(owed.amount)}) todavía no está pagado, así que por ahora no podés ${blocked}. Los eventos que ya están a la venta siguen vendiendo. Escribinos a ${contactEmail} y lo resolvemos.`;
+  return `Tenés un pago pendiente: el reporte de ${owed.eventName}, de ${owed.bandName} (${formatLpsShort(owed.amount)}), todavía no está pagado, así que por ahora no podés ${blocked}. Los eventos que ya están a la venta siguen vendiendo. Escribinos a ${contactEmail} y lo resolvemos.`;
 }
 
 /** The screenshot a band sent with its fee, or what to tell it when there is none fit to keep. */

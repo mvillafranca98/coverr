@@ -1,7 +1,12 @@
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
-import { findBand, findBandEventById, findBandMember } from "../../db/queries/bands";
+import {
+  findBand,
+  findBandEventById,
+  findBandMember,
+  listBandsByEmail,
+} from "../../db/queries/bands";
 import { bandMemberIds, membersWithAdvances, saveMemberTable } from "../../db/queries/members";
 import * as s from "../../db/schema";
 import { BANKS, lpsToCentavos, newId, normalizeEmail, nowIso } from "../../lib/core";
@@ -12,6 +17,7 @@ import {
   typedMemberRows,
 } from "../../lib/member-split";
 import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
+import { CONTACT_EMAIL } from "../../views/legal/constants";
 import { BandSettingsPage } from "../../views/setup/band-settings";
 import type { AdminContext, AdminEnv } from "./context";
 
@@ -94,6 +100,14 @@ bandSettingsRoutes.post("/banda", async (c) => {
   if (bandError) return renderBandSettings(c, { error: bandError });
   if (!EMAIL_PATTERN.test(contactEmail)) {
     return renderBandSettings(c, { error: "Revisá el correo." });
+  }
+  // A suspension follows the person: a band cannot be moved under an address
+  // whose other band is suspended, which would otherwise hand it a working one.
+  const others = await listBandsByEmail(db, contactEmail);
+  if (others.some((band) => band.bannedAt && band.id !== c.get("bandId"))) {
+    return renderBandSettings(c, {
+      error: `Ese correo no se puede usar. Escribinos a ${CONTACT_EMAIL}.`,
+    });
   }
 
   await db

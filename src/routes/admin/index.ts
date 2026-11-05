@@ -2,7 +2,9 @@ import { Hono } from "hono";
 import { accountDeletionRoutes } from "./account-deletion";
 import { bandHomeRoutes } from "./band-home";
 import { bandSettingsRoutes } from "./band-settings";
+import { bandsRoutes } from "./bands";
 import type { AdminEnv } from "./context";
+import { createBandRoutes } from "./create-band";
 import { dashboardRoutes } from "./dashboard";
 import { eventSettingsRoutes } from "./event-settings";
 import { manualSaleRoutes } from "./manual-sale";
@@ -26,6 +28,8 @@ export const admin = new Hono<AdminEnv>();
 admin.use("*", requireSession);
 
 admin.route("/", sessionRoutes);
+admin.route("/", createBandRoutes);
+admin.route("/", bandsRoutes);
 admin.route("/", bandHomeRoutes);
 admin.route("/", dashboardRoutes);
 admin.route("/", ordersRoutes);

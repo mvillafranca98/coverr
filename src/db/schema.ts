@@ -14,7 +14,10 @@ export const bands = sqliteTable(
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
-    /** The login identity — unique, or a band becomes unreachable. */
+    /**
+     * How the band is reached and signed into. Not unique since 2026-11-04: one
+     * person may run several bands under one address (lib/band-identity.ts).
+     */
     contactEmail: text("contact_email").notNull(),
     createdAt: text("created_at").notNull(),
     /** Set when the operator bans the band; null while it is in good standing. */
@@ -37,7 +40,8 @@ export const bands = sqliteTable(
     promoNote: text("promo_note"),
   },
   (t) => [
-    uniqueIndex("idx_bands_contact_email").on(t.contactEmail),
+    // Sign-in and sign-up look a person's bands up by their address.
+    index("idx_bands_contact_email").on(t.contactEmail),
     // The operator's list of every band, newest first.
     index("idx_bands_created").on(t.createdAt),
   ],

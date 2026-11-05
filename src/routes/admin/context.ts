@@ -18,8 +18,12 @@ export type Bindings = {
   EXTRACT_LIMIT?: Limiter;
 };
 
-/** Set by the session middleware; every handler below it can rely on it. */
-export type Vars = { bandId: string };
+/**
+ * Set by the session middleware; every handler below it can rely on it.
+ * `signedInEmail` is the address the session was signed into with — what may
+ * switch to that address's other bands. Null for a session older than that.
+ */
+export type Vars = { bandId: string; signedInEmail: string | null };
 
 export type AdminEnv = { Bindings: Bindings; Variables: Vars };
 

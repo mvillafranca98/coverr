@@ -109,11 +109,10 @@ one since 2026-11-04, the two personal BAC accounts as fallbacks.
 reconciliation; anything that lets the operator see or move a band's ticket money, which never
 passes through Coverr.
 
-## Next: one email, several bands (planned)
+## One email, several bands
 
-Musicians play in more than one band, and a manager may run several. Today one email is one band:
-signing up again with the same address only sends a sign-in link to the band it already has.
-Planned for after the multi-band test, before launch.
+Musicians play in more than one band, and a manager may run several. Until 2026-11-04 one email
+was one band. Built on 2026-11-04; the rules live in `src/lib/band-identity.ts`.
 
 **Decided on 2026-11-04:**
 
@@ -130,19 +129,19 @@ Planned for after the multi-band test, before launch.
 
 | # | Feature | Acceptance criteria (testable) | Status |
 |---|---|---|---|
-| F20 | Another band, same email | `/registro` with an address that already runs a band, under a new name, emails a "Crear <banda>" link; the band exists only once that link is opened. The same name as one of that email's bands (ignoring case and accents) sends a sign-in link to it instead. The page answers identically in every case, so it reveals nothing about which addresses run a band | planned |
-| F21 | Choosing a band | Signing in with an address that runs several bands opens a page listing them; the panel's top bar gets **Cambiar de banda**. A session holds one band at a time, and switching is checked on the server: the band's contact email must still be the session's | planned |
-| F22 | Owed across bands | While any band of an email has a fee marked unpaid, none of that email's bands can create an event, and the new-event page names the band and the report owed. Events on sale keep selling and unlocked reports stay open, as in F19 | planned |
+| F20 | Another band, same email | `/registro` with an address that already runs a band, under a new name, emails a "Crear <banda>" link; the band exists only once that link is opened. The same name as one of that email's bands (ignoring case and accents) sends a sign-in link to it instead. The page answers identically in every case, so it reveals nothing about which addresses run a band | live since 2026-11-04 |
+| F21 | Choosing a band | Signing in with an address that runs several bands opens a page listing them; the panel's top bar gets **Cambiar de banda**. A session holds one band at a time, and switching is checked on the server: the band's contact email must still be the session's | live since 2026-11-04 |
+| F22 | Owed across bands | While any band of an email has a fee marked unpaid, none of that email's bands can create an event, and the new-event page names the band and the report owed. Events on sale keep selling and unlocked reports stay open, as in F19 | live since 2026-11-04 |
 
-**What it touches:** the unique index on `bands.contact_email` goes (a migration); the sign-in
-link and session carry the email as well as the band; `findBandByEmail` becomes a list; the
-operator's band list shows when an email runs more than one band.
+- **A suspension follows the person** (decided 2026-11-04). An address with a suspended band
+  starts no new band, from `/registro` or from the panel: the suspension notice is mailed instead,
+  and the page answers as it always does. Its other bands keep working until the operator
+  suspends them too, and a band cannot be moved under such an address from its settings.
 
-**Still to settle:**
-
-1. **Does a ban follow the person?** Today it is per band. Proposed: a signup from an email with
-   a banned band gets the suspension notice instead of a new band; that email's other bands keep
-   working unless banned themselves.
+**What it touched:** the unique index on `bands.contact_email` became a plain one (migration
+0014); sign-in links name the person and sessions carry the email they proved, which is what
+switching is checked against; the operator's band page lists the other bands run from the same
+email.
 
 ## Success metrics
 

@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
-import { findBand } from "../../db/queries/bands";
+import { findBand, listBandsByEmail } from "../../db/queries/bands";
 import {
   banBand,
   bandEventsForOperator,
@@ -84,15 +84,17 @@ operatorBandRoutes.get("/bandas/:id", async (c) => {
   const band = await findBand(db, c.req.param("id"));
   if (!band) return c.notFound();
 
-  const [events, actions] = await Promise.all([
+  const [events, actions, sameEmail] = await Promise.all([
     bandEventsForOperator(c.env.DB, band.id),
     operatorActionsFor(db, band.id),
+    listBandsByEmail(db, band.contactEmail),
   ]);
   return c.html(
     <OperatorBandPage
       band={band}
       events={events}
       actions={actions}
+      siblings={sameEmail.filter((other) => other.id !== band.id)}
       done={c.req.query("listo")}
       error={c.req.query("error")}
     />,

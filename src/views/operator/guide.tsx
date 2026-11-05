@@ -93,6 +93,12 @@ export const OperatorGuidePage: FC<{ origin: string }> = ({ origin }) => {
             <b>Eventos</b>: cada uno con su estado y, si ya abrió el reporte, cómo va su pago.
           </li>
           <li>
+            <b>El mismo correo también lleva</b>: las otras bandas de esa persona, si tiene. Un
+            correo puede llevar varias bandas. Suspender una impide que ese correo cree bandas
+            nuevas, pero las otras siguen funcionando hasta que las suspendás también. Un pago no
+            pagado bloquea los eventos nuevos de todas sus bandas.
+          </li>
+          <li>
             <b>Historial</b>: cada cambio, con fecha, nota y quién lo hizo.
           </li>
         </ul>
