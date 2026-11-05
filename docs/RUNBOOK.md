@@ -280,6 +280,7 @@ same applies to a manual export: one taken before a band left still holds everyt
 | Date | Rows | Export | Restore | Result |
 |---|---|---|---|---|
 | 2026-10-19 | 407 across 15 tables | 4s | 3s | Pass, after fixing the three issues above. Row counts, `sum(expected_amount)`, earliest order id, latest `created_at` and all 24 indexes identical to production |
+| 2026-11-04 | 26 across 20 tables | seconds | seconds | Pass. Production had no bands left after the test cleanup, so the dump was the migration log, platform accounts and flags, and spent sign-in links. Reordered and loaded into a throwaway **local** D1 (`--local --persist-to` a scratch folder), not a remote one: every table's row count matched the dump, all 36 indexes present, `PRAGMA foreign_key_check` empty. Because that dump had no orders, the same was repeated on the local demo data (672 rows: bands → events → orders → attendees, advances, expenses): all counts matched, no foreign-key violations. Scratch copies deleted afterwards |
 
 Re-run after any schema change that adds a table or a foreign key — the load order changes with
 it. `coverr-restore-test` (D1 `66b60b55-f17e-40ea-9266-80745caa349a`) exists as the scratch
