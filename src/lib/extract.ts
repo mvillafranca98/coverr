@@ -76,8 +76,16 @@ Reglas:
 - No opines sobre si el documento es auténtico. No es tu trabajo y no se te pregunta.`;
 
 export type ExtractResult =
-  | { ok: true; fields: ProofFields; model: string }
+  | { ok: true; fields: ProofFields; model: string; usage: Anthropic.Usage }
   | { ok: false; error: string };
+
+/**
+ * The model that reads proofs in production, chosen with scripts/eval-extract.mjs
+ * on 2026-11-05. On real BAC receipts Sonnet 5.5 read every field Opus 5 did,
+ * at 40% of the cost. Haiku 5.5 was cheaper still but left out years that were
+ * printed, and a date with no year silently turns off the stale-transfer check.
+ */
+export const PROOF_MODEL = "claude-sonnet-5-5";
 
 /**
  * How long one read may take, and how many times it is tried.
@@ -96,6 +104,7 @@ const MAX_RETRIES = 1;
 export async function extractProof(
   apiKey: string,
   file: { bytes: ArrayBuffer; contentType: string },
+  model: string = PROOF_MODEL,
 ): Promise<ExtractResult> {
   const client = new Anthropic({ apiKey, timeout: ATTEMPT_TIMEOUT_MS, maxRetries: MAX_RETRIES });
 
@@ -124,7 +133,7 @@ export async function extractProof(
 
   try {
     const response = await client.messages.parse({
-      model: "claude-opus-5",
+      model,
       max_tokens: 2000,
       system: SYSTEM,
       // Reading labelled fields off a receipt is a simple extraction; low
@@ -144,7 +153,12 @@ export async function extractProof(
     if (!response.parsed_output) {
       return { ok: false, error: "no parsed output" };
     }
-    return { ok: true, fields: response.parsed_output, model: response.model };
+    return {
+      ok: true,
+      fields: response.parsed_output,
+      model: response.model,
+      usage: response.usage,
+    };
   } catch (err) {
     // Before APIError, which it extends: a timeout has no status to report.
     if (err instanceof Anthropic.APIConnectionTimeoutError) {

@@ -16,6 +16,7 @@
     "cf-typegen": "wrangler types",
     "shots": "node scripts/shoot.mjs",
     "brand": "node scripts/brand.mjs",
+    "eval:extract": "node scripts/eval-extract.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "vitest run --config vitest.e2e.config.ts",
