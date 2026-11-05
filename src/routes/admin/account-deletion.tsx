@@ -25,7 +25,7 @@ const NAME_MISMATCH =
 function blockersFor(state: DeletionState): DeletionBlocker[] {
   return deletionBlockers({
     events: state.events,
-    openRefundRequests: state.openRefundRequests,
+    unansweredRefunds: state.unansweredRefunds,
     now: new Date(),
   });
 }

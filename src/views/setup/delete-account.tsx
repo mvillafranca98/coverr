@@ -15,20 +15,46 @@ type BandFootprint = {
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-/** Why the account cannot go yet, as a sentence that says what to do about it. */
-function describeBlocker(blocker: DeletionBlocker): string {
-  if (blocker.kind === "open_refunds") {
-    const answer =
-      blocker.count === 1 ? "Respondela desde su orden." : "Respondelas desde cada orden.";
-    return `${plural(blocker.count, "solicitud de reembolso", "solicitudes de reembolso")} sin responder. ${answer}`;
+/**
+ * Why the account cannot go yet, as a sentence that says what to do about it.
+ * An unanswered refund links straight to its order: "answer it from its order"
+ * alone left the band hunting through every event for the one that asked.
+ */
+const BlockerItem: FC<{ blocker: DeletionBlocker }> = ({ blocker }) => {
+  if (blocker.kind === "upcoming_event") {
+    const refund = blocker.liveTickets === 1 ? "Reembolsalo" : "Reembolsalos";
+    return (
+      <li>
+        «{blocker.eventName}» ({formatEventDate(blocker.startsAt)}) todavía tiene{" "}
+        {plural(blocker.liveTickets, "boleto activo", "boletos activos")}. {refund}, o esperá a que
+        pase el evento.
+      </li>
+    );
   }
-  const refund = blocker.liveTickets === 1 ? "Reembolsalo" : "Reembolsalos";
-  return `«${blocker.eventName}» (${formatEventDate(blocker.startsAt)}) todavía tiene ${plural(
-    blocker.liveTickets,
-    "boleto activo",
-    "boletos activos",
-  )}. ${refund}, o esperá a que pase el evento.`;
-}
+  const unlisted = blocker.count - blocker.orders.length;
+  return (
+    <li>
+      {plural(blocker.count, "solicitud de reembolso", "solicitudes de reembolso")} sin responder.{" "}
+      {blocker.count === 1 ? "Respondela desde su orden:" : "Respondelas desde cada orden:"}
+      <ul style="margin:4px 0 0;padding-left:18px">
+        {blocker.orders.map((order) => (
+          <li key={order.orderId}>
+            <a href={`/admin/e/${order.eventSlug}/orden/${order.orderId}`}>
+              Orden {order.shortCode}
+            </a>{" "}
+            · «{order.eventName}»
+          </li>
+        ))}
+        {unlisted > 0 ? (
+          <li>
+            y {plural(unlisted, "otra", "otras")} más, en <b>Órdenes → Reembolsos pedidos</b> de
+            cada evento
+          </li>
+        ) : null}
+      </ul>
+    </li>
+  );
+};
 
 /**
  * The one screen between a band and the permanent deletion of everything it
@@ -86,7 +112,7 @@ export const DeleteAccountPage: FC<{
           <b>Todavía no se puede borrar.</b> Primero hay que cumplirle a quien compró:
           <ul style="margin:8px 0 0;padding-left:18px">
             {blockers.map((blocker) => (
-              <li>{describeBlocker(blocker)}</li>
+              <BlockerItem blocker={blocker} />
             ))}
           </ul>
         </div>

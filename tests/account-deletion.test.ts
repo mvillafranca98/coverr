@@ -3,6 +3,7 @@ import {
   confirmsDeletion,
   deletionBlockers,
   EVENT_OVER_AFTER_HOURS,
+  type UnansweredRefund,
 } from "../src/lib/account-deletion";
 
 /**
@@ -14,11 +15,18 @@ import {
 const NOW = new Date("2026-10-28T20:00:00Z");
 const hoursFromNow = (hours: number) => new Date(NOW.getTime() + hours * 3_600_000).toISOString();
 
+const refundOn = (shortCode: string): UnansweredRefund => ({
+  eventSlug: "noche",
+  eventName: "Noche",
+  orderId: `ord_${shortCode}`,
+  shortCode,
+});
+
 function blockers(
   events: { name: string; startsAt: string; liveTickets: number }[],
-  openRefundRequests = 0,
+  unansweredRefunds: { count: number; orders: UnansweredRefund[] } = { count: 0, orders: [] },
 ) {
-  return deletionBlockers({ events, openRefundRequests, now: NOW });
+  return deletionBlockers({ events, unansweredRefunds, now: NOW });
 }
 
 describe("what stops a deletion", () => {
@@ -66,7 +74,17 @@ describe("what stops a deletion", () => {
   });
 
   it("is a refund request nobody has answered, even with every event over", () => {
-    expect(blockers([], 2)).toEqual([{ kind: "open_refunds", count: 2 }]);
+    const orders = [refundOn("PRU-AAAA"), refundOn("PRU-BBBB")];
+    expect(blockers([], { count: 2, orders })).toEqual([
+      { kind: "open_refunds", count: 2, orders },
+    ]);
+  });
+
+  // The page links the first few; the count still says how many there are.
+  it("counts every unanswered request, not only the ones it can link", () => {
+    expect(blockers([], { count: 14, orders: [refundOn("PRU-AAAA")] })).toEqual([
+      { kind: "open_refunds", count: 14, orders: [refundOn("PRU-AAAA")] },
+    ]);
   });
 
   it("names every reason at once, so the band fixes them in one pass", () => {
@@ -75,7 +93,7 @@ describe("what stops a deletion", () => {
         { name: "A", startsAt: hoursFromNow(24), liveTickets: 1 },
         { name: "B", startsAt: hoursFromNow(96), liveTickets: 5 },
       ],
-      1,
+      { count: 1, orders: [refundOn("PRU-AAAA")] },
     );
     expect(found.map((b) => b.kind)).toEqual(["upcoming_event", "upcoming_event", "open_refunds"]);
   });

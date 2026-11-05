@@ -5,9 +5,10 @@ import { launchBrowser, localDateTime, mailedLinkCount, nextMailedLink } from ".
 /**
  * One whole night, through the real pages of a local Coverr: a band signs up
  * and sets up, publishes an event, a fan buys two tickets with a receipt, the
- * door lets one in online and one offline, the band refunds, the same person
- * starts a second band and moves between them, another band cannot see the
- * first, and the operator suspends it — which follows the person.
+ * door lets one in online and one offline, the fan asks for a refund and the
+ * band gives it in two parts, the same person starts a second band and moves
+ * between them, another band cannot see the first, and the operator suspends
+ * it — which follows the person.
  *
  * The steps share state and run in order. A failure names the step, and the
  * local server's log is in .wrangler/e2e-state/server.log.
@@ -30,9 +31,21 @@ let bandASignInLink = "";
 let eventSlug = "";
 let scanLink = "";
 
-/** A fresh browser profile: its own cookies, as a different person on a different phone. */
+let peopleSoFar = 0;
+
+/**
+ * A fresh browser profile: its own cookies, as a different person on a
+ * different phone — and its own address. Every email-sending form shares a
+ * per-address budget of five a minute, which one address doing the whole night
+ * would outrun, failing a step only when the run happened not to cross a
+ * minute boundary.
+ */
 async function newPerson(): Promise<{ context: BrowserContext; page: Page }> {
-  const context = await browser.newContext({ baseURL: baseUrl });
+  peopleSoFar += 1;
+  const context = await browser.newContext({
+    baseURL: baseUrl,
+    extraHTTPHeaders: { "CF-Connecting-IP": `203.0.113.${peopleSoFar}` },
+  });
   return { context, page: await context.newPage() };
 }
 
@@ -172,15 +185,39 @@ describe("a night with Coverr", () => {
     await expect(bandA.locator(".card b").first().textContent()).resolves.toBe("2");
   });
 
-  it("refunds the order, keeps it in history and voids its tickets", async () => {
+  it("refunds the order a fan asked back, keeps it in history and voids its tickets", async () => {
     await bandA.goto(`/admin/e/${eventSlug}/ordenes`);
-    await bandA.locator('a[href*="/orden/"]').first().click();
+    const orderPath =
+      (await bandA.locator('a[href*="/orden/"]').first().getAttribute("href")) ?? "";
+    const { context, page } = await newPerson();
+    await page.goto(`/reembolso/${orderPath.split("/").pop()}`);
+    await page.fill("#reason", "No puedo ir");
+    await page.getByRole("button", { name: "Enviar solicitud" }).click();
+    await page.getByText(`Le avisamos a ${BAND_A.name}`).waitFor();
+    await context.close();
+
+    // An unanswered request blocks deleting the account, and the page says which order.
+    await bandA.goto("/admin/banda/borrar");
+    await bandA.getByRole("link", { name: /^Orden / }).click();
+    await bandA.getByText("pendiente").waitFor();
+
+    // A partial refund is recorded as a newer request; the fan's must stay answerable.
+    await bandA.locator('input[name="boleto"]').nth(1).uncheck();
+    await bandA.fill("#motivo", "Prueba automática");
+    await bandA.getByRole("button", { name: "Reembolsar los boletos marcados" }).click();
+    await bandA.getByText("1 reembolsado").waitFor();
+    await bandA.getByRole("button", { name: "Aprobar y anular los boletos" }).waitFor();
+
+    // Refunding the rest is what the fan asked for, so it answers the request.
     await bandA.fill("#motivo", "Prueba automática");
     await bandA.getByRole("button", { name: "Reembolsar los boletos marcados" }).click();
     await bandA.getByText("2 reembolsados").waitFor();
+    await expect(bandA.getByText("pendiente").count()).resolves.toBe(0);
 
     await bandA.goto(`/admin/e/${eventSlug}/ordenes`);
     await bandA.getByText("reembolsada").first().waitFor();
+    await bandA.goto("/admin/banda/borrar");
+    await bandA.getByText("Para confirmar, escribí el nombre de la banda").waitFor();
   });
 
   it("lets the same person start a second band and move between the two", async () => {

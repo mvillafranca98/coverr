@@ -21,9 +21,17 @@
  */
 export const EVENT_OVER_AFTER_HOURS = 12;
 
+/** An order a buyer asked to refund that nobody has answered yet. */
+export type UnansweredRefund = {
+  eventSlug: string;
+  eventName: string;
+  orderId: string;
+  shortCode: string;
+};
+
 export type DeletionBlocker =
   | { kind: "upcoming_event"; eventName: string; startsAt: string; liveTickets: number }
-  | { kind: "open_refunds"; count: number };
+  | { kind: "open_refunds"; count: number; orders: UnansweredRefund[] };
 
 /**
  * Everything standing between the band and deleting its account. Empty means
@@ -34,7 +42,8 @@ export type DeletionBlocker =
  */
 export function deletionBlockers(input: {
   events: { name: string; startsAt: string; liveTickets: number }[];
-  openRefundRequests: number;
+  /** How many orders have an unanswered request, and the first of them to link to. */
+  unansweredRefunds: { count: number; orders: UnansweredRefund[] };
   now: Date;
 }): DeletionBlocker[] {
   const overIfStartedBefore = input.now.getTime() - EVENT_OVER_AFTER_HOURS * 3_600_000;
@@ -49,8 +58,8 @@ export function deletionBlockers(input: {
       liveTickets: event.liveTickets,
     }));
 
-  const refunds: DeletionBlocker[] =
-    input.openRefundRequests > 0 ? [{ kind: "open_refunds", count: input.openRefundRequests }] : [];
+  const { count, orders } = input.unansweredRefunds;
+  const refunds: DeletionBlocker[] = count > 0 ? [{ kind: "open_refunds", count, orders }] : [];
 
   return [...upcoming, ...refunds];
 }

@@ -34,11 +34,15 @@ orderRoutes.get("/e/:slug/orden/:id", async (c) => {
     db.select().from(s.attendees).where(eq(s.attendees.orderId, order.id)),
     db.select().from(s.paymentProofs).where(eq(s.paymentProofs.orderId, order.id)).limit(1),
     db.select().from(s.verificationFlags).where(eq(s.verificationFlags.orderId, order.id)),
+    // An open request wins over a newer answered one. A refund the band
+    // starts itself is written as a request too, so "newest" alone could hide
+    // a buyer's open request behind it, leaving nothing on screen to answer —
+    // and an unanswered request blocks deleting the account.
     db
       .select()
       .from(s.refundRequests)
       .where(eq(s.refundRequests.orderId, order.id))
-      .orderBy(desc(s.refundRequests.requestedAt))
+      .orderBy(sql`${s.refundRequests.status} = 'open' desc`, desc(s.refundRequests.requestedAt))
       .limit(1),
   ]);
 
@@ -277,6 +281,14 @@ orderRoutes.post("/e/:slug/orden/:id/reembolsar", async (c) => {
       .update(s.orders)
       .set({ status: "refunded" })
       .where(and(eq(s.orders.id, order.id), eq(s.orders.eventId, event.id)));
+
+    // The buyer asked for exactly this, so their request is answered by it.
+    // Left open, it would sit on the dashboard and block deleting the account.
+    // A partial refund leaves it open for the band to decide.
+    await db
+      .update(s.refundRequests)
+      .set({ status: "approved", handledBy: bandId, handledAt: ts })
+      .where(and(eq(s.refundRequests.orderId, order.id), eq(s.refundRequests.status, "open")));
   }
 
   return c.redirect(orderPath(event.slug, order.id), 303);

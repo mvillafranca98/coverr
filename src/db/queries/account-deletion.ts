@@ -1,6 +1,14 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
+import type { UnansweredRefund } from "../../lib/account-deletion";
 import * as s from "../schema";
+
+/**
+ * How many unanswered refund requests the deletion page links to by name. The
+ * count above it is exact; past this many the band finds the rest through each
+ * event's "Reembolsos pedidos" filter.
+ */
+const UNANSWERED_REFUNDS_LISTED = 10;
 
 /** What deleting the account will take with it, counted for the band to read first. */
 export type BandFootprint = {
@@ -17,7 +25,8 @@ export type DeletionState = {
   footprint: BandFootprint;
   /** Every event, with its live tickets, for the deletion blockers. */
   events: { id: string; name: string; startsAt: string; liveTickets: number }[];
-  openRefundRequests: number;
+  /** Orders with a refund request nobody has answered: how many, and the first few. */
+  unansweredRefunds: { count: number; orders: UnansweredRefund[] };
 };
 
 /**
@@ -33,45 +42,69 @@ export async function loadDeletionState(
   const ofBand = eq(s.events.bandId, bandId);
   const count = sql<number>`count(*)`;
 
-  const [events, liveByEvent, orders, tickets, proofImages, members, accounts, openRefunds] =
-    await Promise.all([
-      db
-        .select({ id: s.events.id, name: s.events.name, startsAt: s.events.startsAt })
-        .from(s.events)
-        .where(ofBand),
-      db
-        .select({ eventId: s.orders.eventId, n: count })
-        .from(s.attendees)
-        .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
-        .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
-        .where(and(ofBand, eq(s.orders.status, "confirmed"), isNull(s.attendees.voidedAt)))
-        .groupBy(s.orders.eventId),
-      db
-        .select({ n: count })
-        .from(s.orders)
-        .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
-        .where(ofBand),
-      db
-        .select({ n: count })
-        .from(s.attendees)
-        .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
-        .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
-        .where(ofBand),
-      db
-        .select({ n: count })
-        .from(s.paymentProofs)
-        .innerJoin(s.orders, eq(s.paymentProofs.orderId, s.orders.id))
-        .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
-        .where(and(ofBand, isNull(s.paymentProofs.purgedAt))),
-      db.select({ n: count }).from(s.bandMembers).where(eq(s.bandMembers.bandId, bandId)),
-      db.select({ n: count }).from(s.bankAccounts).where(eq(s.bankAccounts.bandId, bandId)),
-      db
-        .select({ n: count })
-        .from(s.refundRequests)
-        .innerJoin(s.orders, eq(s.refundRequests.orderId, s.orders.id))
-        .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
-        .where(and(ofBand, eq(s.refundRequests.status, "open"))),
-    ]);
+  const openRequest = and(ofBand, eq(s.refundRequests.status, "open"));
+
+  const [
+    events,
+    liveByEvent,
+    orders,
+    tickets,
+    proofImages,
+    members,
+    accounts,
+    refundCount,
+    refundOrders,
+  ] = await Promise.all([
+    db
+      .select({ id: s.events.id, name: s.events.name, startsAt: s.events.startsAt })
+      .from(s.events)
+      .where(ofBand),
+    db
+      .select({ eventId: s.orders.eventId, n: count })
+      .from(s.attendees)
+      .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
+      .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+      .where(and(ofBand, eq(s.orders.status, "confirmed"), isNull(s.attendees.voidedAt)))
+      .groupBy(s.orders.eventId),
+    db
+      .select({ n: count })
+      .from(s.orders)
+      .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+      .where(ofBand),
+    db
+      .select({ n: count })
+      .from(s.attendees)
+      .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
+      .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+      .where(ofBand),
+    db
+      .select({ n: count })
+      .from(s.paymentProofs)
+      .innerJoin(s.orders, eq(s.paymentProofs.orderId, s.orders.id))
+      .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+      .where(and(ofBand, isNull(s.paymentProofs.purgedAt))),
+    db.select({ n: count }).from(s.bandMembers).where(eq(s.bandMembers.bandId, bandId)),
+    db.select({ n: count }).from(s.bankAccounts).where(eq(s.bankAccounts.bandId, bandId)),
+    db
+      .select({ n: sql<number>`count(distinct ${s.orders.id})` })
+      .from(s.refundRequests)
+      .innerJoin(s.orders, eq(s.refundRequests.orderId, s.orders.id))
+      .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+      .where(openRequest),
+    db
+      .selectDistinct({
+        eventSlug: s.events.slug,
+        eventName: s.events.name,
+        orderId: s.orders.id,
+        shortCode: s.orders.shortCode,
+      })
+      .from(s.refundRequests)
+      .innerJoin(s.orders, eq(s.refundRequests.orderId, s.orders.id))
+      .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+      .where(openRequest)
+      .orderBy(s.events.name, s.orders.shortCode)
+      .limit(UNANSWERED_REFUNDS_LISTED),
+  ]);
 
   const liveTickets = new Map(liveByEvent.map((row) => [row.eventId, Number(row.n)]));
   const first = (rows: { n: number }[]) => Number(rows[0]?.n ?? 0);
@@ -86,7 +119,7 @@ export async function loadDeletionState(
       accounts: first(accounts),
     },
     events: events.map((event) => ({ ...event, liveTickets: liveTickets.get(event.id) ?? 0 })),
-    openRefundRequests: first(openRefunds),
+    unansweredRefunds: { count: first(refundCount), orders: refundOrders },
   };
 }
 
