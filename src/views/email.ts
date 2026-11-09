@@ -206,6 +206,84 @@ export function ticketEmailSubject(i: TicketEmailInput): string {
   return `${i.order.quantity === 1 ? "Tu boleto" : `Tus ${i.order.quantity} boletos`} — ${i.event.name}`;
 }
 
+// ------------------------------------------------------------ ticket recovery
+
+type RecoveryEmailInput = {
+  orders: {
+    orderId: string;
+    shortCode: string;
+    bandName: string;
+    eventName: string;
+    venue: string;
+    startsAt: string;
+    tickets: number;
+  }[];
+  origin: string;
+};
+
+const ticketCount = (n: number) => (n === 1 ? "1 boleto" : `${n} boletos`);
+
+/**
+ * What `/recuperar` sends: one email for every order on the address, each a
+ * link to its ticket page, where the QR codes are. One email rather than the
+ * original ticket email per order, so a request can never turn into a pile of
+ * mail — the free mail plan allows 100 a day across the whole platform.
+ */
+export function recoveryEmailHtml(i: RecoveryEmailInput): string {
+  const orders = i.orders
+    .map((o) => {
+      const when = `${formatEventDate(o.startsAt)} · ${formatEventTime(o.startsAt)}`;
+      return `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${CARD};margin:0 0 18px">
+        <tr><td style="padding:16px 20px 18px">
+          ${sticker(escapeHtml(o.bandName), LIME)}
+          <div style="font:900 20px/1.2 ${SANS};letter-spacing:-.02em;color:${INK};padding-top:10px">
+            ${escapeHtml(o.eventName)}
+          </div>
+          <div style="font:400 14px/1.6 ${SANS};color:${MUTED};padding:4px 0 14px">
+            ${when}<br>${escapeHtml(o.venue)}<br>${ticketCount(o.tickets)} · Código ${escapeHtml(o.shortCode)}
+          </div>
+          <a href="${i.origin}/boletos/${o.orderId}" style="${BUTTON}">Ver mis boletos</a>
+        </td></tr>
+      </table>`;
+    })
+    .join("");
+
+  return `<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tus boletos</title></head>
+<body style="margin:0;padding:0;background:${CREAM}">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CREAM};padding:24px 12px">
+  <tr><td align="center">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;text-align:left">
+      <tr><td style="padding:0 0 16px">${sticker("Coverr", YELLOW)}</td></tr>
+      <tr><td style="${HEADING};padding-bottom:10px">Tus boletos</td></tr>
+      <tr><td style="${BODY_TEXT};padding-bottom:22px">Estas son las compras hechas con este correo para los eventos que vienen. Tocá una para ver tus códigos QR.</td></tr>
+      <tr><td>${orders}</td></tr>
+      <tr><td style="${FINE_PRINT};padding-top:8px">Si no pediste esto, podés ignorar este correo: tus boletos siguen igual.</td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+}
+
+export function recoveryEmailText(i: RecoveryEmailInput): string {
+  const lines = ["Tus boletos para los eventos que vienen:", ""];
+  for (const o of i.orders) {
+    lines.push(
+      `${o.bandName} — ${o.eventName}`,
+      `${formatEventDate(o.startsAt)} · ${formatEventTime(o.startsAt)}, ${o.venue}`,
+      `${ticketCount(o.tickets)} · Código ${o.shortCode}`,
+      `${i.origin}/boletos/${o.orderId}`,
+      "",
+    );
+  }
+  lines.push("Si no pediste esto, podés ignorar este correo.");
+  return lines.join("\n");
+}
+
+export const RECOVERY_EMAIL_SUBJECT = "Tus boletos en Coverr";
+
 // ------------------------------------------------------------ admin sign-in
 
 type LoginEmailInput = { bandName: string; url: string; minutes: number };

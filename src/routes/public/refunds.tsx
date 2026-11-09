@@ -6,7 +6,7 @@ import { openRefundRequest } from "../../db/queries/refunds";
 import * as s from "../../db/schema";
 import { newId, nowIso } from "../../lib/core";
 import { makeTransport } from "../../lib/email";
-import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { TOO_MANY_REQUESTS, withinMailLimit } from "../../lib/rate-limit";
 import { refundGate } from "../../lib/refund-policy";
 import {
   refundAlertEmailHtml,
@@ -56,9 +56,9 @@ refundRoutes.post("/reembolso/:orderId", async (c) => {
     return c.html(<RefundClosedPage {...common} headline={gate.headline} detail={gate.detail} />);
   }
 
-  // It emails the band, so it shares the per-IP budget of everything else
-  // that sends mail.
-  if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
+  // It emails the band, so it shares the mail budget of everything else that
+  // sends mail, per IP and per inbox.
+  if (!(await withinMailLimit(c.env.EMAIL_LIMIT, c, band.contactEmail))) {
     return c.html(
       <RefundRequestPage
         {...common}

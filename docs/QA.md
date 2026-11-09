@@ -32,7 +32,8 @@ when the name matches it. The page answers the same either way, so it can't be u
 who has an account. Onboarding works in production too (checked 3 November 2026); Part 1 is
 still written for a local run.
 
-**3. Email is rate-limited to 5 per 60s per IP**, purchases to 20 per 60s. Real limits, live.
+**3. Email is rate-limited to 5 per 60s per IP and 5 per 60s per inbox**, purchases to 20 per 60s.
+Real limits, live.
 If you retry a login five times in a minute you will be throttled and conclude email is broken
 again. Wait a minute between attempts.
 
@@ -121,7 +122,7 @@ decide. No model judges authenticity.
 - [ ] **5.1** The ticket email arrives within a minute of purchase — at an address that is not `mvillafranca98@gmail.com`, and note which Gmail tab it lands in
 - [ ] **5.2** QR codes **render in Gmail** — hosted PNGs, not blocked attachments
 - [ ] **5.3** Scanning the QR **from the email** works at the door
-- [ ] **5.4** `/recuperar` with that address re-sends the tickets
+- [ ] **5.4** `/recuperar` with that address sends one email linking each of its orders for upcoming events
 - [ ] **5.5** `/recuperar` with an address that has never bought answers **identically** — no membership leak
 - [ ] **5.6** Sender reads sensibly in the inbox *(expect `Coverr <hola@coverr.live>`)*
 

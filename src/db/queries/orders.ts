@@ -124,6 +124,59 @@ export type EventOrderRow = {
   hasOpenRefund: boolean;
 };
 
+/** One live order in a buyer's recovery email. */
+export type RecoverableOrder = {
+  orderId: string;
+  shortCode: string;
+  bandName: string;
+  eventName: string;
+  venue: string;
+  startsAt: string;
+  /** Tickets on the order that can still get in: refunded ones are left out. */
+  tickets: number;
+};
+
+/**
+ * The orders a buyer can still use, for `/recuperar`: confirmed, with at least
+ * one live ticket, for events that have not yet passed `eventStartedAfter`,
+ * soonest first.
+ *
+ * An address that has bought for years would otherwise get every past show
+ * back too. Capped by `limit`, since one email has to hold them all. Start
+ * times carry their own UTC offset, so they are compared through `julianday`.
+ */
+export async function recoverableOrdersForPayer(
+  db: DrizzleD1Database<typeof s>,
+  input: { payerEmail: string; eventStartedAfter: string; limit: number },
+): Promise<RecoverableOrder[]> {
+  const rows = await db
+    .select({
+      orderId: s.orders.id,
+      shortCode: s.orders.shortCode,
+      bandName: s.bands.name,
+      eventName: s.events.name,
+      venue: s.events.venue,
+      startsAt: s.events.startsAt,
+      tickets: sql<number>`count(*)`,
+    })
+    .from(s.orders)
+    .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+    .innerJoin(s.bands, eq(s.events.bandId, s.bands.id))
+    .innerJoin(s.attendees, eq(s.attendees.orderId, s.orders.id))
+    .where(
+      and(
+        eq(s.orders.payerEmail, input.payerEmail),
+        eq(s.orders.status, "confirmed"),
+        isNull(s.attendees.voidedAt),
+        sql`julianday(${s.events.startsAt}) >= julianday(${input.eventStartedAfter})`,
+      ),
+    )
+    .groupBy(s.orders.id)
+    .orderBy(sql`julianday(${s.events.startsAt})`)
+    .limit(input.limit);
+  return rows.map((row) => ({ ...row, tickets: Number(row.tickets) }));
+}
+
 /**
  * One order, but only if it belongs to this event.
  *

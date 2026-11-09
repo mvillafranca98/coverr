@@ -1,10 +1,7 @@
-import { and, eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
-import * as s from "../../db/schema";
-import { sendTickets } from "../../jobs/send-tickets";
+import { sendTicketRecovery } from "../../jobs/send-recovery";
 import { normalizeEmail } from "../../lib/core";
-import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { TOO_MANY_REQUESTS, withinMailLimit } from "../../lib/rate-limit";
 import { RecoverPage } from "../../views/recover";
 import type { PublicEnv } from "./context";
 
@@ -13,8 +10,9 @@ export const recoveryRoutes = new Hono<PublicEnv>();
 recoveryRoutes.get("/recuperar", (c) => c.html(<RecoverPage sent={c.req.query("ok") === "1"} />));
 
 /**
- * Resends the tickets on an address. Answers the same way whether or not the
- * address bought anything, so the page cannot be used to test who did.
+ * Mails the tickets on an address, as one email. Answers the same way whether
+ * or not the address bought anything, so the page cannot be used to test who
+ * did; the limit is spent the same way too.
  */
 recoveryRoutes.post("/recuperar", async (c) => {
   const body = await c.req.parseBody();
@@ -23,24 +21,10 @@ recoveryRoutes.post("/recuperar", async (c) => {
     return c.html(<RecoverPage error="Revisá el correo que escribiste." />, 400);
   }
 
-  if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
+  if (!(await withinMailLimit(c.env.EMAIL_LIMIT, c, email))) {
     return c.html(<RecoverPage error={TOO_MANY_REQUESTS} />, 429);
   }
 
-  const db = drizzle(c.env.DB, { schema: s });
-  const found = await db
-    .select({ id: s.orders.id })
-    .from(s.orders)
-    .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
-    .where(and(eq(s.orders.payerEmail, email), eq(s.orders.status, "confirmed")));
-
-  // Resend every live order on that address, then answer identically whether or
-  // not anything matched.
-  c.executionCtx.waitUntil(
-    (async () => {
-      for (const order of found) await sendTickets(c.env, order.id);
-    })(),
-  );
-
+  c.executionCtx.waitUntil(sendTicketRecovery(c.env, email));
   return c.redirect("/recuperar?ok=1", 303);
 });

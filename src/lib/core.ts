@@ -124,7 +124,7 @@ export function proofsExpired(eventStartsAt: string, now: Date): boolean {
   return Date.parse(purgeAfter(eventStartsAt)) <= now.getTime();
 }
 
-export async function sha256Hex(buf: ArrayBuffer): Promise<string> {
+export async function sha256Hex(buf: ArrayBuffer | ArrayBufferView): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", buf);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }

@@ -16,7 +16,7 @@ import {
 import { normalizeEmail, nowIso } from "../../lib/core";
 import { makeTransport } from "../../lib/email";
 import { isOperatorEmail, operatorFromToken, operatorTokenPayload } from "../../lib/operator";
-import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { TOO_MANY_REQUESTS, withinMailLimit } from "../../lib/rate-limit";
 import { linkToSpend } from "../../lib/sign-in";
 import { LOGIN_EMAIL_SUBJECT, loginEmailHtml, loginEmailText } from "../../views/email";
 import { OperatorLoginPage, OperatorSignInConfirmPage } from "../../views/operator/login";
@@ -57,14 +57,13 @@ operatorSessionRoutes.get("/acceso", (c) =>
 );
 
 operatorSessionRoutes.post("/acceso", async (c) => {
-  if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
-    return c.html(<OperatorLoginPage error={TOO_MANY_REQUESTS} />, 429);
-  }
-
   const body = await c.req.parseBody();
   const email = typeof body["email"] === "string" ? normalizeEmail(body["email"]) : "";
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return c.html(<OperatorLoginPage error="Revisá el correo que escribiste." />, 400);
+  }
+  if (!(await withinMailLimit(c.env.EMAIL_LIMIT, c, email))) {
+    return c.html(<OperatorLoginPage error={TOO_MANY_REQUESTS} />, 429);
   }
 
   // Mail only an operator, but answer the same either way.

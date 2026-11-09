@@ -12,7 +12,10 @@ export const RecoverPage: FC<{ sent?: boolean; error?: string }> = ({ sent, erro
     <header class="hero">
       <div class="band">Coverr</div>
       <h1>Recuperar mis boletos</h1>
-      <p class="blurb">Escribí el correo que usaste al comprar y te reenviamos tus códigos QR.</p>
+      <p class="blurb">
+        Escribí el correo que usaste al comprar y te mandamos tus boletos para los eventos que
+        vienen.
+      </p>
     </header>
 
     {sent ? (
@@ -20,8 +23,8 @@ export const RecoverPage: FC<{ sent?: boolean; error?: string }> = ({ sent, erro
         <div class="free" style="margin-top:0">
           <span>✓</span>
           <div>
-            Si ese correo tiene boletos, ya te los enviamos. Revisá tu bandeja de entrada — y
-            también la carpeta de spam.
+            Si ese correo tiene boletos para un evento que viene, ya te los enviamos. Revisá tu
+            bandeja de entrada — y también la carpeta de spam.
           </div>
         </div>
         <p class="hint" style="margin-top:16px">

@@ -327,7 +327,7 @@ until the day after their event.
 | `PROOFS` | R2 | The `coverr-proofs` bucket for payment screenshots |
 | `ASSETS` | Static assets | Everything in `public/` |
 | `PURCHASE_LIMIT` | Rate limiter | 20 purchases a minute per IP — loose on purpose, because walk-up buyers share the venue's wifi |
-| `EMAIL_LIMIT` | Rate limiter | 5 a minute per IP for anything that sends email: sign-in, sign-up, ticket recovery, refund requests |
+| `EMAIL_LIMIT` | Rate limiter | 5 a minute per IP, and 5 a minute per inbox, for anything that sends email: sign-in, sign-up, ticket recovery, refund requests, a band's email change. The inbox is keyed by a hash of the address (`lib/rate-limit.ts`, `withinMailLimit`) |
 | `EXTRACT_LIMIT` | Rate limiter | 10 a minute per band for the order page's "read it again" button, a paid vision call per press |
 | `APP_ORIGIN` | Variable | The canonical URL. Links in email and QR codes are built from it, and any other hostname is marked `noindex` |
 | `REDIRECT_HOSTS` | Variable | Hostnames that redirect to `APP_ORIGIN`: `www.coverr.live`, and the `workers.dev` address every link sent before November 2026 points at. `/api/` and `/t/` are still served there — see `src/lib/host-redirect.ts` |

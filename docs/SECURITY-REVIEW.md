@@ -38,7 +38,7 @@ bytes; HMAC sessions; single-use 15-minute sign-in links; HttpOnly and SameSite=
 | S2 | Junk uploads can sell out an event | Medium | Planned | SEC-06 |
 | S3 | A band session survives a change of the band's email | Medium | ✅ Fixed 2026-11-09 | SEC-12 |
 | S4 | The door link never expires, and can still write | Low–medium | Planned | SEC-12 |
-| S5 | Email limits are per IP only; recovery multiplies emails | Low–medium | Planned | SEC-05, SEC-06 |
+| S5 | Email limits are per IP only; recovery multiplies emails | Low–medium | ✅ Fixed 2026-11-09 | SEC-05, SEC-06 |
 | S6 | Operator access rests on personal Gmail inboxes | Low | Owner, no code | — |
 | S7 | The CSP allows inline scripts | Hardening | Planned | SEC-10 |
 | S8 | Order ids are weaker capabilities than QR tokens | Hardening | Planned | — |
@@ -200,15 +200,43 @@ scanner clear its storage and cached page when told the event is over.
 
 ## S5 · Email limits are per IP only; recovery multiplies emails
 
-**Severity: low–medium** — planned
+**Severity: low–medium** — ✅ **FIXED 2026-11-09**
 
-Every mail-sending form shares one per-IP key (`mail:${ip}`, 5 a minute). `/recuperar` sends one
-email per live order on the address, so with 10 orders under one address a single IP sends 50
-emails a minute. Cloudflare's rate-limit binding only counts per 10 or 60 seconds, so a daily
-per-address cap would need a table.
+**What was true.** Every mail-sending form shared one per-IP key (`mail:${ip}`, 5 a minute), so
+anyone with a few connections could keep one inbox filling with sign-in links or tickets.
+`/recuperar` resent each order's full ticket email, one by one, for every show the address had
+ever bought: ten orders were ten emails per request, 50 a minute from one IP. With Resend on the
+free plan (100 a day for the whole platform), that was the cheapest way to stop every band's
+sign-in links for the rest of the day.
 
-**Planned fix:** also limit by recipient (`mail-to:${email}`, the same binding), and make
-`/recuperar` send one email listing every order on the address.
+**The fix.**
+
+- `lib/rate-limit.ts`: `withinMailLimit` checks the caller (`mail:${ip}`) and then the inbox
+  (`mail-to:` plus a SHA-256 of the normalised address), on the same `EMAIL_LIMIT` binding, 5 a
+  minute each. The address is hashed because `withinLimit` logs its key when the limiter fails,
+  and an address does not belong in the logs. A caller already over its limit does not spend the
+  inbox's allowance, and the inbox is counted whether or not the address is known, so a refusal
+  reveals nothing about who has an account.
+- Every form that sends mail uses it: band sign-in, operator sign-in, `/registro`, `/recuperar`,
+  refund requests (keyed on the band's inbox, which is what they mail) and a band's email change
+  (keyed on the new address). Sign-in and sign-up now validate the address before the limit, so a
+  mistyped address no longer spends an attempt.
+- `/recuperar` sends one email (`jobs/send-recovery.ts`, `recoveryEmailHtml`) listing every order
+  on the address for events that started less than a day ago or have not started, up to 20, each
+  with a "Ver mis boletos" link to its ticket page, where the QR codes are. Past shows are no
+  longer resent. The lookup moved after the response, so its timing says nothing either.
+
+**Verified.** Unit tests: an inbox refused from any number of callers once it is over, a caller
+over its limit not spending the inbox's allowance, the key hashed and normalised with no address
+in it (`tests/rate-limit.test.ts`); the recovery email links every order in both versions and
+escapes what was typed (`tests/recovery-email.test.ts`). Locally, `/recuperar` for a demo buyer
+with three orders on an upcoming event sent one email with three links, where it used to send
+three.
+
+**Still true.** The rate-limit binding counts per minute only, so it cannot hold an inbox to a
+few emails a day, and many addresses from many IPs can still use up the daily 100. The real
+ceiling is the Resend plan, which moves to paid once three or more bands have an active event at
+once (see Decisions).
 
 ## S6 · Operator access rests on personal Gmail inboxes
 

@@ -6,7 +6,7 @@ import { mailBandCreateLink, mailBandSignInLink } from "../../jobs/mail-band-lin
 import { sendSuspendedNotice } from "../../jobs/notify-suspended";
 import { decideNewBand } from "../../lib/band-identity";
 import { normalizeEmail } from "../../lib/core";
-import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { TOO_MANY_REQUESTS, withinMailLimit } from "../../lib/rate-limit";
 import { TEXT_LIMITS } from "../../lib/text-limits";
 import { SignupPage, SignupSentPage } from "../../views/signup";
 import type { PublicEnv } from "./context";
@@ -29,10 +29,6 @@ export const signupRoutes = new Hono<PublicEnv>();
 signupRoutes.get("/registro", (c) => c.html(<SignupPage />));
 
 signupRoutes.post("/registro", async (c) => {
-  if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
-    return c.html(<SignupPage error={TOO_MANY_REQUESTS} />, 429);
-  }
-
   const db = drizzle(c.env.DB, { schema: s });
   const body = await c.req.parseBody();
   const name = String(body["name"] ?? "")
@@ -45,6 +41,9 @@ signupRoutes.post("/registro", async (c) => {
   // same way whether or not a band already has it.
   if (email.length > TEXT_LIMITS.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return c.html(<SignupPage error="Revisá el correo." name={name} />, 400);
+  }
+  if (!(await withinMailLimit(c.env.EMAIL_LIMIT, c, email))) {
+    return c.html(<SignupPage error={TOO_MANY_REQUESTS} name={name} email={email} />, 429);
   }
   if (!c.env.SESSION_SECRET) return c.text("SESSION_SECRET no está configurado.", 500);
 

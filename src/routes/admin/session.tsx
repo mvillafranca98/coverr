@@ -17,7 +17,7 @@ import {
 } from "../../lib/auth";
 import { decideSignIn, signInTitle } from "../../lib/band-identity";
 import { normalizeEmail, nowIso } from "../../lib/core";
-import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { TOO_MANY_REQUESTS, withinMailLimit } from "../../lib/rate-limit";
 import {
   bandSessionFrom,
   bandSessionPayload,
@@ -116,14 +116,13 @@ sessionRoutes.get("/acceso", (c) =>
  * address whose bands are all suspended gets the reason by mail instead.
  */
 sessionRoutes.post("/login", async (c) => {
-  if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
-    return c.html(<LoginPage error={TOO_MANY_REQUESTS} />, 429);
-  }
-
   const body = await c.req.parseBody();
   const email = typeof body["email"] === "string" ? normalizeEmail(body["email"]) : "";
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return c.html(<LoginPage error="Revisá el correo que escribiste." />, 400);
+  }
+  if (!(await withinMailLimit(c.env.EMAIL_LIMIT, c, email))) {
+    return c.html(<LoginPage error={TOO_MANY_REQUESTS} />, 429);
   }
 
   const db = drizzle(c.env.DB, { schema: s });

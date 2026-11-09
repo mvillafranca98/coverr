@@ -18,7 +18,7 @@ import {
   readMemberTable,
   typedMemberRows,
 } from "../../lib/member-split";
-import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { TOO_MANY_REQUESTS, withinMailLimit } from "../../lib/rate-limit";
 import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { CONTACT_EMAIL } from "../../views/legal/constants";
 import { BandSettingsPage } from "../../views/setup/band-settings";
@@ -133,7 +133,7 @@ bandSettingsRoutes.post("/banda", async (c) => {
         error: `Ese correo no se puede usar. Escribinos a ${CONTACT_EMAIL}.`,
       });
     }
-    if (!(await withinLimit(c.env.EMAIL_LIMIT, `mail:${clientIp(c)}`))) {
+    if (!(await withinMailLimit(c.env.EMAIL_LIMIT, c, contactEmail))) {
       return renderBandSettings(c, { error: TOO_MANY_REQUESTS });
     }
   }

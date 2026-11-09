@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { normalizeEmail, sha256Hex } from "./core";
 
 /**
  * Cloudflare's rate limiter binding, narrowed to what we use.
@@ -37,6 +38,27 @@ export async function withinLimit(limiter: Limiter | undefined, key: string): Pr
     console.error(`[rate-limit] limiter threw for key=${key}:`, err);
     return true;
   }
+}
+
+/**
+ * True when neither the caller nor the inbox being mailed is over the mail
+ * limit, for every form that sends an email.
+ *
+ * Per IP alone, anyone with a few connections could keep one inbox filling:
+ * a band's sign-in links, a buyer's tickets. The address is hashed before it
+ * becomes a key, because `withinLimit` logs the key when the limiter fails,
+ * and an email address does not belong in the logs. Its allowance is spent
+ * whether or not the address is known to Coverr, so a refusal says nothing
+ * about who has an account.
+ */
+export async function withinMailLimit(
+  limiter: Limiter | undefined,
+  c: Context,
+  recipient: string,
+): Promise<boolean> {
+  if (!(await withinLimit(limiter, `mail:${clientIp(c)}`))) return false;
+  const address = new TextEncoder().encode(normalizeEmail(recipient));
+  return withinLimit(limiter, `mail-to:${await sha256Hex(address)}`);
 }
 
 /** Shown whenever a limit is hit. Vague on purpose — it is not a diagnosis. */
