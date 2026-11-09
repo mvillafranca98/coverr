@@ -289,9 +289,12 @@ export function lpsToCentavos(value: unknown): number | null {
  */
 const READABLE_IMAGE = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
+/** Every type `isReadableProof` accepts, in the lowercase form uploads are stored with. */
+export const READABLE_PROOF_TYPES = ["application/pdf", ...READABLE_IMAGE];
+
 export function isReadableProof(contentType: string): boolean {
   const t = contentType.toLowerCase().split(";")[0]!.trim();
-  return t === "application/pdf" || READABLE_IMAGE.includes(t);
+  return READABLE_PROOF_TYPES.includes(t);
 }
 
 export function isRenderableImage(contentType: string): boolean {

@@ -311,8 +311,8 @@ export const verificationFlags = sqliteTable(
       .notNull()
       .references(() => orders.id, { onDelete: "cascade" }),
     proofId: text("proof_id").references(() => paymentProofs.id, { onDelete: "cascade" }),
-    /** REF_DUPLICATE | DEST_MISMATCH | HASH_DUPLICATE | AMOUNT_SHORT
-     *  | AMOUNT_OVER | DATE_STALE | UNREADABLE | NAME_MISMATCH */
+    /** REF_DUPLICATE | DEST_MISMATCH | HASH_DUPLICATE | AMOUNT_SHORT | AMOUNT_OVER
+     *  | DATE_STALE | UNREADABLE | MISSING_FIELDS | NOT_A_RECEIPT | NAME_MISMATCH */
     code: text("code").notNull(),
     /** critical | warning | info */
     severity: text("severity").notNull(),

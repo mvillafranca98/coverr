@@ -57,7 +57,10 @@
   // hence the per-minute windows.
   // Daily, for the proof purge. The window is 30 days past the event, so the
   // exact hour is irrelevant — what matters is that it runs at all.
-  "triggers": { "crons": ["0 3 * * *"] },
+  // Hourly at :17, to read again the proofs whose read failed or never ran
+  // (jobs/retry-proof-reads.ts). src/index.tsx tells the two apart by this
+  // exact string, so change both together.
+  "triggers": { "crons": ["0 3 * * *", "17 * * * *"] },
   "ratelimits": [
     {
       "name": "PURCHASE_LIMIT",

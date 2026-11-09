@@ -619,13 +619,18 @@ footer{
         <tr><td><span class="mono">AMOUNT_SHORT</span></td><td><span class="chip warn">Warning</span></td><td>Amount &lt; expected</td><td>&ldquo;Faltan L50&rdquo;</td></tr>
         <tr><td><span class="mono">AMOUNT_OVER</span></td><td><span class="chip warn">Warning</span></td><td>Amount &gt; expected</td><td>Usually paying for someone else &mdash; admin confirms</td></tr>
         <tr><td><span class="mono">DATE_STALE</span></td><td><span class="chip warn">Warning</span></td><td>Transaction predates the event going live</td><td>Recycled from an older transfer</td></tr>
-        <tr><td><span class="mono">UNREADABLE</span></td><td><span class="chip info">Info</span></td><td>Extraction failed or confidence low</td><td>Nothing &mdash; manual review, buyer unaffected</td></tr>
+        <tr><td><span class="mono">MISSING_FIELDS</span></td><td><span class="chip warn">Warning</span></td><td>The receipt doesn&rsquo;t show the destination account or the amount, so there is nothing to compare</td><td>Nothing &mdash; manual review, buyer unaffected</td></tr>
+        <tr><td><span class="mono">NOT_A_RECEIPT</span></td><td><span class="chip warn">Warning</span></td><td>The upload isn&rsquo;t a transfer confirmation at all</td><td>Nothing &mdash; manual review, buyer unaffected</td></tr>
+        <tr><td><span class="mono">UNREADABLE</span></td><td><span class="chip info">Info</span></td><td>Extraction failed, never ran, or confidence low</td><td>Nothing &mdash; manual review, buyer unaffected</td></tr>
         <tr><td><span class="mono">NAME_MISMATCH</span></td><td><span class="chip info">Info</span></td><td>Sender name doesn&rsquo;t match payer name</td><td>Nothing. Paying for friends is normal &mdash; never surface this</td></tr>
       </tbody>
     </table>
   </div>
   <div class="note acc">
     <p><strong><span class="mono">NAME_MISMATCH</span> must never reach the buyer or the door.</strong> The baseline event has multi-ticket purchases throughout &mdash; one person paying for four is the common case, not the suspicious one. It exists only as a weak signal in the admin view.</p>
+  </div>
+  <div class="note acc">
+    <p><strong>Missing evidence is never a pass.</strong> Every flag except <span class="mono">NAME_MISMATCH</span> reaches the door, whatever its severity: severity decides who is interrupted (critical emails the band), not whether staff see it. A proof nobody has read yet, one the model could not read, and one that doesn&rsquo;t show the account or the amount are all amber with their reason, never green. Until 2026-11-09 the door dropped every info flag and a missing field raised nothing, so a receipt cropped to hide the account passed as clean. A failed read is retried every hour until the day after the event.</p>
   </div>
 
   <h3>Retention</h3>

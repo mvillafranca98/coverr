@@ -1,6 +1,7 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { computeSettlement } from "../../lib/settlement";
+import { NOTE_ONLY_FLAG } from "../../lib/verify";
 import * as s from "../schema";
 
 /**
@@ -65,6 +66,38 @@ export async function channelTotals(db: DrizzleD1Database<typeof s>, eventId: st
   counts.inside = Number(inside?.n ?? 0);
 
   return { counts, channels };
+}
+
+/**
+ * How much of the gross comes from orders a person still has to look at: an
+ * open flag other than the sender-name note. Counted the way `channelTotals`
+ * counts gross — live tickets on confirmed orders — so it is a part of that
+ * figure, never more than it.
+ *
+ * The gross counts what each receipt says was paid, and a flagged receipt is
+ * exactly the one that may not have been. This is not a lock: the report stays
+ * readable, it only says how much of it is still unconfirmed.
+ */
+export async function takingsUnderReview(
+  db: DrizzleD1Database<typeof s>,
+  eventId: string,
+): Promise<{ orders: number; amount: number }> {
+  const [row] = await db
+    .select({
+      orders: sql<number>`count(distinct ${s.orders.id})`,
+      amount: sql<number>`coalesce(sum(${s.orders.unitAmount}), 0)`,
+    })
+    .from(s.attendees)
+    .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
+    .where(
+      and(
+        eq(s.orders.eventId, eventId),
+        eq(s.orders.status, "confirmed"),
+        isNull(s.attendees.voidedAt),
+        sql`exists (select 1 from ${s.verificationFlags} where ${s.verificationFlags.orderId} = ${s.orders.id} and ${s.verificationFlags.resolvedAt} is null and ${s.verificationFlags.code} != ${NOTE_ONLY_FLAG})`,
+      ),
+    );
+  return { orders: Number(row?.orders ?? 0), amount: Number(row?.amount ?? 0) };
 }
 
 /**

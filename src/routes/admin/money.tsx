@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
-import { settlementFor } from "../../db/queries/event-totals";
+import { settlementFor, takingsUnderReview } from "../../db/queries/event-totals";
 import { findEventBySlug } from "../../db/queries/events";
 import { feeAccountForBand, unpaidFeeFor } from "../../db/queries/fees";
 import { readFlags } from "../../db/queries/flags";
@@ -25,6 +25,7 @@ moneyRoutes.get("/e/:slug/dinero", async (c) => {
   if (!band || !event) return c.notFound();
 
   const { settlement, advancesByMember, counts } = await settlementFor(db, bandId, event.id);
+  const underReview = await takingsUnderReview(db, event.id);
 
   const expenses = await db
     .select()
@@ -46,6 +47,7 @@ moneyRoutes.get("/e/:slug/dinero", async (c) => {
       event={event}
       expenses={expenses}
       settlement={settlement}
+      underReview={underReview}
       advancesByMember={advancesByMember}
       unlocked={!flags.billing || !!unlock}
       price={price}

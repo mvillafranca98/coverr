@@ -5,6 +5,7 @@ import { purgeExpiredFeeProofs } from "./jobs/purge-fee-proofs";
 import { purgeExpiredProofs } from "./jobs/purge-proofs";
 import { purgeSpentSignInLinks } from "./jobs/purge-sign-in-links";
 import { reportError } from "./jobs/report-error";
+import { retryUnreadProofs } from "./jobs/retry-proof-reads";
 import { sweepExpiredProofFiles } from "./jobs/sweep-proof-files";
 import { isCanonicalHost } from "./lib/crawl";
 import { hostRedirectTarget } from "./lib/host-redirect";
@@ -169,13 +170,21 @@ app.onError((err, c) => {
 });
 
 /**
+ * The hourly trigger, exactly as `triggers.crons` in wrangler.jsonc spells it.
+ * Off the hour so it never shares a minute with the nightly sweeps. Any other
+ * trigger, including one fired by hand from the dashboard, runs the sweeps.
+ */
+const HOURLY_CRON = "17 * * * *";
+
+/**
  * The worker has two entry points: `fetch` for requests, and `scheduled` for
- * the nightly sweeps. Keeping `app` as the fetch handler means every route and
- * the 404/500 pages above are unchanged.
+ * the cron jobs — the nightly sweeps and the hourly retry of unread proofs.
+ * Keeping `app` as the fetch handler means every route and the 404/500 pages
+ * above are unchanged.
  */
 export default {
   fetch: app.fetch,
-  async scheduled(_event: ScheduledController, env: Bindings, ctx: ExecutionContext) {
+  async scheduled(controller: ScheduledController, env: Bindings, ctx: ExecutionContext) {
     // Each sweep reports its own failure. Nothing is watching a cron run, so
     // without this a job that stopped working would stay stopped — silently,
     // which for the proof purge means third-party banking details quietly
@@ -184,6 +193,11 @@ export default {
       ctx.waitUntil(
         run.catch((err) => reportError(env, { kind: "scheduled", error: err, path: name })),
       );
+
+    if (controller.cron === HOURLY_CRON) {
+      sweep("retry-proof-reads", retryUnreadProofs(env));
+      return;
+    }
 
     sweep("purge-proofs", purgeExpiredProofs(env));
     sweep("purge-fee-proofs", purgeExpiredFeeProofs(env));

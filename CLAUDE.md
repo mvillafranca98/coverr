@@ -36,6 +36,9 @@ Commands: `npm run dev`, `npm run typecheck`, `npm run db:generate`, `npm run db
 - `docs/EMAIL-SETUP.md`: how sending (Resend), receiving (`hola@`, Cloudflare Email Routing)
   and DMARC are set up on coverr.live, and how to check them. Read it before changing
   `EMAIL_FROM` or the Resend key.
+- `docs/SECURITY-REVIEW.md`: the findings of the November 2026 security review, what was fixed,
+  what is planned and what was decided against. Read it before touching verification, sessions,
+  rate limits or the door link.
 
 ## Project rules
 - **Honduras only.** Money is lempiras, copy is Honduran Spanish, banks are the six in
@@ -90,6 +93,10 @@ Breaking one of these breaks the product, not just a test.
   excluded from the product, not deferred. Extraction reads *by label, never by position*.
 - **`NAME_MISMATCH` never reaches a buyer or the door.** One person paying for four is the
   common case. It is a weak admin-only signal.
+- **Missing evidence is never a pass.** Every other open flag reaches the door, whatever its
+  severity. A proof nobody has read, one the model could not read, and one that does not show the
+  account or the amount are amber, never green. The purchase writes a "todavía no se leyó" flag
+  that only a completed read replaces. See `docs/SECURITY-REVIEW.md`, S1.
 - **Amber always names its reason on screen.** Staff resolving a flag in five seconds is the
   point; staff phoning the admin is the failure.
 - **Money is re-resolved server-side.** The client never tells us a price, a rule id or an

@@ -170,15 +170,23 @@ describe("a night with Coverr", () => {
     await page.locator("#net", { hasText: /listo|Sincronizado/ }).waitFor();
     await page.click("#tab-buscar");
 
+    // The run has no vision key, so the receipt was never read. That must reach
+    // the door as amber with its reason, never as a green "Adelante".
+    const admitUnreadReceipt = async () => {
+      await page.locator("#result.amber .r-detail", { hasText: "Todavía no se leyó" }).waitFor();
+      await page.getByRole("button", { name: "Verificar y dejar pasar" }).click();
+      await page.locator("#result .r-title", { hasText: "Adelante" }).waitFor();
+    };
+
     await page.fill("#searchInput", "Ana");
     await page.locator(".srow", { hasText: "Ana Prueba" }).getByRole("button").click();
-    await page.locator("#result .r-title", { hasText: "Adelante" }).waitFor();
+    await admitUnreadReceipt();
     await expect(page.locator("#statInside").textContent()).resolves.toBe("1");
 
     await context.setOffline(true);
     await page.fill("#searchInput", "Beto");
     await page.locator(".srow", { hasText: "Beto Prueba" }).getByRole("button").click();
-    await page.locator("#result .r-title", { hasText: "Adelante" }).waitFor();
+    await admitUnreadReceipt();
     await page.locator("#queueRow").waitFor({ state: "visible" });
 
     await context.setOffline(false);

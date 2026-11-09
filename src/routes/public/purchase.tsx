@@ -27,6 +27,7 @@ import {
 import { proofObjectKey, removeProofIfWriteFails } from "../../lib/proof-storage";
 import { checkProofBytes, readPurchaseForm } from "../../lib/purchase-form";
 import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
+import { type Flag, NOT_YET_READ } from "../../lib/verify";
 import type { PublicEnv } from "./context";
 
 export const purchaseRoutes = new Hono<PublicEnv>();
@@ -192,22 +193,35 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
     });
   });
 
-  // Deterministic check that needs no OCR. The QR is never withheld — a flag is
-  // internal bookkeeping the admin sees and the door scanner surfaces as amber.
+  // Every proof starts unread, and the first read that completes replaces that
+  // flag, so a read that never happens leaves the order amber rather than
+  // green. The duplicate check needs no OCR and is raised here, from the file
+  // itself. Neither withholds the QR — a flag is internal bookkeeping the
+  // admin sees and the door scanner surfaces as amber.
   const duplicate = await findDuplicateProof(db, sha256, orderId);
-  if (duplicate) {
-    await db.insert(s.verificationFlags).values({
+  const uploadFlags: Flag[] = duplicate
+    ? [
+        {
+          code: "HASH_DUPLICATE",
+          severity: "critical",
+          detail: `Ese comprobante ya lo recibimos en la orden ${duplicate.orderShortCode ?? "anterior"}`,
+        },
+        NOT_YET_READ,
+      ]
+    : [NOT_YET_READ];
+  await db.insert(s.verificationFlags).values(
+    uploadFlags.map((flag) => ({
       id: newId("flg"),
       orderId,
       proofId,
-      code: "HASH_DUPLICATE",
-      severity: "critical",
-      detail: `Ese comprobante ya lo recibimos en la orden ${duplicate.orderShortCode ?? "anterior"}`,
+      ...flag,
       createdAt: ts,
       resolvedAt: null,
       resolvedBy: null,
       resolutionNote: null,
-    });
+    })),
+  );
+  if (duplicate) {
     await db
       .update(s.orders)
       .set({ verificationStatus: "flagged" })

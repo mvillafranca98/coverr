@@ -1,5 +1,6 @@
-import { and, eq, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
+import { READABLE_PROOF_TYPES } from "../../lib/core";
 import * as s from "../schema";
 
 type UploadedProof = {
@@ -100,4 +101,47 @@ export async function referenceUsedOnOtherOrder(
     )
     .limit(1);
   return hit.length > 0;
+}
+
+/**
+ * Orders whose proof was never read to the end, oldest first, for events that
+ * have not yet passed `eventStartedAfter`.
+ *
+ * "Never read" means the vision call never ran (`ocr_raw` still empty) or it
+ * ran and failed (`ocr_raw` holds only the error). A proof the model did read
+ * and called illegible is not here: reading it again costs the same and would
+ * most likely say the same. Neither is a format the model cannot open, nor an
+ * order whose UNREADABLE flag a band has already resolved by hand, since
+ * someone has looked at it. Start times carry their own UTC offset, so they are
+ * compared through `julianday` rather than as text.
+ */
+export async function ordersWithUnreadProofs(
+  db: DrizzleD1Database<typeof s>,
+  input: { eventStartedAfter: string; limit: number },
+): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ orderId: s.orders.id, uploadedAt: s.paymentProofs.uploadedAt })
+    .from(s.paymentProofs)
+    .innerJoin(s.orders, eq(s.paymentProofs.orderId, s.orders.id))
+    .innerJoin(s.events, eq(s.orders.eventId, s.events.id))
+    .innerJoin(
+      s.verificationFlags,
+      and(
+        eq(s.verificationFlags.orderId, s.orders.id),
+        eq(s.verificationFlags.code, "UNREADABLE"),
+        isNull(s.verificationFlags.resolvedAt),
+      ),
+    )
+    .where(
+      and(
+        eq(s.orders.status, "confirmed"),
+        isNull(s.paymentProofs.purgedAt),
+        inArray(s.paymentProofs.contentType, READABLE_PROOF_TYPES),
+        sql`julianday(${s.events.startsAt}) >= julianday(${input.eventStartedAfter})`,
+        sql`(${s.paymentProofs.ocrRaw} is null or (json_valid(${s.paymentProofs.ocrRaw}) and json_extract(${s.paymentProofs.ocrRaw}, '$.error') is not null))`,
+      ),
+    )
+    .orderBy(s.paymentProofs.uploadedAt)
+    .limit(input.limit);
+  return rows.map((row) => row.orderId);
 }

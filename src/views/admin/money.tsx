@@ -12,6 +12,8 @@ export const MoneyPage: FC<{
   event: { slug: string; name: string };
   expenses: { id: string; label: string; category: string; amount: number; paid: number }[];
   settlement: Settlement;
+  /** The part of the gross whose orders still have something to review. */
+  underReview: { orders: number; amount: number };
   advancesByMember: Record<string, number>;
   unlocked: boolean;
   /** What unlocking costs, and why it is free when it is. */
@@ -28,6 +30,7 @@ export const MoneyPage: FC<{
   event,
   expenses,
   settlement,
+  underReview,
   unlocked,
   price,
   feeAccount,
@@ -152,6 +155,17 @@ export const MoneyPage: FC<{
         <b>{formatLpsShort(settlement.net)}</b>
       </div>
     </div>
+
+    {/* The gross is what the receipts say, so it names the part a person has
+        not confirmed yet. Shown locked or not: it is a warning, not the report. */}
+    {underReview.orders > 0 ? (
+      <div class="note warn" style="margin-top:16px">
+        <b>{formatLps(underReview.amount)}</b> de este bruto viene de {underReview.orders}{" "}
+        {underReview.orders === 1 ? "orden" : "órdenes"} por revisar.{" "}
+        <a href={`/admin/e/${event.slug}/ordenes?filtro=flagged`}>Revisalas</a> antes de repartir:
+        si una nunca se pagó, anulala y sale de los totales.
+      </div>
+    ) : null}
 
     {unlocked ? (
       <>

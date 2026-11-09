@@ -162,7 +162,7 @@ Everything else in that file is optional locally:
 | Variable | Without it |
 |---|---|
 | `RESEND_API_KEY`, `EMAIL_FROM` | Email is not sent. A development transport prints each message, including any sign-in link, to the terminal as an `[email:dev]` line, and writes the rendered HTML to the local R2 bucket under `outbox/`. |
-| `ANTHROPIC_API_KEY` | Receipts are not read. Orders still sell, QR codes still issue, and proofs wait for a human — exactly what production does if the vision call fails. |
+| `ANTHROPIC_API_KEY` | Receipts are not read. Orders still sell, QR codes still issue, and proofs wait for a human — exactly what production does if the vision call fails. Every online order is therefore amber at the door with "Todavía no se leyó el comprobante". |
 | `APP_ORIGIN` | Keep it at `http://localhost:8787` so links in emails and QR codes point at your machine. |
 
 ### Create the database and start
@@ -296,7 +296,8 @@ reason a person can say out loud:
 | Flag | Raised when |
 |---|---|
 | `NOT_A_RECEIPT` | The upload does not look like a transfer confirmation |
-| `UNREADABLE` | The receipt could not be read well enough — check it by hand |
+| `UNREADABLE` | The receipt has not been read yet, or could not be read well enough — check it by hand |
+| `MISSING_FIELDS` | The receipt does not show the destination account or the amount, so there is nothing to compare |
 | `HASH_DUPLICATE` | The exact same file was already uploaded for another order |
 | `REF_DUPLICATE` | The transfer reference was already used on another purchase |
 | `DEST_MISMATCH` | The money went to an account that is not the band's |
@@ -309,6 +310,12 @@ reason a person can say out loud:
 shown to the band only and never reaches a buyer or the door. A date without a year — BAC's
 app notification prints "15 octubre" — raises nothing, because a date that cannot be placed is
 not evidence of an old one.
+
+Every other open flag reaches the door as amber, whatever its severity, because missing
+evidence is never a pass. The purchase writes an `UNREADABLE` "todavía no se leyó" flag that only
+a completed read replaces, so a read that fails or never runs leaves the order amber rather than
+green. An hourly job (`jobs/retry-proof-reads.ts`) reads the failed ones again, up to 20 an hour,
+until the day after their event.
 
 ## Configuration
 
@@ -338,7 +345,8 @@ Secrets, set in production with `npx wrangler secret put <NAME>`:
 
 A cron trigger runs every day at 03:00 UTC: it deletes fee screenshots 90 days after the payment
 unless it is still in question, and it deletes payment proofs 30 days after their
-event and error-log rows after 90 days.
+event and error-log rows after 90 days. A second one runs every hour at :17 and reads again the
+payment proofs whose read failed or never ran, for events that have not yet passed.
 
 ### Switches you can flip without deploying
 

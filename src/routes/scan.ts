@@ -5,6 +5,7 @@ import * as s from "../db/schema";
 import { newId, newQrToken, newShortCode, nowIso } from "../lib/core";
 import { parseJsonObject } from "../lib/json";
 import { MAX_SCANNER_BODY_CHARS, readCashSale, readCheckinBatch } from "../lib/scan-request";
+import { NOTE_ONLY_FLAG } from "../lib/verify";
 
 type Bindings = {
   DB: D1Database;
@@ -87,10 +88,12 @@ scanApi.get("/:token/manifest", async (c) => {
   // Open flags become the amber reason shown at the door. Staff resolving a
   // flag in five seconds is the point; staff phoning the admin is the failure.
   //
-  // Info-severity flags are excluded deliberately. NAME_MISMATCH is the one
-  // that matters: one person paying for four is the common case, not the
-  // suspicious one, and surfacing it here would have staff questioning people
-  // who did nothing wrong. It stays a weak signal in the admin view only.
+  // NAME_MISMATCH is excluded deliberately: one person paying for four is the
+  // common case, not the suspicious one, and surfacing it here would have
+  // staff questioning people who did nothing wrong. It stays a weak signal in
+  // the admin view only. Every other open flag reaches the door, info ones
+  // included: this used to drop every info flag, so a receipt nobody could
+  // read showed green.
   const flags = await db
     .select({ orderId: s.verificationFlags.orderId, detail: s.verificationFlags.detail })
     .from(s.verificationFlags)
@@ -99,7 +102,7 @@ scanApi.get("/:token/manifest", async (c) => {
       and(
         eq(s.orders.eventId, event.id),
         isNull(s.verificationFlags.resolvedAt),
-        ne(s.verificationFlags.severity, "info"),
+        ne(s.verificationFlags.code, NOTE_ONLY_FLAG),
       ),
     );
 

@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { ProofFields } from "../src/lib/extract";
-import { type FlagCode, flagLabel, verifyProof, worstSeverity } from "../src/lib/verify";
+import {
+  type FlagCode,
+  flagLabel,
+  NOT_YET_READ,
+  NOTE_ONLY_FLAG,
+  verifyProof,
+} from "../src/lib/verify";
 
 /**
- * The eight rules that decide whether a buyer's proof raises a flag.
+ * The rules that decide whether a buyer's proof raises a flag.
  *
  * Every case here is one somebody could stand at a door and argue about, which
  * is the whole point of the rules being deterministic — a flag has to have a
@@ -87,8 +93,8 @@ describe("amounts", () => {
     expect(codes(proof({ amount: 200 }))).toEqual([]);
   });
 
-  it("says nothing when the amount could not be read", () => {
-    expect(codes(proof({ amount: null }))).toEqual([]);
+  it("leaves an amount it could not read to MISSING_FIELDS rather than passing it", () => {
+    expect(codes(proof({ amount: null }))).toEqual(["MISSING_FIELDS"]);
   });
 
   it("says nothing when the order is free, so comps never flag", () => {
@@ -173,8 +179,9 @@ describe("NAME_MISMATCH", () => {
     expect(codes(proof({ sender_name: "Keyla Discua" }))).toContain("NAME_MISMATCH");
   });
 
-  it("is info severity, so the door never sees it", () => {
+  it("is the one note-only flag, at info severity, so the door never sees it", () => {
     // One person paying for four is the common case, not the suspicious one.
+    expect(NOTE_ONLY_FLAG).toBe("NAME_MISMATCH");
     const flags = verifyProof({
       fields: proof({ sender_name: "Keyla Discua" }),
       expectedAmount: 20000,
@@ -205,6 +212,64 @@ describe("UNREADABLE", () => {
     expect(flags).toContain("UNREADABLE");
     expect(flags).toContain("AMOUNT_SHORT");
   });
+
+  it("has a stand-in for a proof nobody has read yet, worded for the door", () => {
+    // Raised at upload and left in place by any read that never completes.
+    expect(NOT_YET_READ.code).toBe("UNREADABLE");
+    expect(NOT_YET_READ.code).not.toBe(NOTE_ONLY_FLAG);
+    expect(NOT_YET_READ.detail).toContain("Todavía no se leyó");
+  });
+});
+
+describe("MISSING_FIELDS", () => {
+  const flagFor = (fields: ProofFields, over: Partial<Parameters<typeof verifyProof>[0]> = {}) =>
+    verifyProof({
+      fields,
+      expectedAmount: 20000,
+      payerName: "Armando Villafranca",
+      bandAccounts: [BAND_ACCOUNT],
+      eventCreatedAt: SALE_OPENED,
+      knownReferences: new Set<string>(),
+      ...over,
+    }).find((f) => f.code === "MISSING_FIELDS");
+
+  it("fires when the receipt does not show the destination account", () => {
+    // Crop the account out of any old transfer for the right amount: this
+    // used to come back clean, and green at the door.
+    expect(codes(proof({ dest_account: null }))).toEqual(["MISSING_FIELDS"]);
+    expect(flagFor(proof({ dest_account: null }))?.detail).toBe(
+      "El comprobante no muestra la cuenta de destino — revisar a mano",
+    );
+  });
+
+  it("names both fields when neither the account nor the amount is shown", () => {
+    expect(flagFor(proof({ dest_account: null, amount: null }))?.detail).toBe(
+      "El comprobante no muestra la cuenta de destino ni el monto — revisar a mano",
+    );
+  });
+
+  it("treats an account with fewer than four digits as not shown, not as somebody else's", () => {
+    expect(codes(proof({ dest_account: "*****71" }))).toEqual(["MISSING_FIELDS"]);
+    expect(codes(proof({ dest_account: "**********" }))).toEqual(["MISSING_FIELDS"]);
+  });
+
+  it("is a warning, so the order is not matched and the door shows it", () => {
+    expect(flagFor(proof({ amount: null }))?.severity).toBe("warning");
+  });
+
+  it("leaves an illegible receipt to UNREADABLE, which already says why", () => {
+    expect(codes(proof({ legible: false, dest_account: null, amount: null }))).toEqual([
+      "UNREADABLE",
+    ]);
+  });
+
+  it("does not ask for an account when the band has none on file to compare against", () => {
+    expect(codes(proof({ dest_account: null }), { bandAccounts: [] })).toEqual([]);
+  });
+
+  it("does not ask for an amount on a free order", () => {
+    expect(codes(proof({ amount: null }), { expectedAmount: 0 })).toEqual([]);
+  });
 });
 
 describe("several problems at once", () => {
@@ -218,28 +283,6 @@ describe("several problems at once", () => {
     expect(flags).toEqual(
       expect.arrayContaining(["REF_DUPLICATE", "DEST_MISMATCH", "AMOUNT_SHORT", "NAME_MISMATCH"]),
     );
-  });
-});
-
-describe("worstSeverity", () => {
-  it("ranks critical above warning above info", () => {
-    expect(worstSeverity([{ code: "UNREADABLE", severity: "info", detail: "" }])).toBe("info");
-    expect(
-      worstSeverity([
-        { code: "UNREADABLE", severity: "info", detail: "" },
-        { code: "AMOUNT_SHORT", severity: "warning", detail: "" },
-      ]),
-    ).toBe("warning");
-    expect(
-      worstSeverity([
-        { code: "AMOUNT_SHORT", severity: "warning", detail: "" },
-        { code: "REF_DUPLICATE", severity: "critical", detail: "" },
-      ]),
-    ).toBe("critical");
-  });
-
-  it("returns null when nothing fired", () => {
-    expect(worstSeverity([])).toBeNull();
   });
 });
 

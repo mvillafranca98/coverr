@@ -208,7 +208,10 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
       </p>
       <ul>
         <li>
-          <b>OK</b>: todo cuadra.
+          <b>OK</b>: el comprobante muestra tu cuenta y el monto correcto, y no se había usado
+          antes. Coverr lee lo que dice la captura; que la plata de verdad llegó lo confirmás en tu
+          banco. <b>Por cuenta</b>, en el panel del evento, te da el total que debería haber llegado
+          a cada banco.
         </li>
         <li>
           <b>REVISAR</b>: algo no cuadra. El QR ya se entregó igual (el comprador nunca se queda
@@ -225,8 +228,16 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
               <b>Otra cuenta</b>: la transferencia fue a una cuenta que no es tuya.
             </li>
             <li>
-              <b>Transferencia vieja</b>, <b>No se pudo leer</b> o <b>No es un comprobante</b>:
-              revisalo a mano.
+              <b>Faltan datos</b>: el comprobante no muestra tu cuenta o el monto, así que no hay
+              con qué compararlo.
+            </li>
+            <li>
+              <b>No se pudo leer</b>: la captura no se pudo leer, o todavía no se leyó. Si fue una
+              falla de la lectura, Coverr la vuelve a intentar sola cada hora hasta el día del
+              evento.
+            </li>
+            <li>
+              <b>Transferencia vieja</b> o <b>No es un comprobante</b>: revisalo a mano.
             </li>
           </ul>
         </li>
@@ -289,9 +300,10 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
             </li>
             <li>
               <b>Amarillo, Revisar antes de dejar pasar</b>: la compra tiene algo por revisar y te
-              dice qué. Pedile a la persona que te muestre su transferencia en la app del banco. Si
-              está bien, <b>Verificar y dejar pasar</b>; si no, <b>No dejar pasar</b> (puede comprar
-              en la puerta).
+              dice qué, también cuando el comprobante no se pudo leer. Pedile a la persona que te
+              muestre su transferencia en la app del banco. Si está bien,{" "}
+              <b>Verificar y dejar pasar</b>; si no, <b>No dejar pasar</b> (puede comprar en la
+              puerta).
             </li>
           </ul>
         </li>

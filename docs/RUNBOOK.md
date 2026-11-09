@@ -12,7 +12,7 @@ to its default in `src/lib/flags.ts`.
 | Key | Default | Off means |
 |---|---|---|
 | `sales` | on | No new purchases anywhere. QR delivery, check-in, the scanner and the live dashboard are untouched. |
-| `proof_extraction` | on | No vision call. Orders still sell, proofs still stored, a human reads them. |
+| `proof_extraction` | on | No vision call. Orders still sell, proofs still stored, a human reads them. The door shows those orders amber ("Todavía no se leyó el comprobante") until they are read. |
 | `billing` | **off** | The settlement report is free for everyone. Turning it on also rewrites the fee paragraph in `/terminos`. |
 
 ### Stop sales right now
@@ -28,7 +28,14 @@ Buyers then get a 503 saying the sale is paused and to keep their receipt. Turn 
 
 Same statement with `'proof_extraction'`. Use this when the Anthropic bill is running away and
 you want presale to keep working — the proofs wait in the bucket and the band reads them from
-the order page.
+the order page. Every order bought while it is off is amber at the door with "Todavía no se leyó
+el comprobante", so staff ask to see the transfer.
+
+Turning it back on catches up by itself: the hourly retry (`17 * * * *`,
+`jobs/retry-proof-reads.ts`) reads the unread proofs of events that have not yet passed, 20 an
+hour, oldest first. Each is a paid call, so a backlog of 200 costs about $1.60 on Sonnet 5.5 and
+takes ten hours. To clear one order sooner, the band presses **Volver a leer el comprobante** on
+its order page.
 
 Deleting the `ANTHROPIC_API_KEY` secret also stops the spend, but it is a worse tool: it is a
 secret rotation, it affects nothing else you might want to keep, and putting it back means
@@ -183,6 +190,13 @@ npx wrangler d1 execute coverr-db --remote --command "UPDATE orders SET unit_amo
 
 Exact for the same reason as the migration's own backfill: every write path sets
 `expected_amount = unit_amount × quantity`. Comps stay at 0, which is right.
+
+One change with no migration also behaves differently while an older version is live: the
+fail-closed verification of 2026-11-09 (`docs/SECURITY-REVIEW.md`, S1). Older code drops info
+flags at the door again, so an unread or unreadable receipt **scans green**. Cron triggers belong
+to the worker, not to a version, so the hourly `17 * * * *` trigger keeps firing, and older code
+runs the nightly sweeps on it every hour. That is harmless: every sweep deletes by date and
+repeats safely.
 
 ### When not to roll back
 

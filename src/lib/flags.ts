@@ -19,7 +19,9 @@ export type FlagKey = "sales" | "proof_extraction" | "billing";
  *
  *  - **proof_extraction** — off skips the vision call. Orders still sell and
  *    QR codes still issue; proofs still land in the bucket for a human to
- *    read. This is the switch for a runaway bill.
+ *    read, and those orders are amber at the door until a read completes.
+ *    Turned back on, the hourly retry reads them. This is the switch for a
+ *    runaway bill.
  *
  *  - **billing** — on charges for the settlement report. Off while the product
  *    earns its place in the scene, which is why it is the one default that is

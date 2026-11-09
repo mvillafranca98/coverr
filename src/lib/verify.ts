@@ -19,6 +19,7 @@ export type FlagCode =
   | "AMOUNT_OVER"
   | "DATE_STALE"
   | "UNREADABLE"
+  | "MISSING_FIELDS"
   | "NAME_MISMATCH"
   | "NOT_A_RECEIPT";
 
@@ -35,6 +36,7 @@ const FLAG_LABEL: Record<FlagCode, string> = {
   AMOUNT_OVER: "Pagó de más",
   DATE_STALE: "Transferencia vieja",
   UNREADABLE: "No se pudo leer",
+  MISSING_FIELDS: "Faltan datos",
   NAME_MISMATCH: "Pagó otra persona",
   NOT_A_RECEIPT: "No es un comprobante",
 };
@@ -49,8 +51,23 @@ export function flagLabel(code: string): string {
  * paying for a group is the common case, so a different sender never asks the
  * band to do anything: it is left out of every "revisar" count and chip, and
  * the door never sees it (routes/scan.ts).
+ *
+ * Every other flag, whatever its severity, means a person should look: the
+ * panel, the door and the order's status all go by this one exception.
  */
 export const NOTE_ONLY_FLAG: FlagCode = "NAME_MISMATCH";
+
+/**
+ * Raised at upload, before anything has read the proof, and replaced by the
+ * first read that completes. When no read ever completes — the switch is off,
+ * the key is missing, the job was cut off — it stays, so a proof nobody read
+ * is amber at the door rather than green.
+ */
+export const NOT_YET_READ: Flag = {
+  code: "UNREADABLE",
+  severity: "info",
+  detail: "Todavía no se leyó el comprobante — revisar a mano",
+};
 
 export type VerifyInput = {
   fields: ProofFields;
@@ -142,14 +159,16 @@ export function verifyProof(input: VerifyInput): Flag[] {
   }
 
   // --- did the money come to us at all? -------------------------------------
-  if (fields.dest_account && bandAccounts.length > 0) {
-    if (!accountMatches(fields.dest_account, bandAccounts)) {
-      flags.push({
-        code: "DEST_MISMATCH",
-        severity: "critical",
-        detail: `La transferencia fue a la cuenta ${fields.dest_account}, que no es nuestra`,
-      });
-    }
+  // Fewer than four digits printed is too little to compare, which is not the
+  // same as somebody else's account: it is treated as not shown, below.
+  const destAccount = fields.dest_account ?? "";
+  const accountShown = digits(destAccount).length >= 4;
+  if (accountShown && bandAccounts.length > 0 && !accountMatches(destAccount, bandAccounts)) {
+    flags.push({
+      code: "DEST_MISMATCH",
+      severity: "critical",
+      detail: `La transferencia fue a la cuenta ${destAccount}, que no es nuestra`,
+    });
   }
 
   // --- amount ---------------------------------------------------------------
@@ -179,6 +198,23 @@ export function verifyProof(input: VerifyInput): Flag[] {
         detail: `Pagó ${formatLps(diff)} de más — puede estar cubriendo a alguien más`,
       });
     }
+  }
+
+  // --- what the two checks above could not see ------------------------------
+  // A field the receipt does not show is not evidence the payment was right.
+  // Before this rule, cropping the account out of any old transfer for the
+  // right amount produced a clean order, green at the door. Not raised on an
+  // illegible receipt, where UNREADABLE already says why nothing was read.
+  const notShown = [
+    bandAccounts.length > 0 && !accountShown ? "la cuenta de destino" : null,
+    expectedAmount > 0 && fields.amount == null ? "el monto" : null,
+  ].filter((field): field is string => field !== null);
+  if (fields.legible && notShown.length > 0) {
+    flags.push({
+      code: "MISSING_FIELDS",
+      severity: "warning",
+      detail: `El comprobante no muestra ${notShown.join(" ni ")} — revisar a mano`,
+    });
   }
 
   // --- transfer older than the sale ----------------------------------------
@@ -212,12 +248,4 @@ export function verifyProof(input: VerifyInput): Flag[] {
   }
 
   return flags;
-}
-
-/** Highest severity present, for setting the order's verification status. */
-export function worstSeverity(flags: Flag[]): Severity | null {
-  if (flags.some((f) => f.severity === "critical")) return "critical";
-  if (flags.some((f) => f.severity === "warning")) return "warning";
-  if (flags.some((f) => f.severity === "info")) return "info";
-  return null;
 }

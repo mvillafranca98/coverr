@@ -223,7 +223,9 @@ export const OperatorGuidePage: FC<{ origin: string }> = ({ origin }) => {
         <h3>Apagar la lectura de comprobantes</h3>
         <p>
           Si la factura de la lectura automática se dispara. Las compras siguen, las capturas se
-          guardan y las bandas las revisan a mano. Los mismos comandos con{" "}
+          guardan y las bandas las revisan a mano; en la puerta, esas compras salen en amarillo con
+          "Todavía no se leyó el comprobante". Al volver a encenderla, las de eventos que todavía no
+          pasaron se leen solas, de a 20 por hora. Los mismos comandos con{" "}
           <code>proof_extraction</code> en vez de <code>sales</code>.
         </p>
 

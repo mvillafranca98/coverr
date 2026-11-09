@@ -141,7 +141,7 @@ work once with your own eyes.
 ## Part 4 — Transfer receipts
 
 This is the part that needs `ANTHROPIC_API_KEY` set. Extraction reads fields **by label** —
-never by position — and then eight fixed rules decide. No model judges authenticity.
+never by position — and then fixed rules decide. No model judges authenticity.
 
 Upload a proof and watch the order in **Órdenes**. What each flag means:
 
@@ -154,7 +154,8 @@ Upload a proof and watch the order in **Órdenes**. What each flag means:
 | `REF_DUPLICATE` | That reference number was already used | Yes, amber |
 | `HASH_DUPLICATE` | That exact image file was already uploaded | Yes, amber |
 | `NOT_A_RECEIPT` | The image is not a transfer confirmation | Yes, amber |
-| `UNREADABLE` | The format cannot be read at all | Yes, amber |
+| `MISSING_FIELDS` | The receipt does not show the destination account or the amount | Yes, amber |
+| `UNREADABLE` | The receipt has not been read yet, the read failed, the model could not read it, or the format cannot be opened | Yes, amber |
 | `NAME_MISMATCH` | Payer name differs from the buyer | **No — admin only** |
 
 `NAME_MISMATCH` is deliberately invisible to the door. One person paying for four is the normal
@@ -165,6 +166,10 @@ Things worth trying:
 - **Upload the same image twice**, on two different orders → `HASH_DUPLICATE` on the second.
 - **Pay the wrong amount** → `AMOUNT_SHORT` / `AMOUNT_OVER`, with the figures on screen.
 - **A photo of something else entirely** → `NOT_A_RECEIPT`.
+- **A receipt cropped so the account or the amount is cut off** → `MISSING_FIELDS`, amber at the
+  door. This used to come back clean.
+- **Any purchase with no `ANTHROPIC_API_KEY`** → "Todavía no se leyó el comprobante", amber at
+  the door until a read completes. The end-to-end run checks exactly this.
 - **A BAC app screenshot**, if you have one. Their notification prints `15 octubre` with no
   year; the extractor returns `10-15` and a stale-date check once read that as 2001. That is
   guarded now, but it is the single most likely thing to regress.

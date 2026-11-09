@@ -1,11 +1,11 @@
-import { and, eq, ne, sql } from "drizzle-orm";
+import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { readFlags } from "../db/queries/flags";
 import { referenceUsedOnOtherOrder } from "../db/queries/proofs";
 import * as s from "../db/schema";
 import { isReadableProof, newId, nowIso } from "../lib/core";
 import { extractProof } from "../lib/extract";
-import { type Flag, verifyProof, worstSeverity } from "../lib/verify";
+import { type Flag, NOTE_ONLY_FLAG, verifyProof } from "../lib/verify";
 
 type Env = {
   DB: D1Database;
@@ -21,10 +21,18 @@ type Env = {
  * is internal bookkeeping — it shows on the admin dashboard and tints the door
  * scanner amber with a reason staff can read out.
  *
+ * The purchase leaves a NOT_YET_READ flag on the order, and only a read that
+ * completes replaces it. Every early return below therefore leaves the order
+ * amber, never clean: missing evidence is not a pass. The hourly
+ * retry-proof-reads job tries the ones that failed again.
+ *
  * Safe to re-run on the same proof; it replaces the machine-raised flags each
  * time and leaves anything an admin already resolved alone.
+ *
+ * Returns the flags a completed read raised, and nothing when no read
+ * completed, so a caller can tell a new finding from one already reported.
  */
-export async function runVerification(env: Env, orderId: string): Promise<void> {
+export async function runVerification(env: Env, orderId: string): Promise<Flag[]> {
   const db = drizzle(env.DB, { schema: s });
 
   const rows = await db
@@ -36,21 +44,22 @@ export async function runVerification(env: Env, orderId: string): Promise<void> 
     .limit(1);
 
   const row = rows[0];
-  if (!row) return;
+  if (!row) return [];
   const { order, event, proof } = row;
 
   if (!env.ANTHROPIC_API_KEY) {
     console.warn(`[verify] ANTHROPIC_API_KEY unset — skipping extraction for ${order.shortCode}`);
-    return;
+    return [];
   }
 
   // The switch for a runaway bill. The order keeps its QR and the proof is
   // still in the bucket; only the paid call is skipped, so the band reads the
-  // screenshot itself until this is turned back on.
+  // screenshot itself and the door shows it amber until this is turned back
+  // on and the hourly retry reads it.
   const switches = await readFlags(db);
   if (!switches.proof_extraction) {
     console.warn(`[verify] proof_extraction off — no vision call for ${order.shortCode}`);
-    return;
+    return [];
   }
 
   // A format we cannot read is not the buyer's problem — they have already paid
@@ -64,13 +73,13 @@ export async function runVerification(env: Env, orderId: string): Promise<void> 
         detail: `El comprobante viene en formato ${proof.contentType}, que no podemos abrir — pedile una captura de pantalla (PNG o JPG)`,
       },
     ]);
-    return;
+    return [];
   }
 
   const obj = await env.PROOFS.get(proof.fileKey);
   if (!obj) {
     console.error(`[verify] proof object missing: ${proof.fileKey}`);
-    return;
+    return [];
   }
 
   const result = await extractProof(env.ANTHROPIC_API_KEY, {
@@ -93,7 +102,7 @@ export async function runVerification(env: Env, orderId: string): Promise<void> 
         detail: "No se pudo leer el comprobante automáticamente — revisar a mano",
       },
     ]);
-    return;
+    return [];
   }
 
   const f = result.fields;
@@ -145,10 +154,24 @@ export async function runVerification(env: Env, orderId: string): Promise<void> 
 
   await replaceMachineFlags(db, order.id, proof.id, ts, flags);
 
-  const worst = worstSeverity(flags.filter((x) => x.severity !== "info"));
+  // Matched only when nothing is left for a person to look at, by the same
+  // exception the panel and the door make: an unreadable receipt is info
+  // severity, but it is not a matched one. Counted from the table rather than
+  // from `flags`, because a HASH_DUPLICATE raised at upload survives the
+  // replacement above and counts as much as anything read here.
+  const [open] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(s.verificationFlags)
+    .where(
+      and(
+        eq(s.verificationFlags.orderId, order.id),
+        isNull(s.verificationFlags.resolvedAt),
+        ne(s.verificationFlags.code, NOTE_ONLY_FLAG),
+      ),
+    );
   await db
     .update(s.orders)
-    .set({ verificationStatus: worst ? "flagged" : "matched" })
+    .set({ verificationStatus: Number(open?.n ?? 0) > 0 ? "flagged" : "matched" })
     .where(eq(s.orders.id, order.id));
 
   console.log(
@@ -156,6 +179,7 @@ export async function runVerification(env: Env, orderId: string): Promise<void> 
       flags.map((x) => x.code).join(",") || "none"
     }`,
   );
+  return flags;
 }
 
 /**
