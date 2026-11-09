@@ -95,9 +95,19 @@ describe("a night with Coverr", () => {
 
     // Opening a used link hides the button, but nothing stops a direct submit.
     const token = new URL(bandASignInLink, baseUrl).searchParams.get("t") ?? "";
-    const resubmit = await page.request.post("/admin/crear", { form: { t: token } });
+    const resubmit = await page.request.post("/admin/crear", {
+      form: { t: token },
+      headers: { origin: new URL(baseUrl).origin },
+    });
     expect(resubmit.status()).toBe(400);
     await expect(resubmit.text()).resolves.toContain("Ese enlace ya se usó");
+
+    // And a form posted from another site never reaches the route at all.
+    const forged = await page.request.post("/admin/crear", {
+      form: { t: token },
+      headers: { origin: "https://evil.example" },
+    });
+    expect(forged.status()).toBe(403);
     await context.close();
   });
 

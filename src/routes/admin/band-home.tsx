@@ -6,6 +6,7 @@ import { costsByCategory, eventMetrics, fanStats } from "../../db/queries/stats"
 import * as s from "../../db/schema";
 import { BandHomePage } from "../../views/band-home";
 import type { AdminEnv } from "./context";
+import { endSession } from "./session";
 
 export const bandHomeRoutes = new Hono<AdminEnv>();
 
@@ -17,7 +18,7 @@ export const bandHomeRoutes = new Hono<AdminEnv>();
 bandHomeRoutes.get("/", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const band = await findBand(db, c.get("bandId"));
-  if (!band) return c.redirect("/admin/salir", 302);
+  if (!band) return endSession(c);
 
   const events = await eventMetrics(c.env.DB, band.id);
 

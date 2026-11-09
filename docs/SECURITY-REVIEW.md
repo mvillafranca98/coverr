@@ -44,8 +44,8 @@ bytes; HMAC sessions; single-use 15-minute sign-in links; HttpOnly and SameSite=
 | S5 | Email limits are per IP only; recovery multiplies emails | Low–medium | ✅ Fixed 2026-11-09 | SEC-05, SEC-06 |
 | S6 | Operator access rests on personal Gmail inboxes | Low | Owner, no code | — |
 | S7 | The CSP allows inline scripts | Hardening | Planned | SEC-10 |
-| S8 | Order ids are weaker capabilities than QR tokens | Hardening | Planned | — |
-| S9 | No Origin check; logout by GET; login CSRF on `/entrar` | Low | Planned | — |
+| S8 | Order ids are weaker capabilities than QR tokens | Hardening | ✅ Fixed 2026-11-09 | — |
+| S9 | No Origin check; logout by GET; login CSRF on `/entrar` | Low | ✅ Fixed 2026-11-09 | SEC-10, SEC-12 |
 | S10 | Internal comments ship in inlined CSS and scripts | Cosmetic | Planned, optional | — |
 | S11 | Check-in sync queries in a loop | Low–medium (a bug) | ✅ Fixed 2026-11-09 | PERF-02 |
 
@@ -325,22 +325,48 @@ scripts to files would break the deliberate inlining for venue wifi; a nonce doe
 
 ## S8 · Order ids are weaker capabilities than QR tokens
 
-**Hardening** — planned
+**Hardening** — ✅ **FIXED 2026-11-09**
 
-`/boletos/:orderId` and `/reembolso/:orderId` are protected by the order id alone, which carries
-40 random bits against the QR tokens' 130. Not guessable online. **Planned fix:** a 26-character
-random part for new order ids; old ids and links keep working and nothing parses the format.
+`/boletos/:orderId` and `/reembolso/:orderId` are protected by the order id alone, which carried
+40 random bits against the QR tokens' 130. Not guessable online, but the weakest key in the buyer's
+hands.
+
+**The fix.** `newOrderId` (`lib/core.ts`) gives every new order a 26-character random part, 130
+bits like a QR token, for online, door, manual and cash orders alike. Old ids and the links already
+mailed keep working: nothing reads the format, and the error reports already strip ids of any
+length. **Verified:** unit tests for the length, the alphabet and uniqueness
+(`tests/core.test.ts`); the end-to-end run's refund step opens `/reembolso/` with a new id.
 
 ## S9 · No Origin check, logout by GET, login CSRF
 
-**Severity: low** — planned
+**Severity: low** — ✅ **FIXED 2026-11-09**
 
-No route checks the request's Origin, and every signed-in POST relies on SameSite=Lax alone. The
-only GETs that change state are the two logouts. `POST /admin/entrar` and `/operador/entrar`
-accept cross-site posts, so an attacker can post their own unused sign-in link and sign a victim
-into the attacker's band. **Planned fix:** `hono/csrf` app-wide against `APP_ORIGIN` (it ships
-with Hono, and the scanner's JSON requests are unaffected); logout by POST. `/health` stays as it
-is: the uptime monitor needs it.
+**What was true.** No route checked the request's Origin, and every signed-in POST relied on
+SameSite=Lax alone. The only GETs that changed state were the two logouts. `POST /admin/entrar` and
+`/operador/entrar` accepted cross-site posts, so an attacker could post their own unused sign-in
+link and sign a victim into the attacker's band.
+
+**The fix.**
+
+- `src/index.tsx`: `hono/csrf`, which ships with Hono, on `/admin/*` and `/operador/*`. A form post
+  passes when the browser says it is same-origin (`Sec-Fetch-Site`) or sends a matching `Origin`;
+  anything else gets a 403 with a Spanish line, and `app.onError` treats that refusal as an answer,
+  not a crash to report. JSON calls are untouched: a browser will not send one cross-site without a
+  CORS preflight, which nothing here answers.
+- **Scoped to the panels, not app-wide as planned.** The buyer's forms hold no session to abuse,
+  and a purchase refused because an old browser or a privacy extension sent neither header would
+  strand somebody who has already transferred.
+- Signing out is a POST from the Salir button, in both panels (`endSession` in
+  `routes/admin/session.tsx`, which every forced sign-out now goes through too). A GET to the old
+  address only opens the panel. The button is styled exactly like the links beside it, at the same
+  45px height.
+- `/health` stays as it is: the uptime monitor needs it.
+
+**Verified.** The end-to-end run posts to `/admin/crear` with a foreign `Origin` and gets 403, and
+with its own origin reaches the route. Locally: a cross-site sign-in request and one with neither
+header got 403, a same-origin one went through, a buyer's `/recuperar` with neither header still
+worked, `GET /admin/salir` redirected to the panel, and Salir in the browser signed the demo band
+out.
 
 ## S10 · Internal comments ship in inlined CSS and scripts
 

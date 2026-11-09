@@ -12,6 +12,7 @@ import { sendTickets } from "../../jobs/send-tickets";
 import { runVerification } from "../../jobs/verify-proof";
 import {
   newId,
+  newOrderId,
   newQrToken,
   newShortCode,
   normalizeEmail,
@@ -124,7 +125,7 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
 
   const sha256 = await sha256Hex(bytes);
 
-  const orderId = newId("ord");
+  const orderId = newOrderId();
   const ts = nowIso();
   const fileKey = proofObjectKey(event.id, orderId);
 

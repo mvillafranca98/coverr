@@ -29,6 +29,16 @@ export function newId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}${randomBase32(8).toLowerCase()}`;
 }
 
+/**
+ * An order id, which is also the buyer's key: the ticket page and the refund
+ * request open by the order id alone (`/boletos/:id`, `/reembolso/:id`). So its
+ * random part is as long as a QR token's, 130 bits, where other ids carry 40
+ * (security review S8). Ids made before keep working: nothing reads the format.
+ */
+export function newOrderId(): string {
+  return `ord_${Date.now().toString(36)}${randomBase32(26).toLowerCase()}`;
+}
+
 /** 128-bit random, Crockford base32. This is the QR payload. */
 export function newQrToken(): string {
   return randomBase32(26);

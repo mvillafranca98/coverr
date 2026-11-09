@@ -76,21 +76,15 @@ export const requireSession: MiddlewareHandler<AdminEnv> = async (c, next) => {
   // check every write in the admin would hit a foreign key that no longer
   // exists and crash; with it, the session just ends.
   const band = await findBand(drizzle(c.env.DB, { schema: s }), session.bandId);
-  if (!band) return c.redirect("/admin/salir", 302);
+  if (!band) return endSession(c);
 
   // A ban ends the session on the band's next click, not when its cookie runs
   // out a month later.
-  if (band.bannedAt) {
-    c.header("Set-Cookie", clearCookie(isHttps(c.env.APP_ORIGIN)));
-    return c.redirect("/admin/acceso?suspendida=1", 302);
-  }
+  if (band.bannedAt) return endSession(c, "/admin/acceso?suspendida=1");
 
   // So does a move to a new address: the old one may be exactly what the band
   // lost. Every device signed in with it is out on its next click.
-  if (!sessionHoldsBand(session, band)) {
-    c.header("Set-Cookie", clearCookie(isHttps(c.env.APP_ORIGIN)));
-    return c.redirect("/admin/acceso?correo=1", 302);
-  }
+  if (!sessionHoldsBand(session, band)) return endSession(c, "/admin/acceso?correo=1");
 
   c.set("bandId", session.bandId);
   c.set("signedInEmail", session.email);
@@ -187,7 +181,20 @@ sessionRoutes.post("/entrar", async (c) => {
   return openSession(c, first.id, signIn.email, bands.length > 1 ? "/admin/bandas" : "/admin");
 });
 
-sessionRoutes.get("/salir", (c) => {
+/**
+ * Ends the session and sends the person to sign in. Every way out of the panel
+ * comes here: the Salir button, a band that no longer exists, and the checks in
+ * `requireSession`.
+ */
+export function endSession(c: AdminContext, to = "/admin/acceso") {
   c.header("Set-Cookie", clearCookie(isHttps(c.env.APP_ORIGIN)));
-  return c.redirect("/admin/acceso", 302);
-});
+  return c.redirect(to, 302);
+}
+
+/**
+ * Signing out is a POST from the panel's own Salir button. A GET used to do it,
+ * so any link on any site could sign a band out (security review S9); an old
+ * bookmark to it now just opens the panel.
+ */
+sessionRoutes.post("/salir", (c) => endSession(c));
+sessionRoutes.get("/salir", (c) => c.redirect("/admin", 302));

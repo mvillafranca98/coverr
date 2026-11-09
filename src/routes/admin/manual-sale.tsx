@@ -5,7 +5,7 @@ import { findEventBySlug } from "../../db/queries/events";
 import { currentPriceRule } from "../../db/queries/price-rules";
 import * as s from "../../db/schema";
 import { sendTickets } from "../../jobs/send-tickets";
-import { lpsToCentavos, newId, newQrToken, newShortCode, nowIso } from "../../lib/core";
+import { lpsToCentavos, newId, newOrderId, newQrToken, newShortCode, nowIso } from "../../lib/core";
 import { ManualSalePage } from "../../views/manual";
 import type { AdminContext, AdminEnv } from "./context";
 
@@ -104,7 +104,7 @@ manualSaleRoutes.post("/e/:slug/venta", async (c) => {
     return renderManualSale(c, { error: "Revisá el correo.", values: typed });
   }
 
-  const orderId = newId("ord");
+  const orderId = newOrderId();
   const shortCode = newShortCode(band.slug);
   const quantity = names.length;
   const createdAt = nowIso();

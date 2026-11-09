@@ -9,6 +9,9 @@ import {
   isRenderableImage,
   jsonForScript,
   lpsToCentavos,
+  newId,
+  newOrderId,
+  newQrToken,
   normalizeEmail,
   normalizePhone,
   PROOF_RETENTION_DAYS,
@@ -23,6 +26,26 @@ import {
  * Money is centavos as integers everywhere. A float anywhere in here would
  * eventually hand somebody the wrong change.
  */
+
+describe("order ids", () => {
+  // The order id opens the ticket page and the refund request on its own, so
+  // it carries as much randomness as the QR tokens it shows (security review S8).
+  it("carries 26 random characters, 130 bits, like a QR token", () => {
+    const id = newOrderId();
+    expect(id).toMatch(/^ord_[0-9a-z]+$/);
+    expect(id.slice(-26)).toMatch(/^[0-9a-hjkmnp-tv-z]{26}$/);
+    expect(newQrToken()).toHaveLength(26);
+  });
+
+  it("is longer than an ordinary id, which keeps 8", () => {
+    expect(newOrderId().length - newId("ord").length).toBe(18);
+  });
+
+  it("never repeats", () => {
+    const ids = new Set(Array.from({ length: 1000 }, newOrderId));
+    expect(ids.size).toBe(1000);
+  });
+});
 
 describe("formatLps", () => {
   it("renders centavos as lempiras", () => {

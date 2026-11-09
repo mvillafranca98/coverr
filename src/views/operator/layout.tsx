@@ -57,7 +57,9 @@ export const OperatorLayout: FC<
                 <a href="/operador/guia" class={active === "guide" ? "on" : ""}>
                   Guía
                 </a>
-                <a href="/operador/salir">Salir</a>
+                <form method="post" action="/operador/salir">
+                  <button type="submit">Salir</button>
+                </form>
               </span>
             </nav>
           </header>

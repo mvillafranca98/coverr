@@ -113,7 +113,10 @@ export const AdminLayout: FC<
                   Banda
                 </a>
                 <a href="/guia">Ayuda</a>
-                <a href="/admin/salir">Salir</a>
+                {/* A form, not a link: no page anywhere can sign a band out. */}
+                <form method="post" action="/admin/salir">
+                  <button type="submit">Salir</button>
+                </form>
               </span>
             </nav>
 

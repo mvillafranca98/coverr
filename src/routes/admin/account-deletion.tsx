@@ -16,6 +16,7 @@ import { clearCookie } from "../../lib/auth";
 import { deleteFeeProofsForBand, deleteProofsForEvents } from "../../lib/proof-storage";
 import { AccountDeletedPage, DeleteAccountPage } from "../../views/setup/delete-account";
 import type { AdminContext, AdminEnv } from "./context";
+import { endSession } from "./session";
 
 export const accountDeletionRoutes = new Hono<AdminEnv>();
 
@@ -50,7 +51,7 @@ function renderPage(
 accountDeletionRoutes.get("/banda/borrar", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const band = await findBand(db, c.get("bandId"));
-  if (!band) return c.redirect("/admin/salir", 302);
+  if (!band) return endSession(c);
 
   const state = await loadDeletionState(db, band.id);
   return renderPage(c, { bandName: band.name, state, blockers: blockersFor(state) });
@@ -70,7 +71,7 @@ accountDeletionRoutes.get("/banda/borrar", async (c) => {
 accountDeletionRoutes.post("/banda/borrar", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const band = await findBand(db, c.get("bandId"));
-  if (!band) return c.redirect("/admin/salir", 302);
+  if (!band) return endSession(c);
 
   const state = await loadDeletionState(db, band.id);
   const blockers = blockersFor(state);

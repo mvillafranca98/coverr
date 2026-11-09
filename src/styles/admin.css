@@ -141,6 +141,25 @@ nav.band .brand {
   text-decoration: none;
   white-space: nowrap;
 }
+/* Salir is a form so no link elsewhere can sign anyone out; its button
+   dresses exactly as the links beside it. */
+.band-links form {
+  display: contents;
+}
+.band-links button {
+  padding: 12px 8px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  /* A button's own line height is shorter, which left Salir under 44px. */
+  line-height: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.band-links button:hover,
 .band-links a:hover,
 .band-links a.on {
   color: var(--text);

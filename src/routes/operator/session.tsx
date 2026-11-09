@@ -138,7 +138,9 @@ operatorSessionRoutes.post("/entrar", async (c) => {
   return c.redirect("/operador", 303);
 });
 
-operatorSessionRoutes.get("/salir", (c) => {
+/** A POST from the Salir button only, like the band panel's: no link elsewhere can sign out. */
+operatorSessionRoutes.post("/salir", (c) => {
   c.header("Set-Cookie", clearOperatorCookie(isHttps(c.env.APP_ORIGIN)));
   return c.redirect("/operador/acceso", 302);
 });
+operatorSessionRoutes.get("/salir", (c) => c.redirect("/operador", 302));

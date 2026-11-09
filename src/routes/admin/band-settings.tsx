@@ -23,6 +23,7 @@ import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { CONTACT_EMAIL } from "../../views/legal/constants";
 import { BandSettingsPage } from "../../views/setup/band-settings";
 import type { AdminContext, AdminEnv } from "./context";
+import { endSession } from "./session";
 
 export const bandSettingsRoutes = new Hono<AdminEnv>();
 
@@ -44,7 +45,7 @@ async function renderBandSettings(
   const db = drizzle(c.env.DB, { schema: s });
   const bandId = c.get("bandId");
   const band = await findBand(db, bandId);
-  if (!band) return c.redirect("/admin/salir", 302);
+  if (!band) return endSession(c);
 
   const [accounts, members, events] = await Promise.all([
     db
@@ -112,7 +113,7 @@ bandSettingsRoutes.get("/banda", (c) =>
 bandSettingsRoutes.post("/banda", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const band = await findBand(db, c.get("bandId"));
-  if (!band) return c.redirect("/admin/salir", 302);
+  if (!band) return endSession(c);
   const body = await c.req.parseBody();
   const name = String(body["name"] ?? "").trim();
   const contactEmail = normalizeEmail(String(body["contact_email"] ?? ""));

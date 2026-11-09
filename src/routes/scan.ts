@@ -4,7 +4,7 @@ import { Hono, type HonoRequest } from "hono";
 import { checkInTickets, ticketsByToken } from "../db/queries/check-ins";
 import * as s from "../db/schema";
 import { decideCheckIns, settleLostClaims } from "../lib/check-in";
-import { newId, newQrToken, newShortCode, nowIso } from "../lib/core";
+import { newId, newOrderId, newQrToken, newShortCode, nowIso } from "../lib/core";
 import { doorAccess } from "../lib/door-window";
 import { parseJsonObject } from "../lib/json";
 import { MAX_SCANNER_BODY_CHARS, readCashSale, readCheckinBatch } from "../lib/scan-request";
@@ -234,7 +234,7 @@ scanApi.post("/:token/cash", async (c) => {
   const unit = isComp ? 0 : (doorRule[0]?.amount ?? 0);
 
   const ts = nowIso();
-  const orderId = newId("ord");
+  const orderId = newOrderId();
   await db.insert(s.orders).values({
     id: orderId,
     eventId: event.id,

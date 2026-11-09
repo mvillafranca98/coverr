@@ -478,6 +478,11 @@ create events and its event pages stop selling; tickets it has already sold keep
 the ticket page, `/recuperar` and the door. The operator session is its own cookie, sent only to
 `/operador`, and lasts 12 hours.
 
+**Both panels** refuse a form posted from another site (`hono/csrf`, mounted in `src/index.tsx`):
+the browser has to say the post came from the same origin. Signing out is a POST from the Salir
+button. The buyer's forms are left out on purpose, since they hold no session and a refused
+purchase would strand somebody who has already transferred.
+
 **Fees.** With billing on, a report that is not free shows the band Coverr's account — one at the
 band's own bank if there is one, else the main one, both entered at `/operador/cuentas` — and asks
 for the transfer screenshot. The report opens on the upload. The screenshot is read afterwards with

@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { csrf } from "hono/csrf";
+import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
 import { purgeOldErrors } from "./jobs/purge-errors";
 import { purgeExpiredFeeProofs } from "./jobs/purge-fee-proofs";
@@ -113,6 +115,19 @@ app.use(
 );
 
 /**
+ * A form posted to either panel from another site is refused before any route
+ * sees it (security review S9): the browser has to say the post came from this
+ * same origin. SameSite=Lax already kept the session off those posts, but not
+ * off the ones that need no session, and the tap that opens a sign-in link is
+ * one: a forged post of the attacker's own link would sign the visitor into the
+ * attacker's band. The buyer's forms are left out on purpose. They hold no
+ * session to abuse, and one refused by a browser that sends neither header
+ * would strand somebody who has already transferred.
+ */
+app.use("/admin/*", csrf());
+app.use("/operador/*", csrf());
+
+/**
  * Only the production hostname may be indexed. Version preview URLs serve the
  * whole site, landing page included, and would otherwise compete with the
  * real site in search; the old workers.dev address still serves its QR images
@@ -158,6 +173,13 @@ app.notFound((c) => c.html(<NotFoundPage />, 404));
  * than the real path — `/t/:token`, not a live QR token. See jobs/report-error.
  */
 app.onError((err, c) => {
+  // A form refused by the cross-site check above is an answer, not a crash.
+  if (err instanceof HTTPException) {
+    return c.text(
+      "Ese formulario no salió de Coverr, así que no hicimos nada. Volvé a intentarlo desde el panel.",
+      err.status,
+    );
+  }
   c.executionCtx.waitUntil(
     reportError(c.env, {
       kind: "request",

@@ -8,7 +8,7 @@ import { sessionHoldsBand } from "../../lib/sign-in";
 import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { BandsPage } from "../../views/admin/bands";
 import type { AdminContext, AdminEnv } from "./context";
-import { openSession } from "./session";
+import { endSession, openSession } from "./session";
 
 export const bandsRoutes = new Hono<AdminEnv>();
 
@@ -18,7 +18,7 @@ const SUSPENDED =
 async function renderBands(c: AdminContext, error?: string) {
   const db = drizzle(c.env.DB, { schema: s });
   const band = await findBand(db, c.get("bandId"));
-  if (!band) return c.redirect("/admin/salir", 302);
+  if (!band) return endSession(c);
   const email = c.get("signedInEmail");
   return c.html(
     <BandsPage

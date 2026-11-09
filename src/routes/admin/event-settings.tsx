@@ -18,6 +18,7 @@ import { CONTACT_EMAIL } from "../../views/legal/constants";
 import { EventSettingsPage } from "../../views/setup/event-settings";
 import { NewEventPage } from "../../views/setup/new-event";
 import type { AdminContext, AdminEnv } from "./context";
+import { endSession } from "./session";
 
 export const eventSettingsRoutes = new Hono<AdminEnv>();
 
@@ -110,7 +111,7 @@ function initialPriceRules(eventId: string, values: EventInput, createdAt: strin
 eventSettingsRoutes.get("/nuevo", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const band = await findBand(db, c.get("bandId"));
-  if (!band) return c.redirect("/admin/salir", 302);
+  if (!band) return endSession(c);
 
   return c.html(
     <NewEventPage
@@ -125,7 +126,7 @@ eventSettingsRoutes.post("/nuevo", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const bandId = c.get("bandId");
   const band = await findBand(db, bandId);
-  if (!band) return c.redirect("/admin/salir", 302);
+  if (!band) return endSession(c);
 
   // Enforced here, not only by hiding the form: the page may predate the mark.
   const owed = await unpaidFeeFor(db, bandId);
