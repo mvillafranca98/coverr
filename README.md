@@ -87,6 +87,12 @@ every scan on the device, so it keeps working when the venue's signal does not:
 
 Cash sales and comps are one tap each. Scans queue and sync when signal returns.
 
+**Before the night**, the event's **Imprimir** tab downloads black-and-white PDFs: the presale
+list to tick off at the door if a phone dies, a poster with a large QR so walk-ups buy by
+transfer from the queue, and the set list in large capitals, one per musician. One at a time or
+as one pack, each with its own number of copies. `src/lib/pdf.ts` writes them with the two fonts
+every PDF reader has, so nothing is embedded and no library is added.
+
 **During and after the night**, the band's dashboard shows sold, inside and still outside,
 revenue by channel, per-bank subtotals to check against statements, and wristbands expected
 against wristbands used. Settlement takes gross revenue, subtracts costs, splits the net by

@@ -138,6 +138,12 @@ export const events = sqliteTable(
     staffToken: text("staff_token"),
     /** draft | live | closed | settled */
     status: text("status").notNull().default("draft"),
+    /**
+     * The songs for the night as the band typed them: one per line, a blank
+     * line for a pause. Printed for the musicians from Imprimir; null until a
+     * band writes one.
+     */
+    setlist: text("setlist"),
     createdAt: text("created_at").notNull(),
   },
   (t) => [

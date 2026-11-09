@@ -40,6 +40,22 @@ export function qrSvg(
   );
 }
 
+/**
+ * A QR's modules, row by row, `true` for dark. For a printed poster, which
+ * draws them as vector squares so they stay sharp at any size. Same error
+ * correction as the ticket's: M keeps the squares big, which is what lets a
+ * phone read a poster from a few steps back.
+ */
+export function qrModules(text: string): boolean[][] {
+  const qr = qrcode(0, "M");
+  qr.addData(text);
+  qr.make();
+  const count = qr.getModuleCount();
+  return Array.from({ length: count }, (_, r) =>
+    Array.from({ length: count }, (_, c) => qr.isDark(r, c)),
+  );
+}
+
 /** Data URI so a QR can sit in an <img src> or be saved by long-pressing. */
 export function qrDataUri(text: string, size = 320): string {
   const svg = qrSvg(text, { size });

@@ -146,6 +146,28 @@ was one band. Built on 2026-11-04; the rules live in `src/lib/band-identity.ts`.
 switching is checked against; the operator's band page lists the other bands run from the same
 email.
 
+## Printouts for the night
+
+Bands still print for every show: a list of who bought, something at the entrance telling
+walk-ups how to pay, and a set list taped to the floor for each musician. Built on 2026-11-09
+from the owner's own printouts of the last show. Everything is black and white, because it gets
+photocopied at a corner shop and grey turns to mottle while big black fills smear and cost
+toner. Free, like everything but the settlement report.
+
+| # | Feature | Acceptance criteria (testable) | Status |
+|---|---|---|---|
+| F24 | Imprimir | A tab on each event, **Imprimir**, downloads three PDFs one at a time or as one pack, each with its own number of copies (defaults: 2 lists, 4 posters, one set list per row of the members table except "Fondo de la banda"), on Carta or A4. Nothing is printed for a part with zero copies, and a pack with none at all is refused with a message | built 2026-11-09 |
+| F25 | Presale list | Every live ticket except cash sold at the door, comps included, by name, with a box to tick, the order code, the attendee's note, "Cortesía", and "Revisar: <reason>" for an order the door would show amber. No amounts, emails or phones. Header with the event, the count and when it was printed; "Página X de Y" on each page | built 2026-11-09 |
+| F26 | Door QR poster | One page with a QR of the event's buy page, about 13.5 cm on Carta and drawn as vector squares, so a phone reads it from a metre or two: walk-ups buy by transfer from the queue (the "walk-up transfer" in `coverr-spec.html`). Shows the door price and the address in words. The Imprimir page warns when the sale is closed, since the QR then sells nothing | built 2026-11-09 |
+| F27 | Set list | Typed on the Imprimir page, one song per line, a blank line for a pause, and saved on the event (migration 0015); an empty box starts from the band's last set list. Printed in bold capitals, centred, at one size for the whole set, as large as fits one sheet up to 64 pt and never below 32 pt: a longer set runs onto more sheets, and a long title breaks onto up to three tighter rows before it shrinks | built 2026-11-09 |
+
+**How it is built:** `src/lib/pdf.ts` writes the PDFs itself, with the two fonts every reader
+has (Helvetica and Helvetica Bold), so nothing is embedded and no library is added. The layouts
+are in `src/views/print/`, the rules in `src/lib/door-kit.ts`, the queries in
+`src/db/queries/door-kit.ts`, and the page in `src/routes/admin/door-kit.tsx`. Typography is
+Helvetica rather than Archivo Black on purpose: embedding the display face would mean shipping
+and subsetting a font file, for printouts whose job is to be read from a distance.
+
 ## Success metrics
 
 - A band runs a full gig end to end without a spreadsheet.

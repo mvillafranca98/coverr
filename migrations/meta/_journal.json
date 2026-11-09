@@ -106,6 +106,13 @@
       "when": 1793840090261,
       "tag": "0014_several_bands_per_email",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1794249771354,
+      "tag": "0015_event_setlist",
+      "breakpoints": true
     }
   ]
 }

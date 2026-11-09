@@ -176,6 +176,7 @@ older version is live:
 
 | Rolling back to before | While the old code is live | After rolling forward |
 |---|---|---|
+| `0015_event_setlist` (F27) | Nothing visible: the Imprimir tab is gone with the code, and set lists already saved wait in their column. | They are back as they were. |
 | `0009_partial_refunds` (F13) | Tickets refunded one at a time look live again: they **scan `ok` at the door** and count in the totals. Refunds go back to whole-order only. | Nothing to repair — the voids were never erased. |
 | `0008_order_unit_amount` (F14) | New orders are written with `unit_amount = 0`. | **Revenue undercounts those orders.** Run the repair below. |
 | `0007_platform_flags` (LCH-04) | The kill switches stop working; a switch you threw is ignored. | They take effect again. |

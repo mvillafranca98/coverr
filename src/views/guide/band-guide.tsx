@@ -37,6 +37,7 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
     ["ordenes", "Órdenes: OK y REVISAR"],
     ["venta", "Ventas manuales y cortesías"],
     ["puerta", "La puerta"],
+    ["imprimir", "Imprimir: lista, QR y setlist"],
     ["resumen", "El resumen en vivo"],
     ["reembolsos", "Reembolsos"],
     ["dinero", "Dinero, costos y el reporte"],
@@ -331,6 +332,31 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
         Si dos teléfonos sin señal escanean el mismo boleto, se marca cuando vuelven a tener
         internet. Por eso el brazalete sigue siendo el control de verdad en la puerta.
       </p>
+
+      <h2 id="imprimir">Imprimir: lista, QR y setlist</h2>
+      <p>
+        En la pestaña <b>Imprimir</b> de cada evento descargás tres PDF en blanco y negro, listos
+        para la impresora o la fotocopiadora. Cada uno lleva su número de copias, y{" "}
+        <b>Descargar todo junto</b> los junta en un solo archivo. El papel puede ser carta o A4.
+      </p>
+      <ul>
+        <li>
+          <b>Lista de preventa</b> (2 copias): todos los boletos vendidos antes de la puerta, por
+          nombre, con una casilla para marcar quién entra. Es el respaldo si un teléfono se queda
+          sin batería o sin señal. Si una compra tiene algo por revisar, la lista lo dice. Bajala lo
+          más cerca posible del evento, para que tenga las últimas compras.
+        </li>
+        <li>
+          <b>QR para la puerta</b> (4 copias): un cartel con un QR grande que abre la compra del
+          evento. Pegalo en la entrada: quien llega sin boleto lo compra desde su teléfono, por
+          transferencia, sin hacer la fila para pagar. Solo sirve si la venta está abierta.
+        </li>
+        <li>
+          <b>Setlist</b> (uno por músico): escribí una canción por línea y una línea vacía para una
+          pausa, y guardalo. Sale en letras grandes, para leerlo desde el piso del escenario. El
+          próximo evento empieza con este setlist ya escrito.
+        </li>
+      </ul>
 
       <h2 id="resumen">El resumen en vivo</h2>
       <p>

@@ -1069,6 +1069,72 @@ footer a {
   }
 }
 
+/* ---- Imprimir ----
+   Each printout is a row: what it is, then its copies and its own download.
+   On a phone the description takes the full width and the two controls sit
+   under it. */
+.kit-setlist textarea {
+  min-height: 300px;
+}
+.kit-setlist .btn {
+  margin-top: 12px;
+}
+.kit-paper {
+  max-width: 220px;
+  margin-bottom: 18px;
+}
+.kit-item {
+  display: grid;
+  grid-template-columns: 1fr 104px auto;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border: var(--edge);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.kit-item h3 {
+  margin: 0 0 6px;
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.kit-item p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.kit-item .kit-warn {
+  margin-top: 8px;
+  color: var(--warn);
+  font-weight: 700;
+}
+.kit-copies input {
+  text-align: center;
+}
+@media (max-width: 560px) {
+  .kit-item {
+    grid-template-columns: 1fr auto;
+  }
+  .kit-item > div:first-child {
+    grid-column: 1 / -1;
+  }
+}
+.kit-all {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+  margin-top: 24px;
+}
+.kit-all p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

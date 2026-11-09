@@ -174,6 +174,28 @@ describe("a night with Coverr", () => {
     await bandA.getByText("Ana Prueba").first().waitFor();
   });
 
+  it("prints the night: the presale list, the door QR and a set list per musician", async () => {
+    await bandA.goto(`/admin/e/${eventSlug}/imprimir`);
+    await bandA.getByText("2 boletos, por nombre").waitFor();
+    await bandA.fill("#setlist_text", "Primera\nSegunda\n\nBis");
+    await bandA.getByRole("button", { name: "Guardar setlist" }).click();
+    await bandA.getByText("Setlist guardado.").waitFor();
+    // Two members were saved earlier, so two set lists by default.
+    await expect(bandA.locator("#copias_setlist").inputValue()).resolves.toBe("2");
+
+    const pack = await bandA.request.get(
+      `/admin/e/${eventSlug}/imprimir/todo.pdf?lista=1&puerta=1&setlist=2&papel=carta`,
+    );
+    expect(pack.status()).toBe(200);
+    expect(pack.headers()["content-type"]).toBe("application/pdf");
+    const file = (await pack.body()).toString("latin1");
+    expect(file.startsWith("%PDF-1.4")).toBe(true);
+    // One list page, one poster, two set lists.
+    expect(file).toContain("/Count 4");
+    expect(file).toContain("Ana Prueba");
+    expect(file).toContain("COMPR\xC1 TU ENTRADA");
+  });
+
   it("lets one person in online and one offline, and syncs the offline one", async () => {
     const { context, page } = await newPerson();
     await page.goto(new URL(scanLink).pathname);

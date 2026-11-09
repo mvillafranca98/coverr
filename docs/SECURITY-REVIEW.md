@@ -42,7 +42,7 @@ bytes; HMAC sessions; single-use 15-minute sign-in links; HttpOnly and SameSite=
 | S3 | A band session survives a change of the band's email | Medium | ✅ Fixed 2026-11-09 | SEC-12 |
 | S4 | The door link never expires, and can still write | Low–medium | ✅ Fixed 2026-11-09 | SEC-12 |
 | S5 | Email limits are per IP only; recovery multiplies emails | Low–medium | ✅ Fixed 2026-11-09 | SEC-05, SEC-06 |
-| S6 | Operator access rests on personal Gmail inboxes | Low | Owner, no code | — |
+| S6 | Operator access rests on personal Gmail inboxes | Low | On hold (owner, 2026-11-09) | — |
 | S7 | The CSP allows inline scripts | Hardening | ✅ Fixed 2026-11-09 | SEC-10 |
 | S8 | Order ids are weaker capabilities than QR tokens | Hardening | ✅ Fixed 2026-11-09 | — |
 | S9 | No Origin check; logout by GET; login CSRF on `/entrar` | Low | ✅ Fixed 2026-11-09 | SEC-10, SEC-12 |
@@ -307,7 +307,7 @@ once (see Decisions).
 
 ## S6 · Operator access rests on personal Gmail inboxes
 
-**Severity: low** — the owner's, no code
+**Severity: low** — the owner's, no code; on hold since 2026-11-09 by the owner's decision
 
 `OPERATOR_EMAILS` holds two personal Gmail addresses and `hola@coverr.live`, and every Email
 Routing destination of `hola@` is an operator too (`wrangler.jsonc`). Whoever controls any of
