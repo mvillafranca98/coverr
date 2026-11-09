@@ -8,7 +8,9 @@ export const LoginPage: FC<{
   error?: string;
   /** The session just ended because the operator suspended this band. */
   suspended?: boolean;
-}> = ({ sent, error, suspended }) => (
+  /** The session just ended because the band moved to another email. */
+  emailMoved?: boolean;
+}> = ({ sent, error, suspended, emailMoved }) => (
   <AdminLayout
     title="Coverr — Admin"
     description="Entrá al panel de tu banda en Coverr con un enlace a tu correo. Sin contraseña."
@@ -19,6 +21,12 @@ export const LoginPage: FC<{
         <div class="note crit">
           Esta cuenta está suspendida. Si creés que es un error, escribinos a{" "}
           <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+        </div>
+      ) : null}
+      {emailMoved && !sent ? (
+        <div class="note">
+          Cerramos tu sesión porque la banda ahora entra con otro correo. Pedí el enlace con el
+          correo nuevo.
         </div>
       ) : null}
       {sent ? (

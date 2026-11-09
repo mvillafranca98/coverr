@@ -36,7 +36,7 @@ bytes; HMAC sessions; single-use 15-minute sign-in links; HttpOnly and SameSite=
 |---|---|---|---|---|
 | S1 | Receipt verification fails open | High | ✅ Fixed 2026-11-09 | AI-09 |
 | S2 | Junk uploads can sell out an event | Medium | Planned | SEC-06 |
-| S3 | A band session survives a change of the band's email | Medium | Planned | SEC-12 |
+| S3 | A band session survives a change of the band's email | Medium | ✅ Fixed 2026-11-09 | SEC-12 |
 | S4 | The door link never expires, and can still write | Low–medium | Planned | SEC-12 |
 | S5 | Email limits are per IP only; recovery multiplies emails | Low–medium | Planned | SEC-05, SEC-06 |
 | S6 | Operator access rests on personal Gmail inboxes | Low | Owner, no code | — |
@@ -151,17 +151,36 @@ in the count); add a second, per-event purchase limit. Turnstile is deferred (se
 
 ## S3 · A band session survives a change of the band's email
 
-**Severity: medium** — planned
+**Severity: medium** — ✅ **FIXED 2026-11-09**
 
-`requireSession` (`routes/admin/session.tsx`) checks that the band exists and is not banned but
-never compares the session's email with `band.contactEmail`, and sessions last 30 days. Losing
-control of the old address is the usual reason to change it, and whoever holds it keeps the
-panel.
+**What was true.** `requireSession` (`routes/admin/session.tsx`) checked that the band existed and
+was not banned but never compared the session's email with `band.contactEmail`, and sessions
+last 30 days. Moving the band to a new address changed only the band row. Losing control of the
+old address is the usual reason to move, and whoever held it kept the panel.
 
-**Planned fix:** compare them in `requireSession` and end the session on a mismatch. Sessions
-from before 2026-11-04 carry no email, so this signs them out, and the legacy branch in
-`bandFromSession` can then be deleted. A `session_epoch` for "sign out everywhere" is a later,
-larger step that needs a migration.
+**The fix.**
+
+- `lib/sign-in.ts`: `bandSessionFrom` reads a session cookie as its band and the email it proved,
+  and `sessionHoldsBand` says whether that email is still the band's, ignoring case and spaces.
+- `requireSession` runs that check on every request, after the ban check. On a mismatch it
+  clears the cookie and sends the person to `/admin/acceso?correo=1`, which says the band now
+  signs in with another address. Every device signed in with the old address is out on its next
+  click; the person who confirmed the move already holds a session for the new one.
+- Sessions signed before 2026-11-04 carry no email, so there is nothing to hold them to. They are
+  refused, and the legacy branch that kept them working is deleted, along with the "volvé a entrar"
+  fallback on the bands page and the null checks in `routes/admin/bands.tsx`. Anyone still on
+  one of those sessions signs in again once.
+- Switching between bands (`POST /admin/bandas/cambiar`) uses the same `sessionHoldsBand` check.
+
+Nothing here touches a buyer, the door or money, so no invariant is involved.
+
+**Verified.** Unit tests for a held session, a moved band, case and spaces, and the refused old
+sessions (`tests/sign-in.test.ts`). The end-to-end run moves band B to a new address from another
+device, then checks that band B's first device lands on the "otro correo" note and stays signed
+out.
+
+**Still open:** a "sign out everywhere" for a band that suspects a copied cookie. It needs a
+`session_epoch` on bands and a migration, so it is left for later (SEC-12).
 
 ## S4 · The door link never expires, and can still write
 

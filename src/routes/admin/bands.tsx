@@ -4,6 +4,7 @@ import { createBand, findBand, listBandsByEmail } from "../../db/queries/bands";
 import * as s from "../../db/schema";
 import { decideNewBand } from "../../lib/band-identity";
 import { nowIso } from "../../lib/core";
+import { sessionHoldsBand } from "../../lib/sign-in";
 import { TEXT_LIMITS, tooLong } from "../../lib/text-limits";
 import { BandsPage } from "../../views/admin/bands";
 import type { AdminContext, AdminEnv } from "./context";
@@ -24,7 +25,7 @@ async function renderBands(c: AdminContext, error?: string) {
       bandName={band.name}
       currentBandId={band.id}
       email={email}
-      bands={email ? await listBandsByEmail(db, email) : []}
+      bands={await listBandsByEmail(db, email)}
       error={error}
     />,
   );
@@ -40,8 +41,8 @@ bandsRoutes.get("/bandas", (c) => renderBands(c));
 bandsRoutes.post("/bandas/cambiar", async (c) => {
   const email = c.get("signedInEmail");
   const bandId = String((await c.req.parseBody())["band_id"] ?? "");
-  const target = email ? await findBand(drizzle(c.env.DB, { schema: s }), bandId) : null;
-  if (!email || !target || target.contactEmail !== email || target.bannedAt) return c.notFound();
+  const target = await findBand(drizzle(c.env.DB, { schema: s }), bandId);
+  if (!target || !sessionHoldsBand({ email }, target) || target.bannedAt) return c.notFound();
   return openSession(c, target.id, email, "/admin");
 });
 
@@ -53,7 +54,6 @@ bandsRoutes.post("/bandas/cambiar", async (c) => {
  */
 bandsRoutes.post("/bandas/nueva", async (c) => {
   const email = c.get("signedInEmail");
-  if (!email) return c.redirect("/admin/bandas", 303);
   const name = String((await c.req.parseBody())["name"] ?? "").trim();
   if (!name) return renderBands(c, "Falta el nombre de la banda.");
   const nameError = tooLong(name, TEXT_LIMITS.name, "El nombre de la banda");

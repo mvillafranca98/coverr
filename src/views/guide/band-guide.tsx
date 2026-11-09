@@ -425,7 +425,10 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
         <li>
           Para cambiar el correo de una banda, escribí el nuevo en <b>Banda → La banda</b> y tocá{" "}
           <b>Guardar</b>. Al correo nuevo le llega <b>"Confirmá el correo de …"</b>: el cambio pasa
-          cuando alguien lo abre desde ahí. Hasta entonces seguís entrando con el de siempre.
+          cuando alguien lo abre desde ahí. Hasta entonces seguís entrando con el de siempre. Una
+          vez hecho el cambio, todo teléfono o compu que había entrado con el correo viejo queda
+          afuera y tiene que entrar con el nuevo: si cambiaste de correo porque perdiste el viejo,
+          quien lo tenga ya no puede abrir el panel.
         </li>
       </ul>
 

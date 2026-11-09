@@ -19,11 +19,11 @@ import { decideSignIn, signInTitle } from "../../lib/band-identity";
 import { normalizeEmail, nowIso } from "../../lib/core";
 import { clientIp, TOO_MANY_REQUESTS, withinLimit } from "../../lib/rate-limit";
 import {
-  bandFromSession,
+  bandSessionFrom,
   bandSessionPayload,
   emailFromLoginLink,
-  emailFromSession,
   linkToSpend,
+  sessionHoldsBand,
 } from "../../lib/sign-in";
 import { LoginPage, SignInConfirmPage } from "../../views/admin/login";
 import type { AdminContext, AdminEnv } from "./context";
@@ -68,15 +68,14 @@ export const requireSession: MiddlewareHandler<AdminEnv> = async (c, next) => {
 
   const raw = readCookie(c.req.header("Cookie"), SESSION_COOKIE);
   if (!raw) return c.redirect("/admin/acceso", 302);
-  const payload = await verify(sessionSecret(c.env), raw);
-  const bandId = bandFromSession(payload);
-  if (!bandId) return c.redirect("/admin/acceso", 302);
+  const session = bandSessionFrom(await verify(sessionSecret(c.env), raw));
+  if (!session) return c.redirect("/admin/acceso", 302);
 
   // A signed session outlives its band when the band deletes its account from
   // another device, and so does a sign-in link sent just before. Without this
   // check every write in the admin would hit a foreign key that no longer
   // exists and crash; with it, the session just ends.
-  const band = await findBand(drizzle(c.env.DB, { schema: s }), bandId);
+  const band = await findBand(drizzle(c.env.DB, { schema: s }), session.bandId);
   if (!band) return c.redirect("/admin/salir", 302);
 
   // A ban ends the session on the band's next click, not when its cookie runs
@@ -86,8 +85,15 @@ export const requireSession: MiddlewareHandler<AdminEnv> = async (c, next) => {
     return c.redirect("/admin/acceso?suspendida=1", 302);
   }
 
-  c.set("bandId", bandId);
-  c.set("signedInEmail", emailFromSession(payload));
+  // So does a move to a new address: the old one may be exactly what the band
+  // lost. Every device signed in with it is out on its next click.
+  if (!sessionHoldsBand(session, band)) {
+    c.header("Set-Cookie", clearCookie(isHttps(c.env.APP_ORIGIN)));
+    return c.redirect("/admin/acceso?correo=1", 302);
+  }
+
+  c.set("bandId", session.bandId);
+  c.set("signedInEmail", session.email);
   return next();
 };
 
@@ -95,7 +101,11 @@ export const sessionRoutes = new Hono<AdminEnv>();
 
 sessionRoutes.get("/acceso", (c) =>
   c.html(
-    <LoginPage sent={c.req.query("ok") === "1"} suspended={c.req.query("suspendida") === "1"} />,
+    <LoginPage
+      sent={c.req.query("ok") === "1"}
+      suspended={c.req.query("suspendida") === "1"}
+      emailMoved={c.req.query("correo") === "1"}
+    />,
   ),
 );
 

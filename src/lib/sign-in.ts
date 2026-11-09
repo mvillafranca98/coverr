@@ -10,6 +10,8 @@
  * email's bands and nobody else's.
  */
 
+import { normalizeEmail } from "./core";
+
 type Payload = Record<string, unknown> | null;
 
 /** A sign-in link: the person, what it is for, and an id to spend it by. */
@@ -71,26 +73,32 @@ export function emailChangeFromLink(
 }
 
 /**
- * The band a verified session cookie belongs to, or null. Sessions signed
- * before links became single-use carry no `use` and stay valid until they
- * expire, so nobody is signed out by the change. What is refused is a link set
- * as a cookie, which would open the panel without spending it.
+ * The band a verified session cookie opens and the email it proved by its
+ * sign-in link, or null. A link set as a cookie is refused, since it would
+ * open the panel without being spent. So are sessions signed before
+ * 2026-11-04, which carry no `use` and no email: without an email there is
+ * nothing to hold them to the band's current address (see `sessionHoldsBand`).
  */
-export function bandFromSession(payload: Payload): string | null {
-  if (!payload) return null;
-  const use = payload["use"];
-  if (use !== undefined && use !== "band-session") return null;
-  return nonEmpty(payload["b"]) ? payload["b"] : null;
+export function bandSessionFrom(payload: Payload): { bandId: string; email: string } | null {
+  if (payload?.["use"] !== "band-session") return null;
+  const bandId = payload["b"];
+  const email = payload["e"];
+  return nonEmpty(bandId) && nonEmpty(email) ? { bandId, email } : null;
 }
 
 /**
- * The email a session proved by its sign-in link, or null. Older sessions
- * carry none; they keep their band but cannot switch to another until the
- * person signs in again.
+ * Whether a session still belongs to the band it opened.
+ *
+ * A session lasts 30 days and proves an address, not a band. A band moves to a
+ * new address because the old one was lost or is no longer theirs, so a
+ * session proved by the old one must end with the move, not when its cookie
+ * runs out: otherwise whoever holds the old inbox keeps the panel.
  */
-export function emailFromSession(payload: Payload): string | null {
-  if (payload?.["use"] !== "band-session") return null;
-  return nonEmpty(payload["e"]) ? payload["e"] : null;
+export function sessionHoldsBand(
+  session: { email: string },
+  band: { contactEmail: string },
+): boolean {
+  return normalizeEmail(session.email) === normalizeEmail(band.contactEmail);
 }
 
 /** The id to spend a verified link by, and when it would have expired anyway. */

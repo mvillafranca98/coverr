@@ -20,10 +20,10 @@ export type Bindings = {
 
 /**
  * Set by the session middleware; every handler below it can rely on it.
- * `signedInEmail` is the address the session was signed into with — what may
- * switch to that address's other bands. Null for a session older than that.
+ * `signedInEmail` is the address the session was signed into with, and still
+ * the band's own — what may switch to that address's other bands.
  */
-export type Vars = { bandId: string; signedInEmail: string | null };
+export type Vars = { bandId: string; signedInEmail: string };
 
 export type AdminEnv = { Bindings: Bindings; Variables: Vars };
 

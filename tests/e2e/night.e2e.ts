@@ -289,6 +289,14 @@ describe("a night with Coverr", () => {
     await reader.goto(link);
     await reader.getByText("Ese enlace ya se usó").waitFor();
     await context.close();
+
+    // The first device signed in with the old address. The move ends that
+    // session on its next click, since the old inbox may be what was lost.
+    await page.goto("/admin");
+    await page.waitForURL("**/admin/acceso?correo=1");
+    await page.getByText("la banda ahora entra con otro correo").waitFor();
+    await page.goto("/admin/banda");
+    await page.waitForURL("**/admin/acceso");
     await bandB.context.close();
   });
 
