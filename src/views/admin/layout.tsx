@@ -1,10 +1,14 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
+import { withoutComments } from "../../lib/css";
 import ADMIN_CSS from "../../styles/admin.css";
 import TOKENS_CSS from "../../styles/tokens.css";
 import { BrandIcons, Monogram } from "../brand";
 import { ErrorReporter } from "../error-reporter";
 import { InlineScript } from "../inline-script";
 import { LegalLinks } from "../legal/links";
+
+/** Inlined in every panel page, without the notes written for whoever edits it. */
+const PANEL_CSS = withoutComments(TOKENS_CSS + ADMIN_CSS);
 
 /**
  * Copies a link, after asking first when the link carries authority.
@@ -82,7 +86,7 @@ export const AdminLayout: FC<
         href="/vendor/fonts/archivo-black-latin-400-normal.woff2"
         crossorigin="anonymous"
       />
-      <style dangerouslySetInnerHTML={{ __html: TOKENS_CSS + ADMIN_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: PANEL_CSS }} />
     </head>
     <body>
       {/* Two bars of links sit before every page's content; a keyboard user

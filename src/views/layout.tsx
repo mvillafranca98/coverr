@@ -1,8 +1,12 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
+import { withoutComments } from "../lib/css";
 import BUYER_CSS from "../styles/buyer.css";
 import TOKENS_CSS from "../styles/tokens.css";
 import { BrandIcons } from "./brand";
 import { ErrorReporter } from "./error-reporter";
+
+/** Inlined in every buyer page, without the notes written for whoever edits it. */
+const PAGE_CSS = withoutComments(TOKENS_CSS + BUYER_CSS);
 
 /**
  * The card a shared link shows in WhatsApp, Instagram and the rest.
@@ -78,7 +82,7 @@ export const Layout: FC<
         href="/vendor/fonts/archivo-black-latin-400-normal.woff2"
         crossorigin="anonymous"
       />
-      <style dangerouslySetInnerHTML={{ __html: TOKENS_CSS + BUYER_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
     </head>
     <body>
       <main class="wrap">{children}</main>

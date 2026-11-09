@@ -42,7 +42,7 @@ export function ticketScript(i: {
   var VENUE = ${jsonForScript(i.venue)};
   var CODE  = ${jsonForScript(i.shortCode)};
 
-  // Drawn the way the page draws it (DESIGN.md, light surface): the lime
+  // Drawn the way the page draws it, on the light surface: the lime
   // ticket with a black outline and a hard shadow, the QR below the
   // perforation on pure white. A ticket gets held up in a bright doorway and
   // sometimes printed, and a dark QR on white scans more reliably than the

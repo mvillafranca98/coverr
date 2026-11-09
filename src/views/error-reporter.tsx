@@ -31,7 +31,7 @@ const ERROR_REPORTER_SCRIPT = `(function () {
         reports: [{ message: String(message), stack: stack ? String(stack) : "", at: new Date().toISOString() }]
       }),
       keepalive: true
-    }).catch(function () { /* dropped on purpose: see views/error-reporter.tsx */ });
+    }).catch(function () { /* a page that cannot report has nowhere else to say so */ });
   }
   addEventListener("error", function (e) {
     if (e.filename && e.filename.indexOf(location.origin) !== 0) return;

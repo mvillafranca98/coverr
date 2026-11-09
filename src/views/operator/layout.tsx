@@ -1,8 +1,12 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
+import { withoutComments } from "../../lib/css";
 import ADMIN_CSS from "../../styles/admin.css";
 import TOKENS_CSS from "../../styles/tokens.css";
 import { BrandIcons, Monogram } from "../brand";
 import { ErrorReporter } from "../error-reporter";
+
+/** Inlined in every operator page, without the notes written for whoever edits it. */
+const PANEL_CSS = withoutComments(TOKENS_CSS + ADMIN_CSS);
 
 /**
  * Coverr's own back office. It wears the band side's dark surface and
@@ -33,7 +37,7 @@ export const OperatorLayout: FC<
         href="/vendor/fonts/archivo-black-latin-400-normal.woff2"
         crossorigin="anonymous"
       />
-      <style dangerouslySetInnerHTML={{ __html: TOKENS_CSS + ADMIN_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: PANEL_CSS }} />
     </head>
     <body>
       <div class="wrap">

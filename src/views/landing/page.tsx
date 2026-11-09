@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { formatLpsShort, slugify } from "../../lib/core";
+import { withoutComments } from "../../lib/css";
 import {
   freeFirstEventLastDay,
   LARGE_SHOW_FROM,
@@ -17,6 +18,9 @@ import { HeroTicket } from "./hero-ticket";
 import { MoneyFlow } from "./money-flow";
 import { landingMotionScript, revealGuardScript } from "./motion";
 import { AccountsVisual, DoorVisual, ShareLinkVisual, TransferVisual } from "./step-visuals";
+
+/** Inlined in the landing page, without the notes written for whoever edits it. */
+const PAGE_CSS = withoutComments(TOKENS_CSS + LANDING_CSS);
 
 /**
  * The public front page. Carries its own document and stylesheet rather than
@@ -190,7 +194,7 @@ export const LandingPage: FC<{
         href="/vendor/fonts/archivo-black-latin-400-normal.woff2"
         crossorigin="anonymous"
       />
-      <style dangerouslySetInnerHTML={{ __html: TOKENS_CSS + LANDING_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
       {/* Synchronous and before the body: it hides what is about to be
           revealed, and arms the timer that un-hides it if the motion script
           never reports in. See motion.ts. */}

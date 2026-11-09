@@ -46,7 +46,7 @@ bytes; HMAC sessions; single-use 15-minute sign-in links; HttpOnly and SameSite=
 | S7 | The CSP allows inline scripts | Hardening | ✅ Fixed 2026-11-09 | SEC-10 |
 | S8 | Order ids are weaker capabilities than QR tokens | Hardening | ✅ Fixed 2026-11-09 | — |
 | S9 | No Origin check; logout by GET; login CSRF on `/entrar` | Low | ✅ Fixed 2026-11-09 | SEC-10, SEC-12 |
-| S10 | Internal comments ship in inlined CSS and scripts | Cosmetic | Planned, optional | — |
+| S10 | Internal comments ship in inlined CSS and scripts | Cosmetic | ✅ Fixed 2026-11-09 | — |
 | S11 | Check-in sync queries in a loop | Low–medium (a bug) | ✅ Fixed 2026-11-09 | PERF-02 |
 
 ---
@@ -391,11 +391,30 @@ out.
 
 ## S10 · Internal comments ship in inlined CSS and scripts
 
-**Cosmetic** — planned, optional
+**Cosmetic** — ✅ **FIXED 2026-11-09**
 
-Comments are about 21% of the stylesheet source (17.5 of 83.7 KB), and the landing page's HTML
-mentions `DESIGN.md` four times. Strip CSS comments where the layouts inline them. The scripts
-cannot be stripped safely by pattern; trim them by hand or leave them.
+**What was true.** Comments were about 21% of the stylesheet source (17.5 of 83.7 KB), every page
+shipped its stylesheet's share inline, and the landing page's HTML mentioned `DESIGN.md` four
+times. The door scanner's page also shipped two long HTML comments.
+
+**The fix.**
+
+- `lib/css.ts`: `withoutComments` drops a stylesheet's comments and the blank lines they leave.
+  Every layout that inlines CSS uses it, once per worker rather than per request: the buyer
+  pages, both panels, the landing page and the legal pages. That is about 5.4 KB less on each buyer
+  page, 6.7 KB on the landing page and 7.5 KB in the panels.
+- The scanner page's two HTML comments moved into the TypeScript comment above the template, so
+  they no longer ship to every phone at the door.
+- The inline scripts keep their comments: a pattern cannot strip JavaScript safely. The two that
+  named internal files (the error reporter and the ticket drawing) were reworded. `public/scanner.js`
+  and `public/scanner.css` are static files and stay as they are.
+- The source keeps every comment, so nothing is lost for whoever edits the styles.
+
+**Verified.** Unit tests for the stripping, for every stylesheet keeping all its rules, and a
+guard that fails if any sheet ever opens a comment inside a string or a `url()`
+(`tests/css.test.ts`). Retaking one show's three screenshots (scanner, band dashboard, ticket)
+produced files byte-identical to the committed ones, so the buyer and panel styles render
+exactly as before. No served page mentions `DESIGN.md`, a `.tsx` file or `src/` any more.
 
 ## S11 · Check-in sync queries in a loop
 

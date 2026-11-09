@@ -1,8 +1,12 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
+import { withoutComments } from "../../lib/css";
 import PROSE_CSS from "../../styles/legal.css";
 import { Wordmark } from "../brand";
 import { Layout } from "../layout";
 import { LegalLinks } from "./links";
+
+/** Inlined in every legal page, without the notes written for whoever edits it. */
+const LEGAL_CSS = withoutComments(PROSE_CSS);
 
 /**
  * The shell both legal documents share: light surface, prose widths, the
@@ -30,7 +34,7 @@ export const LegalDoc: FC<
   }>
 > = ({ title, description, heading, updated, canonical, children }) => (
   <Layout title={title} description={description} ogUrl={canonical} indexable>
-    <style dangerouslySetInnerHTML={{ __html: PROSE_CSS }} />
+    <style dangerouslySetInnerHTML={{ __html: LEGAL_CSS }} />
     <header class="legal-head">
       {/* Somebody arrives here from a checkout or a footer and needs a way
           back that is not the browser's. */}

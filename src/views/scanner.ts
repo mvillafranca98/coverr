@@ -48,6 +48,19 @@ export function scannerClosedHtml(i: { eventName: string; bandName: string; toke
  * than JSX, so nothing escapes them for us. An unescaped apostrophe in a venue
  * name would break the page at the door, mid-show — and a tag would run in the
  * browser of whoever is scanning.
+ *
+ * Two things about the markup, kept here rather than as HTML comments so they
+ * do not ship to every phone at the door:
+ *
+ *  - `#result` sits outside the panes on purpose. It used to live inside
+ *    "escanear", so a check-in driven from "buscar", or a cash sale from
+ *    "efectivo", rendered where nobody could see it. Harmless while a result
+ *    was only informational; not once an amber result carries the buttons that
+ *    decide whether somebody gets in.
+ *  - `#verdict` is what a screen reader says for each verdict. A live region
+ *    that was display:none when its text changed is not reliably announced, and
+ *    the result is hidden between scans, so the verdict is also written there:
+ *    always present, never shown.
  */
 export function scannerShellHtml(i: ScannerShellInput): string {
   return `<!doctype html>
@@ -84,16 +97,7 @@ export function scannerShellHtml(i: ScannerShellInput): string {
     <button class="tab" data-tab="efectivo" role="tab" id="tab-efectivo" aria-controls="pane-efectivo" aria-selected="false" tabindex="-1">Efectivo</button>
   </div>
 
-  <!-- The result sits outside the panes on purpose. It used to live inside
-       "escanear", so a check-in driven from "buscar" — or a cash sale from
-       "efectivo" — rendered where nobody could see it. Harmless while a result
-       was only ever informational; not harmless once an amber result carries
-       the buttons that decide whether somebody gets in. -->
   <div class="result" id="result" hidden></div>
-  <!-- What a screen reader says for each verdict. A live region that was
-       display:none when its text changed is not reliably announced, and the
-       result above is hidden between scans, so the verdict is also written
-       here: always present, never shown. -->
   <p class="sr-only" id="verdict" aria-live="assertive" aria-atomic="true"></p>
 
   <section class="pane" data-pane="escanear" role="tabpanel" id="pane-escanear" aria-labelledby="tab-escanear">
