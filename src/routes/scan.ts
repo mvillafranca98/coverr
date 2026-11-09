@@ -1,7 +1,9 @@
 import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono, type HonoRequest } from "hono";
+import { checkInTickets, ticketsByToken } from "../db/queries/check-ins";
 import * as s from "../db/schema";
+import { decideCheckIns, settleLostClaims } from "../lib/check-in";
 import { newId, newQrToken, newShortCode, nowIso } from "../lib/core";
 import { parseJsonObject } from "../lib/json";
 import { MAX_SCANNER_BODY_CHARS, readCashSale, readCheckinBatch } from "../lib/scan-request";
@@ -158,57 +160,22 @@ scanApi.post("/:token/checkin", async (c) => {
   const body = await readScannerBody(c.req);
   if (!body.ok) return c.json({ error: body.error }, body.status);
   const scans = readCheckinBatch(body.value, nowIso());
-  const results: {
-    t: string;
-    status: "ok" | "already" | "unknown" | "voided";
-    at?: string;
-    by?: string;
-  }[] = [];
 
-  for (const scan of scans) {
-    const hit = await db
-      .select({
-        id: s.attendees.id,
-        checkedInAt: s.attendees.checkedInAt,
-        checkedInDevice: s.attendees.checkedInDevice,
-        voidedAt: s.attendees.voidedAt,
-        orderStatus: s.orders.status,
-      })
-      .from(s.attendees)
-      .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
-      .where(and(eq(s.attendees.qrToken, scan.t), eq(s.orders.eventId, found.event.id)))
-      .limit(1);
-
-    const row = hit[0];
-    if (!row) {
-      results.push({ t: scan.t, status: "unknown" });
-      continue;
-    }
-    // The manifest already excludes refunded and voided orders, but a device
-    // holding a stale cache would still queue the scan — so the server refuses
-    // it rather than trusting whatever the client had downloaded.
-    if (row.orderStatus !== "confirmed" || row.voidedAt !== null) {
-      results.push({ t: scan.t, status: "voided" });
-      continue;
-    }
-    if (row.checkedInAt) {
-      results.push({
-        t: scan.t,
-        status: "already",
-        at: row.checkedInAt,
-        by: row.checkedInDevice ?? undefined,
-      });
-      continue;
-    }
-    await db
-      .update(s.attendees)
-      .set({
-        checkedInAt: scan.at,
-        checkedInDevice: scan.device,
-      })
-      .where(eq(s.attendees.id, row.id));
-    results.push({ t: scan.t, status: "ok" });
-  }
+  // A handful of reads and one batched write for the whole sync, however many
+  // scans it carries. The scanner refuses voided tickets from its cache, but a
+  // device holding a stale one would still queue the scan, so the server
+  // decides from what the database says now.
+  const eventId = found.event.id;
+  const tickets = await ticketsByToken(db, eventId, [...new Set(scans.map((scan) => scan.t))]);
+  const decided = decideCheckIns(scans, tickets);
+  const letIn = await checkInTickets(db, [...decided.claims.values()]);
+  const lost = [...decided.claims]
+    .filter(([, claim]) => !letIn.has(claim.attendeeId))
+    .map(([token]) => token);
+  const results =
+    lost.length > 0
+      ? settleLostClaims(decided.results, await ticketsByToken(db, eventId, lost))
+      : decided.results;
 
   const [counts] = await db
     .select({

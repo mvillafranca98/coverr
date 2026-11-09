@@ -47,7 +47,7 @@ bytes; HMAC sessions; single-use 15-minute sign-in links; HttpOnly and SameSite=
 | S8 | Order ids are weaker capabilities than QR tokens | Hardening | Planned | — |
 | S9 | No Origin check; logout by GET; login CSRF on `/entrar` | Low | Planned | — |
 | S10 | Internal comments ship in inlined CSS and scripts | Cosmetic | Planned, optional | — |
-| S11 | Check-in sync queries in a loop | Low–medium (a bug) | Planned | PERF-02 |
+| S11 | Check-in sync queries in a loop | Low–medium (a bug) | ✅ Fixed 2026-11-09 | PERF-02 |
 
 ---
 
@@ -322,12 +322,32 @@ cannot be stripped safely by pattern; trim them by hand or leave them.
 
 ## S11 · Check-in sync queries in a loop
 
-**Severity: low–medium, a bug** — planned
+**Severity: low–medium, a bug** — ✅ **FIXED 2026-11-09**
 
-`routes/scan.ts` runs a SELECT and an UPDATE per scan. A full 500-scan sync is up to 1,002
-queries, over D1's 1,000 per request on Workers Paid, so it fails after writing about 499; the
-scanner retries and reports its own scans as already inside ("N ya estaban adentro — revisá
-brazaletes"). The update has no condition, so two devices syncing the same ticket at once both get
-"ok", which breaks "a cross-device double scan is flagged at sync". **Planned fix:** read the
-tickets in chunks of at most 90 (D1 allows 100 bound parameters), then one `db.batch` of updates
-conditioned on `checked_in_at IS NULL`.
+**What was true.** `routes/scan.ts` ran a SELECT and an UPDATE per scan. A full 500-scan sync was
+up to 1,002 queries, over D1's 1,000 per request on Workers Paid, so it failed after writing about
+499; the scanner retried and reported its own scans as already inside ("N ya estaban adentro —
+revisá brazaletes"). The update had no condition, so two devices syncing the same ticket at once
+both got "ok" and the second overwrote the first, which broke "a cross-device double scan is
+flagged at sync".
+
+**The fix.**
+
+- `db/queries/check-ins.ts`: `ticketsByToken` reads a sync's tickets in chunks of 90 tokens (D1
+  binds at most 100 parameters, and the event id takes one); `checkInTickets` writes every
+  check-in in one `db.batch`, each only while the ticket is still outside, and returns the ids it
+  actually let in. A 500-scan sync is now about nine queries.
+- `lib/check-in.ts`, pure: `decideCheckIns` gives each scan its result in the order the device
+  made them, exactly as before (unknown, voided, already inside with who and when, or ok), and
+  treats a second scan of one ticket in the same sync as a double scan.
+  `settleLostClaims` turns a check-in another device wrote between this sync's read and its
+  write into "already", naming that device.
+- The scanner is unchanged: the response has the same shape.
+
+**Verified.** Unit tests for every result, the double scan within one sync and a lost claim
+(`tests/check-in.test.ts`). Locally, with the demo event's check-ins cleared: one 500-scan sync
+(157 real tickets, 10 repeats, 333 unknown tokens) came back as 157 ok, 10 already inside naming
+the first scan, 333 unknown, and 157 inside, in one request. Two devices syncing the same ticket
+at the same moment, five times: each time exactly one was let in and the other was told who was
+first. The end-to-end run's offline sync passes. The demo check-ins were restored exactly from a
+backup afterwards.
