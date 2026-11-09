@@ -9,6 +9,35 @@ type ScannerShellInput = {
 };
 
 /**
+ * What a door link shows once it has closed for good, a week after its event
+ * (`lib/door-window.ts`). It loads the scanner script only so the script can
+ * clear what an earlier night left on this phone: the list, unsent scans and
+ * the cached page. `data-closed` tells it to do that and nothing else.
+ */
+export function scannerClosedHtml(i: { eventName: string; bandName: string; token: string }) {
+  return `<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#141414">
+<meta name="robots" content="noindex,nofollow">
+<title>Entrada — ${escapeHtml(i.eventName)}</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/scanner.css">
+</head>
+<body data-token="${escapeHtml(i.token)}" data-closed="1">
+<main class="wrap">
+  <header>
+    <h1 class="ev">${escapeHtml(i.eventName)}</h1>
+    <div class="vn">${escapeHtml(i.bandName)}</div>
+  </header>
+  <p class="hint">Este enlace de puerta ya no sirve: el evento terminó. La lista de asistentes ya no está en este teléfono.</p>
+</main>
+<script src="/scanner.js"></script>
+</body></html>`;
+}
+
+/**
  * The scanner's HTML shell. It ships nothing but the event's name and the
  * token: the attendee list, the counts and every decision at the door come
  * from `/api/scan`, cached on the device so the page keeps working with no

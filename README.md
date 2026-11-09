@@ -76,7 +76,9 @@ fields with the order. Anything suspicious becomes a flag the band sees with its
 spelled out. Flags never take a QR away.
 
 **At the door**, staff open a per-event scanner link on any phone. No account, no login —
-the link is the credential. The scanner downloads the whole attendee list and validates
+the link is the credential, and it expires with the night: the list, cash sales and stats stop a
+day after the event starts, late offline syncs a week after, and the scanner then clears the list
+from the phone (`lib/door-window.ts`). The scanner downloads the whole attendee list and validates
 every scan on the device, so it keeps working when the venue's signal does not:
 
 - **Green** names the person.
@@ -197,6 +199,15 @@ npx wrangler d1 execute coverr-db --local --file=./seed/demo.sql
 Sign in as `demo@ejemplo.com`. The event is at `/e/evento-de-ejemplo`, and its door scanner at
 <http://localhost:8787/scan/demostaff00000000000000000000000>. Any event's scanner link is
 also on its dashboard, under *Entrada*.
+
+The demo show stays dated 24 October 2026 so the landing page's screenshots never change, and a
+door link closes a week after its event, so that link now says the event is over. To try the
+scanner, move the show to now (reloading `seed/demo.sql` puts it back; `npm run shots` does this
+by itself):
+
+```bash
+npx wrangler d1 execute coverr-db --local --command "UPDATE events SET starts_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = 'evt_demo'"
+```
 
 ## Scripts
 

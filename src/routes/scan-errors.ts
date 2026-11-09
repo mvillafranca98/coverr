@@ -4,6 +4,7 @@ import { findEventByStaffToken } from "../db/queries/events";
 import * as s from "../db/schema";
 import { reportClientErrors } from "../jobs/report-client-errors";
 import { MAX_CLIENT_ERROR_BODY_CHARS, readClientErrorReports } from "../lib/client-error";
+import { doorAccess } from "../lib/door-window";
 import { withinLimit } from "../lib/rate-limit";
 import type { PublicEnv } from "./public/context";
 
@@ -27,6 +28,9 @@ scanErrorApi.post("/:token/error", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const found = await findEventByStaffToken(db, token);
   if (!found) return c.json({ error: "not_found" }, 404);
+  if (doorAccess(found.event.startsAt, new Date()) === "closed") {
+    return c.json({ error: "event_over" }, 410);
+  }
 
   // Keyed by event, never by token: the limiter logs its key when it fails.
   if (!(await withinLimit(c.env.EMAIL_LIMIT, `scanner-error:${found.event.id}`))) {

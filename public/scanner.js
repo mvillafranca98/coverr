@@ -14,6 +14,42 @@
 
   var TOKEN = document.body.dataset.token;
   var KEY = "coverr:scan:" + TOKEN;
+
+  // ------------------------------------------------------------ end of night
+  //
+  // A door link stops working after its event (src/lib/door-window.ts): the
+  // list, cash sales and stats a day after the start, late check-in syncs a
+  // week after. Volunteers open it on their own phones, so the attendee list
+  // must not stay there once the night is over.
+
+  /** Must match DOOR_OPEN_HOURS in src/lib/door-window.ts. */
+  var DOOR_OPEN_HOURS = 24;
+
+  /** Everything this link left on the phone: the list, the queue, the errors, the cached page. */
+  function forgetEvent() {
+    try {
+      localStorage.removeItem(KEY);
+      localStorage.removeItem(KEY + ":errors");
+      localStorage.removeItem(KEY + ":device");
+    } catch (e) {
+      // Storage blocked: there is nothing stored to remove either.
+    }
+    if (window.caches) {
+      caches.open("coverr-scan-v1")
+        .then(function (c) { return c.delete("/scan/" + TOKEN); })
+        .catch(function () {
+          // No cache to clear; the page was never stored for offline use.
+        });
+    }
+  }
+
+  // The link has closed for good: this page only says so. Clear what an
+  // earlier night left here and stop.
+  if (document.body.dataset.closed) {
+    forgetEvent();
+    return;
+  }
+
   var DEVICE =
     localStorage.getItem(KEY + ":device") ||
     (function () {
@@ -111,6 +147,8 @@
     scanning: false,
     lastToken: null,
     lastAt: 0,
+    /** The door has closed for this event; nothing more is recorded here. */
+    over: false,
   };
 
   var el = {
@@ -146,6 +184,27 @@
         indexManifest();
       }
     } catch (e) {}
+    // Past the door's hours by this phone's own clock, the list goes now, even
+    // with no signal to ask the server. Queued scans stay until they sync.
+    if (state.manifest && pastDoorHours(state.manifest.event.startsAt)) endOfNight();
+  }
+
+  function pastDoorHours(startsAt) {
+    var start = Date.parse(startsAt);
+    return !isNaN(start) && Date.now() > start + DOOR_OPEN_HOURS * 3600 * 1000;
+  }
+
+  /**
+   * The door has closed. The list leaves the phone at once; scans still queued
+   * go out with the next sync, and after that nothing of this event is left.
+   */
+  function endOfNight() {
+    state.over = true;
+    state.manifest = null;
+    indexManifest();
+    save();
+    setNet("El evento terminó · la lista ya no está en este teléfono", "off");
+    if (!state.queue.length) forgetEvent();
   }
 
   function save() {
@@ -183,7 +242,14 @@
     if (!online()) return false;
     try {
       var res = await fetch("/api/scan/" + TOKEN + "/manifest", { cache: "no-store" });
+      if (res.status === 410) {
+        endOfNight();
+        return false;
+      }
       if (!res.ok) throw new Error("http " + res.status);
+      // The server decides, not this phone's clock: a list it still hands out
+      // means the door is open, whatever the time here says.
+      state.over = false;
       state.manifest = await res.json();
       indexManifest();
       save();
@@ -221,6 +287,13 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ scans: batch }),
         });
+        // A week after the event even late syncs are refused: these scans can
+        // no longer be recorded anywhere, so they go with everything else.
+        if (res.status === 410) {
+          state.queue = [];
+          endOfNight();
+          return;
+        }
         if (!res.ok) throw new Error("http " + res.status);
         var data = await res.json();
 
@@ -240,6 +313,11 @@
           indexManifest();
         }
         renderStats(data);
+      }
+      if (state.over) {
+        forgetEvent();
+        setNet("El evento terminó · los escaneos pendientes ya se registraron", "ok");
+        return;
       }
       if (voided) {
         setNet(voided + " boleto(s) anulado(s) o reembolsado(s) — no deben entrar", "off");
@@ -337,6 +415,10 @@
   function handleToken(token) {
     // A pending amber decision owns the screen until staff answer it.
     if (state.pending) return;
+    if (state.over) {
+      show("red", "El evento terminó", "Este enlace ya no registra entradas");
+      return;
+    }
     var now = Date.now();
     // The camera fires many frames a second; ignore repeats of the same code.
     if (token === state.lastToken && now - state.lastAt < 2500) return;
@@ -570,6 +652,12 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: qty, device: DEVICE, comp: isComp }),
       });
+      if (res.status === 410) {
+        endOfNight();
+        el.cashNote.textContent = "El evento terminó: ya no se registran ventas.";
+        el.cashNote.className = "hint warn";
+        return;
+      }
       var d = await res.json();
       if (!res.ok) throw new Error("http " + res.status);
       el.cashNote.textContent =
@@ -646,6 +734,7 @@
   load();
   renderStats();
   refreshManifest().then(function (ok) {
+    if (state.over) return;
     setNet(ok ? "Lista descargada · listo" : "Sin conexión · usando lista guardada", ok ? "ok" : "off");
     renderStats();
   });

@@ -53,7 +53,8 @@ const LAPTOP = { width: 1360, height: 960 };
 /**
  * `scroll` drops the page down before the shot — usually to take a wrapped
  * nav or a redundant heading out of frame. `height` crops the capture to
- * something tighter than the viewport.
+ * something tighter than the viewport. `before` runs before the page opens
+ * and `after` once the shot is saved, for data the shot needs only briefly.
  */
 const SHOTS = [
   // First: it checks somebody in, and the dashboard after it has to count
@@ -63,7 +64,9 @@ const SHOTS = [
     url: "/scan/demostaff00000000000000000000000",
     viewport: PHONE,
     height: 600,
+    before: openTheDoor,
     prepare: checkSomebodyIn,
+    after: closeTheDoor,
   },
   {
     name: "shot-dashboard",
@@ -85,6 +88,22 @@ const SHOTS = [
     height: 754,
   },
 ];
+
+/**
+ * Door links close a week after their event (src/lib/door-window.ts), and the
+ * demo show stays dated October 2026 so the dashboard shot never changes. The
+ * scanner shot moves the show to now while it is taken, then puts it back.
+ */
+let seededStart = null;
+
+function openTheDoor() {
+  seededStart = d1(`select starts_at from events where id = '${EVENT}'`)[0].starts_at;
+  d1(`update events set starts_at = '${new Date().toISOString()}' where id = '${EVENT}'`);
+}
+
+function closeTheDoor() {
+  d1(`update events set starts_at = '${esc(seededStart)}' where id = '${EVENT}'`);
+}
 
 /**
  * The door flow, driven the way staff actually drive it. Whoever is next in
@@ -291,6 +310,7 @@ async function shootShow(show) {
     });
     const page = await context.newPage();
 
+    if (shot.before) shot.before();
     if (shot.auth) {
       await context.addCookies([{ name: "coverr_session", value: token, url: ORIGIN }]);
     }
@@ -313,5 +333,6 @@ async function shootShow(show) {
     );
 
     await context.close();
+    if (shot.after) shot.after();
   }
 }

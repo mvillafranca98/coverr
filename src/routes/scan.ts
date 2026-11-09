@@ -5,6 +5,7 @@ import { checkInTickets, ticketsByToken } from "../db/queries/check-ins";
 import * as s from "../db/schema";
 import { decideCheckIns, settleLostClaims } from "../lib/check-in";
 import { newId, newQrToken, newShortCode, nowIso } from "../lib/core";
+import { doorAccess } from "../lib/door-window";
 import { parseJsonObject } from "../lib/json";
 import { MAX_SCANNER_BODY_CHARS, readCashSale, readCheckinBatch } from "../lib/scan-request";
 import { NOTE_ONLY_FLAG } from "../lib/verify";
@@ -42,6 +43,13 @@ async function readScannerBody(req: HonoRequest): Promise<ScannerBody> {
   return value ? { ok: true, value } : { ok: false, status: 400, error: "bad_request" };
 }
 
+/**
+ * What every scanner call answers once the door has closed (`lib/door-window.ts`).
+ * The list, cash sales and stats end a day after the start; a late check-in
+ * sync is still taken for a week, so a device that lost signal is not lost.
+ */
+const EVENT_OVER = { error: "event_over" } as const;
+
 async function eventForToken(db: ReturnType<typeof drizzle>, token: string) {
   const rows = await db
     .select({ event: s.events, band: s.bands })
@@ -62,6 +70,7 @@ scanApi.get("/:token/manifest", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const found = await eventForToken(db, c.req.param("token"));
   if (!found) return c.json({ error: "not_found" }, 404);
+  if (doorAccess(found.event.startsAt, new Date()) !== "open") return c.json(EVENT_OVER, 410);
   const { event, band } = found;
 
   const rows = await db
@@ -156,6 +165,7 @@ scanApi.post("/:token/checkin", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const found = await eventForToken(db, c.req.param("token"));
   if (!found) return c.json({ error: "not_found" }, 404);
+  if (doorAccess(found.event.startsAt, new Date()) === "closed") return c.json(EVENT_OVER, 410);
 
   const body = await readScannerBody(c.req);
   if (!body.ok) return c.json({ error: body.error }, body.status);
@@ -208,6 +218,7 @@ scanApi.post("/:token/cash", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const found = await eventForToken(db, c.req.param("token"));
   if (!found) return c.json({ error: "not_found" }, 404);
+  if (doorAccess(found.event.startsAt, new Date()) !== "open") return c.json(EVENT_OVER, 410);
   const { event, band } = found;
 
   const body = await readScannerBody(c.req);
@@ -283,6 +294,7 @@ scanApi.get("/:token/stats", async (c) => {
   const db = drizzle(c.env.DB, { schema: s });
   const found = await eventForToken(db, c.req.param("token"));
   if (!found) return c.json({ error: "not_found" }, 404);
+  if (doorAccess(found.event.startsAt, new Date()) !== "open") return c.json(EVENT_OVER, 410);
 
   const [counts] = await db
     .select({

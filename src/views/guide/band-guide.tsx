@@ -283,6 +283,12 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
         servir.
       </p>
       <p>
+        El enlace deja de servir solo <b>un día después de que empieza el evento</b>: ya no muestra
+        la lista ni registra ventas, y la lista se borra de los teléfonos que lo abrieron. Los
+        escaneos que un teléfono guardó sin señal se siguen registrando una semana más, apenas
+        vuelva a tener conexión. Si cambiás la fecha del evento, el enlace sigue a la fecha nueva.
+      </p>
+      <p>
         Abrilo en el teléfono de la puerta <b>antes de que empiece</b>, con señal: descarga la lista
         completa y desde ahí <b>funciona sin internet</b>. Arriba ves si está <b>Sincronizado</b> o{" "}
         <b>Sin conexión</b>, y los contadores <b>Adentro</b>, <b>Vendidos</b> y <b>Brazaletes</b>.

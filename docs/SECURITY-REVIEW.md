@@ -40,7 +40,7 @@ bytes; HMAC sessions; single-use 15-minute sign-in links; HttpOnly and SameSite=
 | S1 | Receipt verification fails open | High | ✅ Fixed 2026-11-09 | AI-09 |
 | S2 | Junk uploads can sell out an event | Medium | ✅ Fixed 2026-11-09 (capacity) | SEC-06 |
 | S3 | A band session survives a change of the band's email | Medium | ✅ Fixed 2026-11-09 | SEC-12 |
-| S4 | The door link never expires, and can still write | Low–medium | Planned | SEC-12 |
+| S4 | The door link never expires, and can still write | Low–medium | ✅ Fixed 2026-11-09 | SEC-12 |
 | S5 | Email limits are per IP only; recovery multiplies emails | Low–medium | ✅ Fixed 2026-11-09 | SEC-05, SEC-06 |
 | S6 | Operator access rests on personal Gmail inboxes | Low | Owner, no code | — |
 | S7 | The CSP allows inline scripts | Hardening | Planned | SEC-10 |
@@ -221,19 +221,49 @@ out.
 
 ## S4 · The door link never expires, and can still write
 
-**Severity: low–medium** — planned
+**Severity: low–medium** — ✅ **FIXED 2026-11-09**
 
-`eventForToken` (`routes/scan.ts`) has no time or status check. An old link still returns the
-attendee list with names and notes, and still accepts cash sales, comps and check-ins, so it can
-change a past event's gross and payouts. The `settled` status is enforced nowhere. The scanner
-keeps the list in local storage, and the service worker caches the `/scan/<token>` page, on
-volunteers' own phones. The token appears in Workers Logs request URLs, which only the Cloudflare
-account can see; the error log strips it.
+**What was true.** `eventForToken` (`routes/scan.ts`) had no time or status check. An old link
+still returned the attendee list with names and notes, and still accepted cash sales, comps and
+check-ins, so it could change a past event's gross and payouts. The `settled` status is enforced
+nowhere. The scanner kept the list in local storage, and the service worker cached the
+`/scan/<token>` page, on volunteers' own phones, forever. The token appears in Workers Logs
+request URLs, which only the Cloudflare account can see; the error log strips it.
 
-**Planned fix:** by date, not status, because "Venta cerrada" events still sell at the door.
-Refuse the attendee list, cash sales and stats once the event's start is 24 hours past; keep
-accepting check-in syncs for a few days so an offline device does not lose its queue; have the
-scanner clear its storage and cached page when told the event is over.
+**The fix.** By date, never by status, because a "Venta cerrada" event still sells at the door.
+
+- `lib/door-window.ts`: `doorAccess` says what a link may still do. Until a day after the start
+  (`DOOR_OPEN_HOURS`) everything works. From then until a week after (`LATE_SYNC_DAYS`) only
+  check-in syncs are taken, so a device that lost signal does not lose its scans. After that,
+  nothing. A start time that cannot be read leaves the door open, so a bad date can never be what
+  locks staff out on the night. Postponing the event moves the window with it.
+- `routes/scan.ts`: the attendee list, cash sales and stats answer `410 event_over` once the door
+  has closed; check-in syncs only once the week is over. The scanner page and its error reports
+  are served until then, since the page is what sends a late sync, and after it the page says the
+  link no longer works.
+- `public/scanner.js`: on a `410` the list leaves the phone at once, scanning and cash sales say
+  "El evento terminó", queued scans go out with the next sync, and then the scanner removes
+  everything this link stored (list, queue, error reports, device name) and its cached page. A
+  phone that opens the link offline after the night drops the list by its own clock, keeping only
+  the unsent scans. A list the server still hands out reopens it, so a wrong clock cannot lock a
+  working door. The closed page loads the same script only to clear what an earlier night left.
+- `scripts/shoot.mjs`: the demo show stays dated 24 October 2026 so the landing page's shots never
+  change; the scanner shot moves it to now while it is taken and puts it back. The README says how
+  to do the same to try the demo scanner locally.
+
+**Verified.** Unit tests for each window, a postponed event and an unreadable date
+(`tests/door-window.test.ts`). Locally:
+
+- The demo link (dated six weeks back) served the closed page with a 410, and opening it removed
+  a list and device name planted in the phone's storage.
+- With the show moved to 30 hours ago and one scan queued offline from that night, the scanner
+  dropped the list, synced the scan (recorded with its original time and device), cleared its
+  storage and said "los escaneos pendientes ya se registraron"; the list and a cash sale answered
+  410.
+- `npm run shots -- shot-scanner acople` produced a scanner shot byte-identical to the committed
+  one, and left the demo's date as the seed has it.
+
+The end-to-end run passes; its event is a month ahead.
 
 ## S5 · Email limits are per IP only; recovery multiplies emails
 
