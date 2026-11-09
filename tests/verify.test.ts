@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProofFields } from "../src/lib/extract";
 import {
+  FLAGS_THAT_FREE_A_PLACE,
   type FlagCode,
   flagLabel,
   NOT_YET_READ,
@@ -283,6 +284,26 @@ describe("several problems at once", () => {
     expect(flags).toEqual(
       expect.arrayContaining(["REF_DUPLICATE", "DEST_MISMATCH", "AMOUNT_SHORT", "NAME_MISMATCH"]),
     );
+  });
+});
+
+describe("which flags free a place", () => {
+  // Junk uploads must not sell an event out from under real buyers.
+  it("frees the place of an upload that is not a payment for the order", () => {
+    expect([...FLAGS_THAT_FREE_A_PLACE].sort()).toEqual([
+      "DEST_MISMATCH",
+      "HASH_DUPLICATE",
+      "NOT_A_RECEIPT",
+      "REF_DUPLICATE",
+    ]);
+  });
+
+  // These are also what a genuine buyer's cropped screenshot, an outage at the
+  // API, or one person paying for four look like: their places stay taken.
+  it("keeps the place of an order that may well be paid", () => {
+    for (const code of ["MISSING_FIELDS", "UNREADABLE", "AMOUNT_SHORT", "NAME_MISMATCH"]) {
+      expect(FLAGS_THAT_FREE_A_PLACE).not.toContain(code);
+    }
   });
 });
 

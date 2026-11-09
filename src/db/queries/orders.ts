@@ -1,7 +1,7 @@
-import { and, desc, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { newShortCode } from "../../lib/core";
-import { NOTE_ONLY_FLAG } from "../../lib/verify";
+import { FLAGS_THAT_FREE_A_PLACE, NOTE_ONLY_FLAG } from "../../lib/verify";
 import * as s from "../schema";
 
 /**
@@ -21,54 +21,52 @@ export async function findOrderWithEventAndBand(db: DrizzleD1Database<typeof s>,
 }
 
 /**
- * Tickets already sold on an event, for the capacity check at purchase.
+ * A ticket that occupies a place: live on a confirmed order, and on an order
+ * with no open flag saying its upload is not a payment for it
+ * (`FLAGS_THAT_FREE_A_PLACE`). A refunded ticket hands its place back, and so
+ * does a junk upload once it has been read, so neither keeps real buyers out.
  *
- * Counts live ticket rows, so a refunded ticket hands its place back to the
- * room rather than occupying capacity nobody is going to use.
+ * Every count that decides what can still be sold goes through this one
+ * condition — the event's capacity, a price's allocation, and which price is
+ * on sale — so they can never disagree. Expects `attendees` joined to `orders`.
  */
-export async function confirmedTicketCount(
+export const holdsAPlace = and(
+  eq(s.orders.status, "confirmed"),
+  isNull(s.attendees.voidedAt),
+  sql`not exists (select 1 from ${s.verificationFlags} where ${s.verificationFlags.orderId} = ${s.orders.id} and ${s.verificationFlags.resolvedAt} is null and ${inArray(s.verificationFlags.code, [...FLAGS_THAT_FREE_A_PLACE])})`,
+);
+
+/** Places already taken on an event, for the capacity check at purchase. */
+export async function placesTaken(
   db: DrizzleD1Database<typeof s>,
   eventId: string,
 ): Promise<number> {
-  const [sold] = await db
+  const [taken] = await db
     .select({ n: sql<number>`count(*)` })
     .from(s.attendees)
     .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
-    .where(
-      and(
-        eq(s.orders.eventId, eventId),
-        eq(s.orders.status, "confirmed"),
-        isNull(s.attendees.voidedAt),
-      ),
-    );
-  return Number(sold?.n ?? 0);
+    .where(and(eq(s.orders.eventId, eventId), holdsAPlace));
+  return Number(taken?.n ?? 0);
 }
 
 /**
- * Tickets already sold under one price rule.
+ * Places already taken under one price rule.
  *
- * Separate from `confirmedTicketCount` because a rule's allocation and the
- * event's capacity are different limits: a presale tier can sell out while the
- * event still has room, and only this count can tell you so.
+ * Separate from `placesTaken` because a rule's allocation and the event's
+ * capacity are different limits: a presale tier can sell out while the event
+ * still has room, and only this count can tell you so.
  */
-export async function ticketsSoldUnderRule(
+export async function placesTakenUnderRule(
   db: DrizzleD1Database<typeof s>,
   eventId: string,
   ruleId: string,
 ): Promise<number> {
-  const [sold] = await db
+  const [taken] = await db
     .select({ n: sql<number>`count(*)` })
     .from(s.attendees)
     .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
-    .where(
-      and(
-        eq(s.orders.eventId, eventId),
-        eq(s.orders.priceRuleId, ruleId),
-        eq(s.orders.status, "confirmed"),
-        isNull(s.attendees.voidedAt),
-      ),
-    );
-  return Number(sold?.n ?? 0);
+    .where(and(eq(s.orders.eventId, eventId), eq(s.orders.priceRuleId, ruleId), holdsAPlace));
+  return Number(taken?.n ?? 0);
 }
 
 /**

@@ -33,7 +33,7 @@ Two numbers from the baseline event (Jungla, 01/08 — 229 people, L52,650) shap
 
 | # | Feature | Acceptance criteria (testable) | Status |
 |---|---|---|---|
-| F1 | Buy by bank transfer | A buyer picks a quantity, sees the band's account for their own bank, uploads a confirmation screenshot and reaches their QR codes without creating an account | live |
+| F1 | Buy by bank transfer | A buyer picks a quantity, sees the band's account for their own bank, uploads a confirmation screenshot and reaches their QR codes without creating an account. An order whose upload is evidently not a payment for it (not a receipt, a repeated file or reference, money sent elsewhere) keeps its QR but holds no place in the capacity or a price's allocation until the band resolves the flag | live; places since 2026-11-09 (`docs/SECURITY-REVIEW.md`, S2) |
 | F2 | QR issues immediately | The QR codes render on screen before verification has run, and no flag, failure or missing API key can withhold them | live |
 | F3 | Ticket email | The same codes arrive by email within a minute, as hosted PNGs that Gmail will render | live since 2026-11-03, from `hola@coverr.live` (`docs/EMAIL-SETUP.md`). Gmail may file it under Promotions |
 | F4 | Three ways to get a ticket back | On screen at purchase, `/recuperar` by email, and staff name-search at the door. `/recuperar` answers identically whether or not the address is registered, and sends one email linking every order on the address for events that have not yet passed (since 2026-11-09; it used to resend each order's full ticket email, for every show ever bought) | live |

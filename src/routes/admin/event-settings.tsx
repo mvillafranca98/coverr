@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { findBand } from "../../db/queries/bands";
 import { findEventBySlug, uniqueEventSlug } from "../../db/queries/events";
 import { unpaidFeeFor } from "../../db/queries/fees";
-import { confirmedTicketCount } from "../../db/queries/orders";
+import { placesTaken } from "../../db/queries/orders";
 import * as s from "../../db/schema";
 import { newId, newStaffToken, nowIso } from "../../lib/core";
 import {
@@ -40,7 +40,7 @@ async function renderSettings(
     .where(eq(s.priceRules.eventId, event.id))
     .orderBy(s.priceRules.sortOrder);
 
-  const soldCount = await confirmedTicketCount(db, event.id);
+  const soldCount = await placesTaken(db, event.id);
 
   return c.html(
     <EventSettingsPage

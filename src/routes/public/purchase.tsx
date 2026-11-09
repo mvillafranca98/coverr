@@ -3,11 +3,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { findEventWithBand } from "../../db/queries/events";
 import { readFlags } from "../../db/queries/flags";
-import {
-  confirmedTicketCount,
-  ticketsSoldUnderRule,
-  uniqueShortCode,
-} from "../../db/queries/orders";
+import { placesTaken, placesTakenUnderRule, uniqueShortCode } from "../../db/queries/orders";
 import { resolveSellableRule } from "../../db/queries/price-rules";
 import { findDuplicateProof, insertUnreadProof } from "../../db/queries/proofs";
 import * as s from "../../db/schema";
@@ -93,7 +89,7 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
   // presale price. Refusing with the real number mirrors the capacity check
   // below and tells the buyer something they can act on.
   if (rule.maxQty != null) {
-    const soldUnderRule = await ticketsSoldUnderRule(db, event.id, rule.id);
+    const soldUnderRule = await placesTakenUnderRule(db, event.id, rule.id);
     if (soldUnderRule + quantity > rule.maxQty) {
       const left = Math.max(0, rule.maxQty - soldUnderRule);
       return backToForm(
@@ -106,7 +102,7 @@ purchaseRoutes.post("/e/:slug/comprar", async (c) => {
   }
 
   if (event.capacityCap != null) {
-    const sold = await confirmedTicketCount(db, event.id);
+    const sold = await placesTaken(db, event.id);
     const left = Math.max(0, event.capacityCap - sold);
     // Saying how many are left beats "no hay cupo": a buyer wanting four when
     // three remain can act on the number, not just be refused.

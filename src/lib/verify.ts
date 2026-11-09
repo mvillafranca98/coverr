@@ -58,6 +58,26 @@ export function flagLabel(code: string): string {
 export const NOTE_ONLY_FLAG: FlagCode = "NAME_MISMATCH";
 
 /**
+ * Flags that are evidence the upload is not a payment for this order: not a
+ * receipt at all, a file or a reference already used on another order, or
+ * money sent to an account that is not the band's. While one is open, the
+ * order holds no place in the room or in a price's allocation
+ * (`db/queries/orders.ts`, `holdsAPlace`), so junk uploads cannot sell an event
+ * out from under real buyers. The buyer keeps the QR either way, and resolving
+ * the flag gives the place back.
+ *
+ * Missing fields and an unread receipt are deliberately not here: they are
+ * also what a genuine buyer's cropped screenshot, or an outage at the API,
+ * look like, and taking those buyers' places would oversell the room.
+ */
+export const FLAGS_THAT_FREE_A_PLACE: readonly FlagCode[] = [
+  "NOT_A_RECEIPT",
+  "HASH_DUPLICATE",
+  "REF_DUPLICATE",
+  "DEST_MISMATCH",
+];
+
+/**
  * Raised at upload, before anything has read the proof, and replaced by the
  * first read that completes. When no read ever completes — the switch is off,
  * the key is missing, the job was cut off — it stays, so a proof nobody read

@@ -253,6 +253,12 @@ export const BandGuidePage: FC<{ origin: string; billingEnabled: boolean }> = ({
         sus QR y la saca de los totales.
       </p>
       <p>
+        Mientras una orden tenga <b>No es un comprobante</b>, <b>Comprobante repetido</b>,{" "}
+        <b>Referencia repetida</b> u <b>Otra cuenta</b> sin resolver, no ocupa lugar en el{" "}
+        <b>Cupo máximo</b> ni en la preventa: así nadie te agota el evento subiendo cualquier
+        imagen. Si la resolvés, vuelve a ocupar su lugar, aunque el evento ya esté lleno.
+      </p>
+      <p>
         <b>Para pasarle un boleto a otra persona</b>, cambiá el nombre en <b>Asistentes</b> y tocá{" "}
         <b>Guardar</b>. El QR sigue siendo el mismo.
       </p>

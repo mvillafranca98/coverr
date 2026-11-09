@@ -1,6 +1,7 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as s from "../schema";
+import { holdsAPlace } from "./orders";
 
 type PriceRule = typeof s.priceRules.$inferSelect;
 
@@ -29,9 +30,10 @@ export async function resolveSellableRule(
   const rules = await rulesInOrder(db, eventId);
   if (rules.length === 0) return null;
 
-  // Live ticket rows, the same count the purchase-time cap uses in
-  // `ticketsSoldUnderRule`. If the two disagreed, a partial refund would leave
-  // presale showing sold out here while the cap would happily sell it.
+  // Places taken, the same count the purchase-time cap uses in
+  // `placesTakenUnderRule`. If the two disagreed, a partial refund or a junk
+  // upload would leave presale showing sold out here while the cap would
+  // happily sell it — and real buyers would pay the next price for nothing.
   const soldByRule = new Map<string, number>();
   const counts = await db
     .select({
@@ -40,13 +42,7 @@ export async function resolveSellableRule(
     })
     .from(s.attendees)
     .innerJoin(s.orders, eq(s.attendees.orderId, s.orders.id))
-    .where(
-      and(
-        eq(s.orders.eventId, eventId),
-        eq(s.orders.status, "confirmed"),
-        isNull(s.attendees.voidedAt),
-      ),
-    )
+    .where(and(eq(s.orders.eventId, eventId), holdsAPlace))
     .groupBy(s.orders.priceRuleId);
   for (const c of counts) if (c.ruleId) soldByRule.set(c.ruleId, Number(c.qty));
 

@@ -27,6 +27,9 @@ bytes; HMAC sessions; single-use 15-minute sign-in links; HttpOnly and SameSite=
 - **No automatic voiding.** Voiding an order the model called "not a receipt" would break "the
   QR issues immediately, always" and would let a misread genuine receipt cost a buyer their
   ticket. Rejected for S2.
+- **No per-event purchase limit** (2026-11-09). Once junk stopped holding places, a per-event
+  limit would mainly have let anyone with a script stop an event's sales for a minute at a time.
+  Dropped from S2.
 - **Order of work:** S1, S3, S5 and S2, S11, S4, S9 and S8, S7, S10. S6 is the owner's, with no
   code.
 
@@ -35,7 +38,7 @@ bytes; HMAC sessions; single-use 15-minute sign-in links; HttpOnly and SameSite=
 | # | Finding | Severity | Status | STANDARDS |
 |---|---|---|---|---|
 | S1 | Receipt verification fails open | High | ✅ Fixed 2026-11-09 | AI-09 |
-| S2 | Junk uploads can sell out an event | Medium | Planned | SEC-06 |
+| S2 | Junk uploads can sell out an event | Medium | ✅ Fixed 2026-11-09 (capacity) | SEC-06 |
 | S3 | A band session survives a change of the band's email | Medium | ✅ Fixed 2026-11-09 | SEC-12 |
 | S4 | The door link never expires, and can still write | Low–medium | Planned | SEC-12 |
 | S5 | Email limits are per IP only; recovery multiplies emails | Low–medium | ✅ Fixed 2026-11-09 | SEC-05, SEC-06 |
@@ -134,20 +137,54 @@ the hourly retry picks it up if its read had failed.
 
 ## S2 · Junk uploads can sell out an event
 
-**Severity: medium** — planned
+**Severity: medium** — ✅ **FIXED 2026-11-09** (the capacity half; see "Still true")
 
-Orders are written `confirmed` at upload, and the capacity check and the presale allocation count
-every confirmed order whatever its flags (`db/queries/orders.ts`). The only limit is 20 purchases
-a minute per IP, at up to 10 tickets each, so one IP with any valid image can fill a 300-person
-show in about two minutes, or push real buyers onto the next, dearer price. Each junk order also
-costs one vision call and sends one email to whatever address was typed: one IP can use up the
-day's 100 Resend emails in about five minutes, which stops ticket emails and band sign-in links
-for every band until 00:00 UTC (18:00 in Honduras). Mail to invented addresses bounces, and a
-rising bounce rate can get the Resend account paused.
+**What was true.** Orders are written `confirmed` at upload, and the capacity check, the presale
+allocation and the choice of which price is on sale all counted every confirmed order whatever
+its flags. The only limit is 20 purchases a minute per IP, at up to 10 tickets each, so one IP
+with any valid image could fill a 300-person show in about two minutes, or push real buyers onto
+the next, dearer price. Each junk order also costs one vision call and sends one email to
+whatever address was typed: one IP can use up the day's 100 Resend emails in about five minutes,
+which stops ticket emails and band sign-in links for every band until 00:00 UTC (18:00 in
+Honduras). Mail to invented addresses bounces, and a rising bounce rate can get the Resend
+account paused.
 
-**Planned fix:** leave orders with an open `NOT_A_RECEIPT` or `HASH_DUPLICATE` flag out of the
-capacity and allocation counts (the buyer keeps the QR, and a resolved flag puts the order back
-in the count); add a second, per-event purchase limit. Turnstile is deferred (see Decisions).
+**The fix.**
+
+- `lib/verify.ts`: `FLAGS_THAT_FREE_A_PLACE` names the flags that are evidence an upload is not a
+  payment for its order: `NOT_A_RECEIPT`, `HASH_DUPLICATE`, `REF_DUPLICATE` and `DEST_MISMATCH`.
+- `db/queries/orders.ts`: `holdsAPlace` is the one condition for a ticket that occupies a place:
+  live, on a confirmed order, with none of those flags open. The capacity check (`placesTaken`,
+  was `confirmedTicketCount`), a price's allocation (`placesTakenUnderRule`, was
+  `ticketsSoldUnderRule`) and the choice of which price is on sale (`resolveSellableRule`) all
+  use it, so they cannot disagree. A repeated file is flagged at upload and frees its place
+  at once; an image that is not a receipt frees it a few seconds later, when it is read.
+- The buyer keeps the QR either way, so "the QR issues immediately, always" holds. Resolving the
+  flag gives the place back, even when the event has filled in the meantime, which can oversell
+  by that order; the band guide says so.
+- `MISSING_FIELDS` and `UNREADABLE` keep their places on purpose: they are also what a genuine
+  buyer's cropped screenshot, or an outage at the API, look like.
+
+**Not done, deliberately.** The per-event purchase limit in the original plan was dropped. With
+junk no longer holding places, its remaining effect would have been to give anyone with a script
+a way to stop an event's sales for a minute at a time by using up its allowance — a cheaper
+attack than the one it guards against. Turnstile stays deferred (see Decisions).
+
+**Verified.** Unit tests pin which flags free a place and which do not (`tests/verify.test.ts`).
+Locally, on the demo event set two places short of full: a first purchase took a place, a second
+with the same file was accepted and flagged `HASH_DUPLICATE`, a third with another file was
+accepted because the duplicate held no place (before, it would have been refused), and a fourth
+was refused with "Ya no quedan boletos". The end-to-end run passes. The test orders were removed
+and the event restored.
+
+**Still true.**
+
+- A junk order still costs one vision call and sends one ticket email before it is read.
+  Sending the ticket email only after the read, and not at all for a repeated file or a
+  non-receipt, would stop most of that mail; it changes F3 ("the codes arrive by email within a
+  minute") for those orders, so it is left for the owner to decide.
+- An attacker who first uses up the Anthropic limit leaves every later upload unread, and unread
+  orders keep their places. Turnstile is the answer if that is ever seen.
 
 ## S3 · A band session survives a change of the band's email
 

@@ -269,7 +269,9 @@ named steps, and anything that outlives the response is a job.
 2. `POST /e/:slug/comprar` — `routes/public/purchase.tsx`:
    - rate-limits by IP, then validates the form (`lib/purchase-form.ts`);
    - re-resolves the price rule on the server and checks the rule's allocation and the
-     event's capacity against live ticket counts;
+     event's capacity against the places taken (`holdsAPlace` in `db/queries/orders.ts`): live
+     tickets, leaving out orders with an open flag saying the upload is not a payment for them
+     (not a receipt, a repeated file or reference, money sent elsewhere);
    - decides what the uploaded file is from its bytes, not from what the browser claimed
      (`lib/file-type.ts`) — a file labelled as an image that is really HTML is refused;
    - hashes the file and flags it at once if the same file was already used on another order;
