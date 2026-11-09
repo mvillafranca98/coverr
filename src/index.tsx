@@ -1,7 +1,8 @@
 import { Hono } from "hono";
+import { contextStorage } from "hono/context-storage";
 import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
-import { secureHeaders } from "hono/secure-headers";
+import { NONCE, secureHeaders } from "hono/secure-headers";
 import { purgeOldErrors } from "./jobs/purge-errors";
 import { purgeExpiredFeeProofs } from "./jobs/purge-fee-proofs";
 import { purgeExpiredProofs } from "./jobs/purge-proofs";
@@ -41,6 +42,10 @@ import { NotFoundPage, ServerErrorPage } from "./views/errors";
  * slash redirect sitting above its mount, `/admin/` and `/operador/`.
  */
 const app = new Hono<PublicEnv>();
+
+// First, so every page rendered below can reach its own request: an inline
+// script reads the response's CSP nonce from it (views/inline-script.tsx).
+app.use("*", contextStorage());
 
 /**
  * www and the old workers.dev address send people on to coverr.live — see
@@ -95,7 +100,12 @@ app.use(
   secureHeaders({
     contentSecurityPolicy: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      // Our inline scripts carry this response's nonce (views/inline-script.tsx);
+      // a script injected into the page would not, so it never runs.
+      // 'unsafe-inline' is only for browsers too old to know nonces, so the buy
+      // form still works on them: every browser that knows nonces ignores it
+      // whenever a nonce is present, as the CSP spec requires.
+      scriptSrc: [NONCE, "'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:"],
       connectSrc: ["'self'"],

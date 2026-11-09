@@ -54,6 +54,9 @@ Commands: `npm run dev`, `npm run typecheck`, `npm run db:generate`, `npm run db
   DESIGN.md, *Typography* and *The landing page*.
 - **Light or dark is chosen by audience, not by preference.** Light for anything a buyer sees,
   dark for anything the band sees. There is no theme toggle and should not be one.
+- **Inline scripts go through `InlineScript`** (`src/views/inline-script.tsx`), never a bare
+  `<script dangerouslySetInnerHTML>`. The CSP runs only scripts carrying the response's nonce, so a
+  bare one is refused by the browser — which is the point: an injected script never has it.
 
 ## Code standards
 

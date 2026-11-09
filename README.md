@@ -478,6 +478,11 @@ create events and its event pages stop selling; tickets it has already sold keep
 the ticket page, `/recuperar` and the door. The operator session is its own cookie, sent only to
 `/operador`, and lasts 12 hours.
 
+**Inline scripts** carry a per-response CSP nonce: write any new one through `InlineScript`
+(`src/views/inline-script.tsx`), which reads the nonce `secureHeaders` made for the request. A bare
+`<script>` with inline code is refused by the browser, and so is anything an injection bug slips
+into a page. Styles stay inline under `'unsafe-inline'`; the scripts are what an attacker needs.
+
 **Both panels** refuse a form posted from another site (`hono/csrf`, mounted in `src/index.tsx`):
 the browser has to say the post came from the same origin. Signing out is a POST from the Salir
 button. The buyer's forms are left out on purpose, since they hold no session and a refused

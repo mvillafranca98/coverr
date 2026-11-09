@@ -3,6 +3,7 @@ import ADMIN_CSS from "../../styles/admin.css";
 import TOKENS_CSS from "../../styles/tokens.css";
 import { BrandIcons, Monogram } from "../brand";
 import { ErrorReporter } from "../error-reporter";
+import { InlineScript } from "../inline-script";
 import { LegalLinks } from "../legal/links";
 
 /**
@@ -158,7 +159,7 @@ export const AdminLayout: FC<
       {/* One delegated handler for every CopyLink on the page. Inline because
           this surface ships no script files and a copy button is not worth
           starting. */}
-      <script dangerouslySetInnerHTML={{ __html: COPY_SCRIPT }} />
+      <InlineScript code={COPY_SCRIPT} />
     </body>
   </html>
 );

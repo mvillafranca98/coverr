@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { formatPct, type MemberFormRow, memberField } from "../../lib/member-split";
 import { TEXT_LIMITS } from "../../lib/text-limits";
+import { InlineScript } from "../inline-script";
 
 /** Empty rows a band starts with: enough for a usual band without touching "+ Otra fila". */
 const STARTING_ROWS = 4;
@@ -176,6 +177,6 @@ export const MemberTable: FC<{ rows: MemberFormRow[] }> = ({ rows }) => (
     <template id="member-row">
       <MemberRowView row={{ id: null, name: "", pct: "", remove: false }} index={null} />
     </template>
-    <script dangerouslySetInnerHTML={{ __html: MEMBER_TABLE_SCRIPT }} />
+    <InlineScript code={MEMBER_TABLE_SCRIPT} />
   </>
 );

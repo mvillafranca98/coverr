@@ -2,6 +2,7 @@ import type { FC } from "hono/jsx";
 import { formatLpsShort } from "../lib/core";
 import { AdminLayout } from "./admin/layout";
 import { type DemoShow, pickDemoShow } from "./demo-shows";
+import { InlineScript } from "./inline-script";
 
 /**
  * A sale the band makes away from both the link and the door: a friend hands
@@ -157,9 +158,8 @@ export const ManualSalePage: FC<{
     </div>
     {/* This POST creates orders, so a double tap double-sells. The buyer form
         has guarded this since it was written; the door's own form had not. */}
-    <script
-      dangerouslySetInnerHTML={{
-        __html: `(function(){
+    <InlineScript
+      code={`(function(){
   var f = document.getElementById('manualForm');
   var b = document.getElementById('manualSubmit');
   if (!f || !b) return;
@@ -167,8 +167,7 @@ export const ManualSalePage: FC<{
     b.disabled = true;
     b.textContent = 'Registrando…';
   });
-})();`,
-      }}
+})();`}
     />
   </AdminLayout>
 );

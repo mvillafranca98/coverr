@@ -43,7 +43,7 @@ bytes; HMAC sessions; single-use 15-minute sign-in links; HttpOnly and SameSite=
 | S4 | The door link never expires, and can still write | Low–medium | ✅ Fixed 2026-11-09 | SEC-12 |
 | S5 | Email limits are per IP only; recovery multiplies emails | Low–medium | ✅ Fixed 2026-11-09 | SEC-05, SEC-06 |
 | S6 | Operator access rests on personal Gmail inboxes | Low | Owner, no code | — |
-| S7 | The CSP allows inline scripts | Hardening | Planned | SEC-10 |
+| S7 | The CSP allows inline scripts | Hardening | ✅ Fixed 2026-11-09 | SEC-10 |
 | S8 | Order ids are weaker capabilities than QR tokens | Hardening | ✅ Fixed 2026-11-09 | — |
 | S9 | No Origin check; logout by GET; login CSRF on `/entrar` | Low | ✅ Fixed 2026-11-09 | SEC-10, SEC-12 |
 | S10 | Internal comments ship in inlined CSS and scripts | Cosmetic | Planned, optional | — |
@@ -316,12 +316,33 @@ hardware key on both Google accounts and on Cloudflare, and trim the list to wha
 
 ## S7 · The CSP allows inline scripts
 
-**Hardening** — planned
+**Hardening** — ✅ **FIXED 2026-11-09**
 
-`'unsafe-inline'` in `script-src` (`src/index.tsx`). There are about nine inline script blocks and
-no inline event handlers, so a nonce covers everything. Three of the blocks carry band-provided
-data (escaped by `lib/core.ts`), so SEC-10's condition for nonces is already met. Moving the
-scripts to files would break the deliberate inlining for venue wifi; a nonce does not.
+**What was true.** `'unsafe-inline'` in `script-src` (`src/index.tsx`), so any HTML-injection bug
+would have become a running script. There were nine inline script blocks and no inline event
+handlers. Three carry band-provided data (escaped by `lib/core.ts`), so SEC-10's own condition for
+nonces was already met. Moving the scripts to files would break the deliberate inlining for
+venue wifi; a nonce does not.
+
+**The fix.**
+
+- `src/index.tsx`: `script-src` is now Hono's per-response `NONCE` plus `'self'`.
+  `'unsafe-inline'` stays only as the fallback for browsers too old to know nonces, so the buy
+  form still works on them; every browser that knows nonces ignores it whenever one is present.
+  `contextStorage()` is the first middleware, so a page being rendered can reach its own request.
+- `src/views/inline-script.tsx`: `InlineScript` writes an inline script with that response's nonce.
+  All nine blocks use it: the buy form, the ticket page, the manual sale, the member table, the
+  admin copy buttons, the error reporter on every page, and the landing page's reveal guard and
+  motion. Outside a request it writes no nonce, and the browser refuses the script, which is the
+  safe way to be wrong.
+- `CLAUDE.md` now says inline scripts go through `InlineScript`, never a bare `<script>`.
+- Styles stay inline under `'unsafe-inline'`, on purpose: an injected style cannot run code.
+
+**Verified.** Locally, every inline script on the landing, buy, ticket, recovery, sign-up, sign-in,
+guide, privacy and 404 pages, and on the admin home, dashboard, band settings, manual sale and orders
+pages, carried the nonce in that response's header. A script injected into the buy page was
+blocked by `script-src-elem` in Chrome, with and without the old-browser fallback; the buy form's
+quantity button, GSAP and the landing reveal still ran. The end-to-end run passes.
 
 ## S8 · Order ids are weaker capabilities than QR tokens
 

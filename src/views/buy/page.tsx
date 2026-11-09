@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 import { bankLabel, formatEventDate, formatEventTime, formatLpsShort } from "../../lib/core";
 import { Wordmark } from "../brand";
+import { InlineScript } from "../inline-script";
 import { Layout } from "../layout";
 import { LegalLinks } from "../legal/links";
 import { buyFormScript } from "./form-script";
@@ -129,21 +130,19 @@ export const BuyPage: FC<BuyProps> = ({
         <LegalLinks />
       </footer>
 
-      <script
-        dangerouslySetInnerHTML={{
-          __html: buyFormScript({
-            eventSlug: event.slug,
-            defaultBank: defaultAccount.bank,
-            shortCode,
-            unitAmount: rule.amount,
-            accountsByBank: Object.fromEntries(
-              accounts.map((a) => [
-                a.bank,
-                { n: a.accountNumber, h: a.holderName, b: bankLabel(a.bank) },
-              ]),
-            ),
-          }),
-        }}
+      <InlineScript
+        code={buyFormScript({
+          eventSlug: event.slug,
+          defaultBank: defaultAccount.bank,
+          shortCode,
+          unitAmount: rule.amount,
+          accountsByBank: Object.fromEntries(
+            accounts.map((a) => [
+              a.bank,
+              { n: a.accountNumber, h: a.holderName, b: bankLabel(a.bank) },
+            ]),
+          ),
+        })}
       />
     </Layout>
   );

@@ -2,6 +2,7 @@ import type { FC } from "hono/jsx";
 import { formatEventDate, formatEventTime, formatLpsShort } from "../../lib/core";
 import { qrDataUri } from "../../lib/qr";
 import { Wordmark } from "../brand";
+import { InlineScript } from "../inline-script";
 import { Layout } from "../layout";
 import { LegalLinks } from "../legal/links";
 import { ticketScript } from "./ticket-script";
@@ -162,18 +163,16 @@ export const ConfirmPage: FC<ConfirmProps> = ({ band, event, order, attendees })
       <LegalLinks />
     </footer>
 
-    <script
-      dangerouslySetInnerHTML={{
-        __html: ticketScript({
-          eventSlug: event.slug,
-          bandName: band.name,
-          eventName: event.name,
-          whenLine: `${formatEventDate(event.startsAt)} · ${formatEventTime(event.startsAt)}`,
-          venue: event.venue,
-          shortCode: order.shortCode,
-          total: attendees.length,
-        }),
-      }}
+    <InlineScript
+      code={ticketScript({
+        eventSlug: event.slug,
+        bandName: band.name,
+        eventName: event.name,
+        whenLine: `${formatEventDate(event.startsAt)} · ${formatEventTime(event.startsAt)}`,
+        venue: event.venue,
+        shortCode: order.shortCode,
+        total: attendees.length,
+      })}
     />
   </Layout>
 );

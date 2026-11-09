@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import { InlineScript } from "./inline-script";
 
 /**
  * The script itself, kept small because it ships inline on every page.
@@ -50,6 +51,4 @@ const ERROR_REPORTER_SCRIPT = `(function () {
  * listening when they run. Every document but the scanner's includes it; the
  * scanner has its own reporter in public/scanner.js, which queues offline.
  */
-export const ErrorReporter: FC = () => (
-  <script dangerouslySetInnerHTML={{ __html: ERROR_REPORTER_SCRIPT }} />
-);
+export const ErrorReporter: FC = () => <InlineScript code={ERROR_REPORTER_SCRIPT} />;

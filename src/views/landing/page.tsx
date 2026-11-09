@@ -11,6 +11,7 @@ import TOKENS_CSS from "../../styles/tokens.css";
 import { BrandIcons, Monogram, Wordmark } from "../brand";
 import type { DemoShow } from "../demo-shows";
 import { ErrorReporter } from "../error-reporter";
+import { InlineScript } from "../inline-script";
 import { LegalLinks } from "../legal/links";
 import { HeroTicket } from "./hero-ticket";
 import { MoneyFlow } from "./money-flow";
@@ -193,13 +194,13 @@ export const LandingPage: FC<{
       {/* Synchronous and before the body: it hides what is about to be
           revealed, and arms the timer that un-hides it if the motion script
           never reports in. See motion.ts. */}
-      <script dangerouslySetInnerHTML={{ __html: revealGuardScript() }} />
+      <InlineScript code={revealGuardScript()} />
       {/* Vendored, not from a CDN — see motion.ts. `defer` so neither blocks
           the first paint, and both have run by DOMContentLoaded, which is what
           the init below waits for. */}
       <script src="/vendor/gsap.min.js" defer />
       <script src="/vendor/ScrollTrigger.min.js" defer />
-      <script dangerouslySetInnerHTML={{ __html: landingMotionScript() }} />
+      <InlineScript code={landingMotionScript()} />
     </head>
     <body>
       <a class="skip" href="#main">
