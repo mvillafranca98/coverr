@@ -89,7 +89,7 @@ Logs in the dashboard, or `npx wrangler tail` while it is happening.
 
 | Field | State | What it means | What to do |
 |---|---|---|---|
-| `database` | `behind` | D1 answers, but the migration this deploy was built against has not been applied. Pages load; **every purchase fails** on the missing column. | `npm run db:migrate:remote`. This is the deploy-before-migrate mistake, and running the migration is the fix. |
+| `database` | `behind` | D1 answers, but the migration this deploy was built against has not been applied. Pages load; **every purchase fails** on the missing column. | `npm run db:migrate:remote`. This is the deploy-before-migrate mistake, and running the migration is the fix. `npm run deploy` refuses to ship while a migration is pending, so seeing this means the code went out some other way (`npx wrangler deploy` directly, or the dashboard). |
 | `database` | `down` | D1 refused the query. Nothing loads that reads data. | Check the Cloudflare status page and the `[health]` log line. Nothing in Coverr fixes a D1 outage. Scanners that already cached the list keep checking people in offline. |
 | `database` | `timeout` | D1 took longer than 5 seconds. | Same places as `down`. One slow answer can be noise; several in a row are not. |
 | `proofs` | `down` or `timeout` | R2 is unreachable. The proof is stored before the order is written, so a buyer gets the crash page and **no order exists**. The crash page tells anyone who already transferred to write in. | Check the Cloudflare status page. Expect messages from buyers who paid and have no ticket; their transfers will be in the band's bank, not in Coverr. |

@@ -429,6 +429,13 @@ version with its short commit hash and writes the commit subject as its message 
 deployment list reads like `git log` when you need to roll back. A deploy with uncommitted
 changes says so in its label.
 
+Before it uploads anything, it asks production which migrations it has applied
+([`scripts/pending-migrations.mjs`](scripts/pending-migrations.mjs)). If any file in
+`migrations/` is missing, it names them and stops; if it cannot read the database at all (a
+failed sign-in, say), it stops too. Code that goes out ahead of its migration takes the event
+pages down, so a failed `db:migrate:remote` now blocks the deploy rather than being skipped
+past. `npm run deploy -- --dry-run` runs the same check without deploying.
+
 Then check it:
 
 ```bash
